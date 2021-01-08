@@ -1,0 +1,167 @@
+# vim: ai et ts=2 st=2 sw=2 :
+---
+- name: raspberry pi pihole
+  hosts: pihole
+  become: true
+  vars:
+    stubby_config: |
+      resolution_type: GETDNS_RESOLUTION_STUB
+      dns_transport_list:
+        - GETDNS_TRANSPORT_TLS
+      tls_authentication: GETDNS_AUTHENTICATION_REQUIRED
+      tls_query_padding_blocksize: 256
+      edns_client_subnet_private : 1
+      round_robin_upstreams: 0
+      idle_timeout: 10000
+      #timeout: 1
+      #tls_backoff_time: 300
+      dnssec_return_status: GETDNS_EXTENSION_TRUE
+      tls_min_version: GETDNS_TLS1_3
+      listen_addresses:
+        - 127.0.0.1@5053
+      upstream_recursive_servers:
+        - address_data: 9.9.9.9
+          tls_auth_name: "dns.quad9.net"
+        - address_data: 149.112.112.112
+          tls_auth_name: "dns.quad9.net"
+        - address_data: 2620:fe::fe
+          tls_auth_name: "dns.quad9.net"
+        - address_data: 2620:fe::9
+          tls_auth_name: "dns.quad9.net"
+      #  - address_data: 2606:4700:4700::1111
+      #    tls_auth_name: "cloudflare-dns.com"
+      #  - address_data: 2606:4700:4700::1001
+      #    tls_auth_name: "cloudflare-dns.com"
+      #  - address_data: 1.1.1.1
+      #    tls_auth_name: "cloudflare-dns.com"
+      #  - address_data: 1.0.0.1
+      #    tls_auth_name: "cloudflare-dns.com"
+
+  tasks:
+    - name: dependencies
+      apt:
+        name:
+          - python-apt
+          - python-docker
+      check_mode: false
+
+    - name: install packages
+      apt:
+        name:
+          - docker.io
+          - dstat
+          - stubby
+          - ufw
+          - unattended-upgrades
+
+    - name: allow remote ssh
+      ufw:
+        rule: allow
+        proto: '{{ item.0 }}'
+        port: '{{ item.1 | string }}'
+      loop:
+        - - tcp
+          - 22
+        - - udp
+          - 53
+        - - tcp
+          - 53
+        - - udp
+          - 67
+        - - tcp
+          - 80
+
+    - name: enable ufw
+      ufw:
+        state: enabled
+        direction: '{{ item.d }}'
+        policy: '{{ item.p }}'
+      loop:
+        - d: incoming
+          p: reject
+        - d: outgoing
+          p: allow
+        - d: routed
+          p: allow
+
+    - name: hardening mss value, CVE-2019-11479
+      sysctl:
+        name: net.ipv4.tcp_min_snd_mss
+        value: "536"
+
+    - name: enable services
+      systemd:
+        name: '{{ item }}'
+        state: started
+        enabled: true
+      loop:
+        - docker
+        - ufw
+        - stubby
+
+    - name: add my stubby config file
+      copy:
+        dest: /etc/stubby/stubby.yml
+        #content: '{{ stubby_config | to_nice_yaml(indent=2, width=1337) }}'
+        content: '{{ stubby_config }}'
+        mode: 0644
+      register: stubby_yml_file
+      tags:
+        - stubby
+
+    - name: restart stubby server on config change
+      systemd:
+        name: stubby
+        state: restarted
+      when: stubby_yml_file is changed
+      tags:
+        - stubby
+
+    - name: pihole container
+      docker_container:
+        name: pihole
+        image: pihole/pihole:latest
+        pull: true
+        log_driver: journald
+        restart_policy: unless-stopped
+        env:
+          TZ: 'Europe/Oslo'
+          ServerIP: '{{ ansible_default_ipv4.address }}'
+          ServerIPv6: '{{ pihole_server_ipv6 | default(ansible_default_ipv6.address) | default(omit) }}'
+          DNS1: 127.0.0.1#5053
+          DNS2: 'no'
+        network_mode: host
+        volumes:
+          - /srv/pihole/conf:/etc/pihole/
+          - /srv/pihole/dnsmasq_conf:/etc/dnsmasq.d/
+        dns_servers:
+          - 127.0.0.1
+          - 9.9.9.9
+        capabilities:
+          - NET_ADMIN
+      tags:
+        - container
+
+    - name: watchtower container
+      docker_container:
+        name: watchtower
+        image: containrrr/watchtower:armhf-latest
+        pull: true
+        command: -i 3600
+        log_driver: journald
+        restart_policy: unless-stopped
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+        env: '{{ watchtower_env | default(omit) }}'
+      tags:
+        - container
+
+    - name: keep docker environment tidy
+      cron:
+        name: purge old dockers and images
+        minute: "0"
+        hour: "*/6"
+        job: |
+          bash -c "docker system prune -a -f --filter until=48h --filter label!=prune=false 2>&1 | systemd-cat -t CRON_DOCKER"
+      tags:
+        - cron

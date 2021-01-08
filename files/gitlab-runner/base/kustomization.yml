@@ -1,0 +1,4 @@
+resources:
+  - ns.yml
+  - rbac.yml
+  - deployment.yml

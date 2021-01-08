@@ -1,0 +1,53 @@
+# vim: ai et ts=2 st=2 sw=2 :
+---
+- name: homeserver configuration
+  hosts: master_node
+  become: true
+
+  tasks:
+    - name: install packages
+      apt:
+        name:
+          - etckeeper
+          - munin-node
+          - munin-plugins-extra
+          - ufw
+          - unattended-upgrades
+        cache_valid_time: 3600
+
+    - name: allow other things
+      ufw:
+        rule: allow
+        port: "{{ item.port }}"
+        proto: "{{ item.proto }}"
+      loop: '{{ base_ufw_rules }}'
+
+    - name: hardening mss value, CVE-2019-11479
+      sysctl:
+        name: net.ipv4.tcp_min_snd_mss
+        value: "536"
+
+    - name: add cron jobs
+      cron:
+        name: '{{ item.name }}'
+        weekday: '{{ item.weekday | default(omit) }}'
+        day: '{{ item.day | default(omit) }}'
+        minute: '{{ item.minute | default(omit) }}'
+        hour: '{{ item.hour | default(omit) }}'
+        user: root
+        job: '{{ item.job }}'
+      loop: '{{ base_cron }}'
+      tags:
+        - cron
+
+    - name: server ssh notify
+      template:
+        src: sshnotif
+        dest: /usr/local/bin/sshnotif
+        mode: 0755
+
+    - name: add notify on ssh
+      lineinfile:
+        path: /etc/pam.d/common-session
+        line: session optional pam_exec.so /usr/local/bin/sshnotif
+

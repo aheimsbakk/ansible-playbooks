@@ -1,0 +1,111 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: traefik-letsencrypt
+  namespace: traefik
+  labels:
+    app: traefik
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 250Mi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: traefik
+  name: traefik
+  labels:
+    app: traefik
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traefik
+  template:
+    metadata:
+      labels:
+        app: traefik
+    spec:
+      serviceAccountName: traefik-ingress-controller
+      containers:
+        - name: traefik
+          image: traefik:v2.3
+          imagePullPolicy: Always
+          args:
+            - --api=true
+            - --log.level=WARN
+            - --accesslog
+            # Don't verfy tls on dockers
+            - --serverstransport.insecureskipverify=true
+            # File provider
+            - --providers.file.directory=/etc/traefik
+            # Kubernetes ingress provider
+            - --providers.kubernetesingress
+            # Listen to port 80 and redirect to 443
+            - --entrypoints.web.address=:80
+            - --entrypoints.web.http.redirections.entrypoint.to=websecure
+            - --entrypoints.web.http.redirections.entrypoint.scheme=https
+            # Listen to port 443 with SSL
+            - --entrypoints.websecure.address=:443
+            - --entrypoints.websecure.http.tls=true
+            - --entrypoints.websecure.http.tls.options=mintls12@file
+          #  - --entrypoints.websecure.http.tls.certresolver=letsencrypt
+            - --entrypoints.websecure.http.middlewares=default-https-headers@file
+            # Listen to port 5487 with SSL
+            - --entrypoints.registrysecure.address=:5487
+            - --entrypoints.registrysecure.http.tls=true
+            - --entrypoints.registrysecure.http.tls.options=mintls12@file
+          #  - --entrypoints.registrysecure.http.tls.certresolver=letsencrypt
+            - --entrypoints.registrysecure.http.middlewares=default-https-headers@file
+          ports:
+            - name: web
+              containerPort: 80
+            - name: websecure
+              containerPort: 443
+            - name: registry
+              containerPort: 5487
+          volumeMounts:
+            - name: letsencrypt
+              mountPath: /acme
+            - name: traefik
+              mountPath: /etc/traefik
+      volumes:
+        - name: letsencrypt
+          persistentVolumeClaim:
+            claimName: traefik-letsencrypt
+        - name: traefik
+          configMap:
+            name: traefik
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik
+  namespace: traefik
+  labels:
+    app: traefik
+spec:
+  #type: LoadBalancer
+  #externalTrafficPolicy: Local
+  selector:
+    app: traefik
+  ports:
+    - protocol: TCP
+      name: web
+      port: 80
+    - protocol: TCP
+      name: websecure
+      port: 443
+    - protocol: TCP
+      name: registry
+      port: 5487
+  externalIPs:
+    - 10.20.30.11
+

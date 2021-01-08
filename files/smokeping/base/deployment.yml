@@ -1,0 +1,94 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: smokeping-data
+  labels:
+    app: smokeping
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smokeping
+  labels:
+    app: smokeping
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smokeping
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: smokeping
+    spec:
+      containers:
+        - name: smokeping
+          image: docker.io/aheimsbakk/smokeping:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: smokeping
+              mountPath: /etc/smokeping
+              subPath: config
+            - name: smokeping-data
+              mountPath: /var/lib/smokeping
+          env:
+            - name: TZ
+              value: UTC
+          ports:
+            - name: web
+              containerPort: 80
+      volumes:
+        - name: smokeping
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/smokeping
+        - name: smokeping-data
+          persistentVolumeClaim:
+            claimName: smokeping-data
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smokeping
+spec:
+  selector:
+    app: smokeping
+  ports:
+    - protocol: TCP
+      name: web
+      port: 80
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: smokeping
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: auth-private-service@file
+  labels:
+    app: smokeping
+spec:
+  rules:
+    - host: smokeping.10.20.30.11.xip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: smokeping
+                port:
+                  number: 80

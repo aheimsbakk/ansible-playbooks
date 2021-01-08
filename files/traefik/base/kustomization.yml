@@ -1,0 +1,6 @@
+resources:
+  - ns.yml
+  - rbac.yml
+  - config.yml
+  - deployment.yml
+  - ingress.yml

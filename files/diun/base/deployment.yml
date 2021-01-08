@@ -1,0 +1,77 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: diun
+  labels:
+    app: diun
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 250Mi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diun
+  labels:
+    app: diun
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: diun
+  template:
+    metadata:
+      labels:
+        app: diun
+    spec:
+      serviceAccountName: diun
+      containers:
+        - name: diun
+          image: crazymax/diun:latest
+          imagePullPolicy: Always
+          env:
+            - name: TZ
+              valueFrom:
+                secretKeyRef:
+                  name: diun
+                  key: TZ
+            - name: LOG_LEVEL
+              value: "debug"
+            - name: LOG_JSON
+              value: "false"
+            - name: DIUN_WATCH_WORKERS
+              value: "5"
+            - name: DIUN_WATCH_SCHEDULE
+              value: "0 1 * * *"
+            - name: DIUN_PROVIDERS_KUBERNETES
+              value: "true"
+            - name: DIUN_PROVIDERS_KUBERNETES_WATCHBYDEFAULT
+              value: "true"
+            - name: DIUN_PROVIDERS_KUBERNETES_NAMESPACES
+              valueFrom:
+                secretKeyRef:
+                  name: diun
+                  key: DIUN_PROVIDERS_KUBERNETES_NAMESPACES
+            - name: DIUN_NOTIF_GOTIFY_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: diun
+                  key: DIUN_NOTIF_GOTIFY_ENDPOINT
+            - name: DIUN_NOTIF_GOTIFY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: diun
+                  key: DIUN_NOTIF_GOTIFY_TOKEN
+          volumeMounts:
+            - mountPath: /data
+              name: data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: diun

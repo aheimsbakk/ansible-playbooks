@@ -1,0 +1,120 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gotify
+  labels:
+    app: gotify
+type: Opaque
+stringData:
+  GOTIFY_DEFAULTUSER_NAME: admin
+  GOTIFY_DEFAULTUSER_PASS: password
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gotify
+  labels:
+    app: gotify
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 250Mi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gotify
+  labels:
+    app: gotify
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gotify
+  template:
+    metadata:
+      labels:
+        app: gotify
+    spec:
+      containers:
+        - name: gotify
+          image: docker.io/gotify/server:2.0
+          imagePullPolicy: Always
+          env:
+            - name: GOTIFY_SERVER_PORT
+              value: '80'
+            - name: GOTIFY_DATABASE_DIALECT
+              value: sqlite3
+            - name: GOTIFY_DATABASE_CONNECTION
+              value: /data/gotify.db
+            - name: GOTIFY_DEFAULTUSER_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: gotify
+                  key: GOTIFY_DEFAULTUSER_NAME
+            - name: GOTIFY_DEFAULTUSER_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: gotify
+                  key: GOTIFY_DEFAULTUSER_PASS
+            - name: GOTIFY_PASSSTRENGTH
+              value: '16'
+            - name: GOTIFY_UPLOADEDIMAGESDIR
+              value: /data/images
+            - name: GOTIFY_PLUGINSDIR
+              value: /data/plugins
+            - name: GOTIFY_SERVER_RESPONSEHEADERS
+              value: "Access-Control-Allow-Origin: \"*\"\nAccess-Control-Allow-Methods: \"GET,POST\""
+          ports:
+            - name: web
+              containerPort: 80
+          volumeMounts:
+            - name: gotify
+              mountPath: /data
+      volumes:
+        - name: gotify
+          persistentVolumeClaim:
+            claimName: gotify
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gotify
+  labels:
+    app: gotify
+spec:
+  selector:
+    app: gotify
+  ports:
+    - protocol: TCP
+      name: web
+      port: 80
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: gotify
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  labels:
+    app: gotify
+spec:
+  rules:
+    - host: gotify.10.20.30.11.xip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gotify
+                port:
+                  number: 80

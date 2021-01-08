@@ -1,0 +1,118 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: munin
+  labels:
+    app: munin
+type: Opaque
+stringData:
+  NODES: ""
+  SNMP_NODES: ""
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: munin-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: munin
+  labels:
+    app: munin
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: munin
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: munin
+    spec:
+      containers:
+        - name: munin
+          image: docker.io/aheimsbakk/munin-alpine:latest
+          imagePullPolicy: Always
+          env:
+            - name: NODES
+              valueFrom:
+                secretKeyRef:
+                  name: munin
+                  key: NODES
+            - name: SNMP_NODES
+              valueFrom:
+                secretKeyRef:
+                  name: munin
+                  key: SNMP_NODES
+            - name: TZ
+              value: UTC
+          ports:
+            - name: web
+              containerPort: 80
+          volumeMounts:
+            - name: munin
+              mountPath: /etc/munin/munin-conf.d
+              subPath: config
+            - name: munin
+              mountPath: /etc/munin/plugin-conf.d
+              subPath: plugin-config
+            - name: munin-data
+              mountPath: /var/lib/munin
+      volumes:
+        - name: munin
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/munin
+        - name: munin-data
+          persistentVolumeClaim:
+            claimName: munin-data
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: munin
+spec:
+  selector:
+    app: munin
+  ports:
+    - protocol: TCP
+      name: web
+      port: 80
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: munin
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: munin-redirect@file,auth-private-service@file
+  labels:
+    app: munin
+spec:
+  rules:
+    - host: munin.10.20.30.11.xip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: munin
+                port:
+                  number: 80

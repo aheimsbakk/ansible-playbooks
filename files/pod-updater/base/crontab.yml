@@ -1,0 +1,29 @@
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: auto-update-pods
+spec:
+  schedule: "0 0 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 3600
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          serviceAccountName: cron-pod-updater
+          restartPolicy: Never
+          containers:
+            - name: kubectl
+              image: docker.io/rancher/k3s:latest
+              command:
+                - /bin/sh
+              args:
+                - -c
+                - for i in $(kubectl get deployments -o name); do kubectl patch $i -p '{"spec":{"template":{"metadata":{"labels":{"restarted-by":"'${POD_NAME}'"}}}}}'; done
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name

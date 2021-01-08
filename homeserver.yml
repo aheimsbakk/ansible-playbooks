@@ -1,0 +1,18 @@
+# vim: ai et ts=2 st=2 sw=2 :
+---
+- name: base config
+  import_playbook: homeserver-base.yml
+  tags:
+    - base
+
+- name: add default fail2ban
+  import_playbook: homeserver-fail2ban.yml
+  tags:
+    - fail2ban
+    - ban
+
+- name: install/upgrade k3s
+  import_playbook: homeserver-k3s.yml
+  tags:
+    - k3s
+

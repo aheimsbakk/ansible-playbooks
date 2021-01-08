@@ -1,0 +1,4 @@
+---
+resources:
+  - rbac.yml
+  - crontab.yml

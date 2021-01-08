@@ -1,0 +1,26 @@
+#!/bin/bash
+
+exec &> /dev/null
+shopt -s lastpipe
+
+GOTIFY_URL='https://{{ gotify_domain }}'
+GOTIFY_TOKEN='{{ gotify_token | default("") }}'
+
+[ "$PAM_TYPE" = "open_session" ] || exit 0
+
+{
+  echo "User: $PAM_USER"
+  [ -z "$PAM_RUSER" ] || echo "Ruser: $PAM_RUSER"
+  [ -z "$PAM_RHOST" ] || echo "Rhost: $PAM_RHOST"
+  echo "Service: $PAM_SERVICE"
+  echo "TTY: $PAM_TTY"
+  echo "Date: $(date +'%F %T')"
+} | readarray message
+
+title="Login to $(/bin/hostname -f)"
+
+/usr/bin/curl -X POST -s \
+  -F "title=${title}" \
+  -F "message=${message[*]}" \
+  -F "priority=5" \
+  "${GOTIFY_URL}/message?token=${GOTIFY_TOKEN}" &

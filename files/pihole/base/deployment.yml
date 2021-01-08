@@ -1,0 +1,200 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pihole
+  labels:
+    app: pihole
+type: Opaque
+stringData:
+  TZ: UTC
+  WEBPASSWORD: password
+  VIRTUAL_HOST: pihole.10.20.30.11.xip.io
+
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pihole
+  labels:
+    app: pihole
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pihole
+  labels:
+    app: pihole
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pihole
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: pihole
+    spec:
+      dnsConfig:
+        nameservers:
+          - 127.0.0.1
+          - 9.9.9.9
+      containers:
+        - name: pihole
+          image: docker.io/pihole/pihole:latest
+          imagePullPolicy: Always
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+          env:
+            - name: DNS1
+              value: 9.9.9.9
+            - name: DNS2
+              value: 149.112.112.112
+            - name: TZ
+              valueFrom:
+                secretKeyRef:
+                  name: pihole
+                  key: TZ
+            - name: WEBPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pihole
+                  key: WEBPASSWORD
+            - name: DNSSEC
+              value: 'true'
+            - name: VIRTUAL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: pihole
+                  key: VIRTUAL_HOST
+            - name: DNSMASQ_USER
+              value: pihole
+          ports:
+            - name: web
+              containerPort: 80
+            - name: dns
+              containerPort: 53
+            - name: dhcp
+              containerPort: 67
+          volumeMounts:
+            - name: pihole
+              mountPath: /etc/pihole
+              subPath: etc-pihole
+            - name: pihole
+              mountPath: /etc/dnsmasq.d
+              subPath: etc-dnsmasq.d
+      volumes:
+        - name: pihole
+          persistentVolumeClaim:
+            claimName: pihole
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pihole-dns-tcp
+  labels:
+    app: pihole
+spec:
+  type: LoadBalancer
+  selector:
+    app: pihole
+  loadBalancerSourceRanges:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+  ports:
+    - protocol: TCP
+      name: dns-tcp
+      port: 53
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pihole-dns-udp
+  labels:
+    app: pihole
+spec:
+  type: LoadBalancer
+  selector:
+    app: pihole
+  loadBalancerSourceRanges:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+  ports:
+    - protocol: UDP
+      name: dns-udp
+      port: 53
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pihole-dhcp
+  labels:
+    app: pihole
+spec:
+  type: LoadBalancer
+  selector:
+    app: pihole
+  loadBalancerSourceRanges:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+    - 0.0.0.0/32
+  ports:
+    - protocol: UDP
+      name: dhcp
+      port: 67
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pihole-web
+  labels:
+    app: pihole
+spec:
+  selector:
+    app: pihole
+  ports:
+    - protocol: TCP
+      name: web
+      port: 80
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: pihole
+  labels:
+    app: pihole
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: "Host(`pihole.10.20.30.11.xip.io`)"
+      middlewares:
+        - name: auth-private-service
+          namespace: traefik
+      services:
+        - kind: Service
+          name: pihole-web
+          port: 80
+

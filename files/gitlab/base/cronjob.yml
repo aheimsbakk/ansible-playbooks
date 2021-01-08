@@ -1,0 +1,54 @@
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: gitlab-backup
+  labels:
+    app: gitlab
+spec:
+  schedule: "0 12 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 3600
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          serviceAccountName: cron-gitlab
+          restartPolicy: Never
+          containers:
+            - name: kubectl
+              image: docker.io/rancher/k3s:latest
+              command:
+                - /bin/sh
+              args:
+                - -c
+                - kubectl exec deployment.apps/gitlab -- gitlab-rake gitlab:backup:create SKIP=registry
+
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: gitlab-registry-garbage-collect
+  labels:
+    app: gitlab
+spec:
+  schedule: "0 12 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 3600
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          serviceAccountName: cron-gitlab
+          restartPolicy: Never
+          containers:
+            - name: kubectl
+              image: docker.io/rancher/k3s:latest
+              command:
+                - /bin/sh
+              args:
+                - -c
+                - kubectl exec deployment.apps/gitlab -- gitlab-ctl registry-garbage-collect -m; exit 0
+

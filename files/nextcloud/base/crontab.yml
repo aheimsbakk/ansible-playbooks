@@ -1,0 +1,46 @@
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: nextcloud-backup
+  labels:
+    app: nextcloud
+spec:
+  schedule: "0 12 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 3600
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          serviceAccountName: cron-nextcloud
+          restartPolicy: Never
+          containers:
+            - name: kubectl
+              image: docker.io/rancher/k3s:latest
+              command:
+                - /bin/sh
+              args:
+                - -c
+                - kubectl exec deployment.apps/nextcloud-mysql -- sh -c "exec mysqldump --add-drop-table --user=$(MYSQL_USER) --password='$(MYSQL_PASSWORD)' nextcloud" | gzip > /mnt/nextcloud-$(date -Is).sql.gz; find /mnt/ -type f -mtime +30 -exec rm {} +
+              env:
+                - name: MYSQL_USER
+                  valueFrom:
+                    secretKeyRef:
+                      key: MYSQL_USER
+                      name: nextcloud
+                - name: MYSQL_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: MYSQL_PASSWORD
+                      name: nextcloud
+              volumeMounts:
+                - name: nextcloud-backup
+                  mountPath: /mnt
+          volumes:
+            - name: nextcloud-backup
+              hostPath:
+                type: DirectoryOrCreate
+                path: "/srv/nextcloud/mysql-backup"
+

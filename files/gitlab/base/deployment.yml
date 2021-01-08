@@ -1,0 +1,167 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitlab-log
+  labels:
+    app: gitlab
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitlab
+  labels:
+    app: gitlab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitlab
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: gitlab
+    spec:
+      containers:
+        - name: gitlab
+          image: docker.io/gitlab/gitlab-ce:latest
+          imagePullPolicy: Always
+          env:
+            - name: GITLAB_OMNIBUS_CONFIG
+              value: |
+                external_url "https://gitlab.10.20.30.11.xip.io"
+                registry_external_url "http://registry.10.20.30.11.xip.io:5487"
+                nginx['listen_https'] = false
+                nginx['listen_port'] = 80
+                gitlab_rails['time_zone'] = "UTC"
+                gitlab_rails['gitlab_ssh_host'] = "gitlab.10.20.30.11.xip.io:2222"
+                gitlab_rails['registry_enabled'] = true
+                gitlab_rails['registry_host'] = "registry.10.20.30.11.xip.io"
+                gitlab_rails['registry_port'] = "5487"
+                gitlab_rails['registry_path'] = "/var/opt/gitlab/gitlab-rails/shared/registry"
+                gitlab_rails['backup_keep_time'] = 2592000
+                registry_nginx['enable'] = true
+                registry_nginx['proxy_set_headers'] = {
+                  "Host" => "$http_host",
+                  "X-Real-IP" => "$remote_addr",
+                  "X-Forwarded-For" => "$proxy_add_x_forwarded_for",
+                  "X-Forwarded-Proto" => "https"
+                }
+          ports:
+            - name: web
+              containerPort: 80
+            - name: registry
+              containerPort: 5487
+            - name: ssh
+              containerPort: 22
+          volumeMounts:
+            - name: gitlab
+              mountPath: /etc/gitlab
+              subPath: config
+            - name: gitlab
+              mountPath: /var/opt/gitlab
+              subPath: data
+            - name: gitlab-backups
+              mountPath: /var/opt/gitlab/backups
+            - name: gitlab-log
+              mountPath: /var/log/gitlab
+      volumes:
+        - name: gitlab-log
+          persistentVolumeClaim:
+            claimName: gitlab-log
+        - name: gitlab
+          hostPath:
+            type: DirectoryOrCreate
+            path: "/srv/gitlab"
+        - name: gitlab-backups
+          hostPath:
+            type: DirectoryOrCreate
+            path: "/srv/gitlab/backup"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitlab
+  labels:
+    app: gitlab
+spec:
+  selector:
+    app: gitlab
+  ports:
+    - name: web
+      protocol: TCP
+      port: 80
+    - name: registry
+      protocol: TCP
+      port: 5487
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitlab-ssh
+  labels:
+    app: gitlab
+spec:
+  #type: LoadBalancer
+  selector:
+    app: gitlab
+  ports:
+    - name: ssh
+      protocol: TCP
+      port: 2222
+      targetPort: ssh
+  externalIPs:
+    - 10.20.30.11
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: gitlab-web
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  rules:
+    - host: gitlab.10.20.30.11.xip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gitlab
+                port:
+                  number: 80
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: gitlab-registry
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: registrysecure
+spec:
+  rules:
+    - host: registry.10.20.30.11.xip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gitlab
+                port:
+                  number: 5487
+

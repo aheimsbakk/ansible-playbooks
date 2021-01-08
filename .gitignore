@@ -1,0 +1,14 @@
+# Editor temporary files
+*swp
+*~
+
+# Vagrant temporary files
+*.log
+.vagrant
+console.out
+
+# Ansible retry files
+.ansible-retry
+
+# Ansible vault
+vault-*

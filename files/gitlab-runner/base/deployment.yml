@@ -1,0 +1,44 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitlab-runner-config
+  namespace: build
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 100Mi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitlab-runner
+  namespace: build
+  labels:
+    app: gitlab-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitlab-runner
+  template:
+    metadata:
+      labels:
+        app: gitlab-runner
+    spec:
+      serviceAccountName: gitlab-runner
+      containers:
+        - name: gitlab-runner
+          image: docker.io/gitlab/gitlab-runner:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: gitlab-runner-config
+              mountPath: /etc/gitlab-runner
+      volumes:
+        - name: gitlab-runner-config
+          persistentVolumeClaim:
+            claimName: gitlab-runner-config

@@ -1,0 +1,232 @@
+---
+- name: configure k3s master
+  hosts: master_node
+  become: true
+
+  vars:
+    k3s_version: v1.19.5+k3s2
+    k9s_version: v0.24.2
+    use_docker: false
+    docker_json:
+      log-driver: json-file
+      log-opts:
+        max-size: 100m
+      storage-driver: overlay2
+      dns:
+        - 9.9.9.9
+        - 149.112.112.112
+
+  tasks:
+    - name: set apt proxy
+      set_fact:
+        apt_proxy: 'Acquire::http::proxy "http://{{ proxy_address }}:3142/";'
+      when:
+        - proxy_address is defined
+        - proxy_address|length > 0
+      check_mode: false
+
+    - name: update proxy file
+      copy:
+        dest: /etc/apt/apt.conf.d/80proxy
+        content: |
+          {{ apt_proxy|default("") }}
+        mode: 0644
+      when: apt_proxy is defined
+
+    - name: set legacy iptables for k3s for debian
+      alternatives:
+        name: '{{ item }}'
+        path: '/usr/sbin/{{ item }}-legacy'
+      loop:
+        - iptables
+        - ip6tables
+      when: ansible_distribution | lower == "debian"
+
+    - name: set docker proxy
+      set_fact:
+        docker_json: '{{ docker_json | combine({ "registry-mirrors": [ "http://" + proxy_address + ":5000" ] }) }}'
+      when:
+        - proxy_address is defined
+        - proxy_address|length > 0
+        - use_docker
+
+    - name: install python-apt
+      apt:
+        name: python3-apt
+      check_mode: false
+      when: ansible_check_mode|bool
+
+    - name: auto update operating system
+      apt:
+        name: unattended-upgrades
+        update_cache: true
+
+    - name: install docker runtime
+      apt:
+        name: docker.io
+      when: use_docker
+
+    - name: configure docker
+      copy:
+        dest: /etc/docker/daemon.json
+        content: "{{ docker_json | default({}) | to_nice_json  }}"
+        mode: 0644
+      register: docker_json_file
+      when:
+        - docker_json is defined
+        - use_docker
+
+    - name: restart docker
+      systemd:
+        name: docker
+        enabled: true
+        state: restarted
+      when:
+        - docker_json_file is changed
+        - use_docker
+
+    - name: set docker arg for k3s
+      set_fact:
+        docker_arg: "--docker"
+      when: use_docker
+
+    ## Other config
+
+    - name: set cri proxy
+      set_fact:
+        cri_proxy:
+          mirrors:
+            docker.io:
+              endpoint:
+                - "http://{{ proxy_address }}:5000"
+      when:
+        - proxy_address is defined
+        - proxy_address|length > 0
+
+    - name: create k3s config directory
+      file:
+        path: /etc/rancher/k3s
+        state: directory
+        mode: 0755
+
+    - name: cri dockker caching proxy
+      copy:
+        dest: /etc/rancher/k3s/registries.yaml
+        content: |
+          {{ cri_proxy|default({})|to_nice_yaml }}
+        mode: 0644
+      when: cri_proxy is defined
+
+    - name: install ufw
+      package:
+        name: ufw
+
+    - name: enable and start ufw
+      systemd:
+        name: ufw
+        enabled: true
+        state: started
+
+    - name: ufw allow ssh
+      ufw:
+        rule: allow
+        port: '22'
+        proto: tcp
+
+    - name: ufw allow kubernets api
+      ufw:
+        rule: allow
+        port: '6443'
+        proto: tcp
+
+    - name: allow internal kubernetes communication
+      ufw:
+        rule: allow
+        from_ip: 10.42.0.0/16
+
+    - name: allow kubernetes and pods to connect to systemd-resolv
+      ufw:
+        rule: allow
+        port: '5355'
+        from_ip: fe80::/64
+
+    - name: allow forwarding to pods
+      ini_file:
+        path: /etc/default/ufw
+        section: null
+        option: DEFAULT_FORWARD_POLICY
+        value: '"ACCEPT"'
+        no_extra_spaces: true
+        mode: 0644
+      register: ufw_defaults
+
+    - name: restart ufw on config change
+      systemd:
+        name: ufw
+        state: restarted
+      when: ufw_defaults is changed
+
+    - name: enable ufw and set policy
+      ufw:
+        policy: reject
+        state: enabled
+
+    - name: remove swapfile from /etc/fstab
+      mount:
+        name: "{{ item }}"
+        fstype: swap
+        state: absent
+      with_items:
+        - swap
+        - none
+
+    - name: disable swap
+      command: swapoff -a
+      when: ansible_swaptotal_mb > 0
+
+    - name: get k3s install script from stable branch
+      get_url:
+        url: https://raw.githubusercontent.com/k3s-io/k3s/release-1.19/install.sh
+        checksum: sha256:e98ad0e3f19e4b042136f5b481a13c289f513387e3ea66e939445dc790f355a8
+        dest: /root/install.sh
+        mode: 0755
+
+    - name: run k3s installation
+      command: /root/install.sh
+      environment:
+        INSTALL_K3S_EXEC: "{{ docker_arg|default('') }} --node-ip {{ node_ip }} --disable=traefik --default-local-storage-path=/opt/local-path-provider --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75"
+        INSTALL_K3S_VERSION: "{{ k3s_version }}"
+      register: k3s_server
+      changed_when: k3s_server.rc == 0
+
+    - name: bash completion
+      file:
+        path: /etc/bash_completion.d
+        state: directory
+        mode: 0755
+
+    - name: generate bash completion
+      shell: '{{ item }} completion bash > /etc/bash_completion.d/{{ item }}'
+      args:
+        creates: '/etc/bash_completion.d/{{ item }}'
+      loop:
+        - kubectl
+        - crictl
+
+    - name: get k9s
+      get_url:
+        url: 'https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/k9s_Linux_{{ ansible_architecture }}.tar.gz'
+        checksum: 'sha256:https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/checksums.txt'
+        dest: /tmp/k9s.tar.gz
+      register: k9s_download
+
+    - name: uncompress k9s
+      unarchive:
+        src: /tmp/k9s.tar.gz
+        dest: /usr/local/bin
+        remote_src: true
+        mode: 0755
+      when:
+        - not ansible_check_mode
+        - k9s_download is changed
+
