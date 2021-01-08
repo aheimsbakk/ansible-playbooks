@@ -55,13 +55,13 @@ spec:
             - --entrypoints.websecure.address=:443
             - --entrypoints.websecure.http.tls=true
             - --entrypoints.websecure.http.tls.options=mintls12@file
-          #  - --entrypoints.websecure.http.tls.certresolver=letsencrypt
+            # - --entrypoints.websecure.http.tls.certresolver=letsencrypt
             - --entrypoints.websecure.http.middlewares=default-https-headers@file
             # Listen to port 5487 with SSL
             - --entrypoints.registrysecure.address=:5487
             - --entrypoints.registrysecure.http.tls=true
             - --entrypoints.registrysecure.http.tls.options=mintls12@file
-          #  - --entrypoints.registrysecure.http.tls.certresolver=letsencrypt
+            # - --entrypoints.registrysecure.http.tls.certresolver=letsencrypt
             - --entrypoints.registrysecure.http.middlewares=default-https-headers@file
           ports:
             - name: web
@@ -92,8 +92,8 @@ metadata:
   labels:
     app: traefik
 spec:
-  #type: LoadBalancer
-  #externalTrafficPolicy: Local
+  # type: LoadBalancer
+  # externalTrafficPolicy: Local
   selector:
     app: traefik
   ports:
@@ -108,4 +108,3 @@ spec:
       port: 5487
   externalIPs:
     - 10.20.30.11
-

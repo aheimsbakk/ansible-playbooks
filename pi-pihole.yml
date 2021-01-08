@@ -102,7 +102,7 @@
     - name: add my stubby config file
       copy:
         dest: /etc/stubby/stubby.yml
-        #content: '{{ stubby_config | to_nice_yaml(indent=2, width=1337) }}'
+        # content: '{{ stubby_config | to_nice_yaml(indent=2, width=1337) }}'
         content: '{{ stubby_config }}'
         mode: 0644
       register: stubby_yml_file

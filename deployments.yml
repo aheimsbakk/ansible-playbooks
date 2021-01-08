@@ -22,7 +22,7 @@
         - munin
         - nextcloud
         - smokeping
-        #- pihole
+        # - pihole
         - diun
 
     - name: "copy out all for env '{{ env }}'"
@@ -43,7 +43,7 @@
         - munin
         - nextcloud
         - smokeping
-        #- pihole
+        # - pihole
         - diun
 
     - name: "apply pods-updater in env '{{ env }}'"

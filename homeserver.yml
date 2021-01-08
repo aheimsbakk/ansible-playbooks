@@ -15,4 +15,3 @@
   import_playbook: homeserver-k3s.yml
   tags:
     - k3s
-

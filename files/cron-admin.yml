@@ -11,9 +11,9 @@ kind: ClusterRoleBinding
 metadata:
   name: cron-admin
 subjects:
-- kind: ServiceAccount
-  name: cron-admin
-  namespace: default
+  - kind: ServiceAccount
+    name: cron-admin
+    namespace: default
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

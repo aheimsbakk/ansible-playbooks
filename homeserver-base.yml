@@ -50,4 +50,3 @@
       lineinfile:
         path: /etc/pam.d/common-session
         line: session optional pam_exec.so /usr/local/bin/sshnotif
-

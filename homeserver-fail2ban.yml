@@ -40,5 +40,3 @@
         state: restarted
         enabled: true
       when: fail2ban_conf is changed
-
-

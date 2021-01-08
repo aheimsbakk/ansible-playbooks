@@ -52,4 +52,3 @@ kind: ServiceAccount
 metadata:
   namespace: traefik
   name: traefik-ingress-controller
-

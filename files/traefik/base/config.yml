@@ -79,4 +79,3 @@ data:
             - auth-private-service
           entryPoints:
             - websecure
-

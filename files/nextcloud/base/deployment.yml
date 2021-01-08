@@ -217,9 +217,9 @@ spec:
         - name: nextcloud
           image: docker.io/aheimsbakk/nextcloud-20-apache:latest
           imagePullPolicy: Always
-          #resources:
-          #  limits:
-          #    memory: 2Gi
+          # resources:
+          #   limits:
+          #     memory: 2Gi
           env:
             - name: NEXTCLOUD_ADMIN_USER
               valueFrom:
@@ -335,4 +335,3 @@ spec:
                 name: nextcloud
                 port:
                   number: 80
-

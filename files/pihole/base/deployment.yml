@@ -11,7 +11,6 @@ stringData:
   WEBPASSWORD: password
   VIRTUAL_HOST: pihole.10.20.30.11.xip.io
 
-
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -197,4 +196,3 @@ spec:
         - kind: Service
           name: pihole-web
           port: 80
-

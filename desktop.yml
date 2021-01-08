@@ -28,7 +28,7 @@
         name:
           - ansible           # Automate everything
           - ansible-lint      # Lint everything
-          - arm-image-installer # Install arm images, ie. fedora arm on a SD-card
+          - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
           - audacity          # Audio editing
           - bijiben           # Note taking
           - cheese            # Webcamera
@@ -36,14 +36,14 @@
           - dstat             # Stat system values in colors
           - duply             # Vrapper for Duplicity backup
           - etckeeper         # Watch what happens in /etc
-          - evolution-bogofilter # Mail spam filtering
+          - evolution-bogofilter  # Mail spam filtering
           - exfalso           # Edit tags on mp3s
           - ffmpeg            # Transcode audio and video
           - flac              # Lossless audio
           - gimp              # Pixelbased drawing
           - git               # Version control <3
-          - gnome-backgrounds # More backgrounds
-          - gnome-backgrounds-extras # Favorite backgrounds
+          - gnome-backgrounds  # More backgrounds
+          - gnome-backgrounds-extras  # Favorite backgrounds
           - gnome-calculator  # Install what was snap
           - gnome-calendar    # Gnome <3
           - gnome-characters  # Install what was snap
@@ -52,8 +52,8 @@
           - gnome-documents   # Gnome <3
           - gnome-logs        # Install what was snap
           - gnome-maps        # Gnome <3
-          - gnome-power-manager # Power statistics
-          - gnome-system-monitor # Install what was snap
+          - gnome-power-manager  # Power statistics
+          - gnome-system-monitor  # Install what was snap
           - gnome-tweaks      # Customize Gnome
           - gnupg-pkcs11-scd  # Smart card functionality for SSH keys on Yubikey
           - gthumb            # Photo manager that works with remote folders
@@ -100,7 +100,7 @@
           - virt-manager      # Graphical interface to Libvirt
           - vlc               # Video viewer with built in codecs
           - whois             # A must
-          - yubikey-personalization-gui # Yubico configuration
+          - yubikey-personalization-gui  # Yubico configuration
           - yubioath-desktop  # The Yubico Authenticator
           - zmap              # Map internet
           - zram              # Zram swap
@@ -169,10 +169,10 @@
       lineinfile:
         path: '{{ item }}'
         insertafter: pam_faildelay.so
-        firstmatch: yes
+        firstmatch: true
         line: auth sufficient pam_u2f.so cue
       loop:
-        #- /etc/pam.d/password-auth
+        # - /etc/pam.d/password-auth
         - /etc/pam.d/system-auth
       tags:
         - pam
@@ -212,4 +212,3 @@
           [Link]
           TCPSegmentationOffload=false
           NamePolicy=keep kernel database onboard slot path
-

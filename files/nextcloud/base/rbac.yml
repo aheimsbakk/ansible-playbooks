@@ -39,5 +39,3 @@ roleRef:
   kind: Role
   name: cron-nextcloud
   apiGroup: ""
-
-

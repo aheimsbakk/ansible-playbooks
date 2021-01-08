@@ -229,4 +229,3 @@
       when:
         - not ansible_check_mode
         - k9s_download is changed
-

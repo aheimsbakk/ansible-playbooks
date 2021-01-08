@@ -1,3 +1,4 @@
+---
 resources:
   - ns.yml
   - rbac.yml

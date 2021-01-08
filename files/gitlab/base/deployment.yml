@@ -114,7 +114,7 @@ metadata:
   labels:
     app: gitlab
 spec:
-  #type: LoadBalancer
+  # type: LoadBalancer
   selector:
     app: gitlab
   ports:
@@ -164,4 +164,3 @@ spec:
                 name: gitlab
                 port:
                   number: 5487
-

@@ -51,4 +51,3 @@ spec:
               args:
                 - -c
                 - kubectl exec deployment.apps/gitlab -- gitlab-ctl registry-garbage-collect -m; exit 0
-
