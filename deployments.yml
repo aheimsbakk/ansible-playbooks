@@ -35,6 +35,7 @@
 
     - name: "apply depolyments env '{{ env }}'"
       command: "kubectl apply -k {{ deployment_path }}/{{ item }}/{{ env }}"
+      changed_when: true
       loop:
         - traefik
         - gitlab
@@ -48,6 +49,7 @@
 
     - name: "apply pods-updater in env '{{ env }}'"
       command: "kubectl -n {{ item }} apply -k {{ deployment_path }}/pod-updater/{{ env }}"
+      changed_when: true
       loop:
         - default
         - traefik
