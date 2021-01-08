@@ -1,0 +1,11 @@
+---
+extends: default
+rules:
+  line-length: disable
+  brackets:
+    forbid: false
+    min-spaces-inside: 1
+    max-spaces-inside: 1
+ignore: |
+  secrets.yml
+  host_vars/*
