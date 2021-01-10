@@ -39,10 +39,7 @@ To spin up all services, start Vagrant. Services spun up in Vagrant use self sig
 
 ```bash
 vagrant up
-vagrant up
 ```
-
-Yes, that's correct you need to run `vagrant up` twice. CRDs isn't created on first run.
 
 ### Services
 
@@ -54,7 +51,7 @@ Public available services.
 * [Gotify](https://gotify.10.20.30.11.xip.io), default username `admin` and password `password`
 * [Nextcloud](https://nextcloud.10.20.30.11.xip.io) with backup cronjob, default username `admin` and password `password`
 
-Services restricted to private IP addresses only.
+Services restricted with username and password. Defaults to `admin:password`.
 
 * [Munin](https://munin.10.20.30.11.xip.io)
 * [Smokeping](https://smokeping.10.20.30.11.xip.io)
