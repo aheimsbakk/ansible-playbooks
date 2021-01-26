@@ -237,6 +237,8 @@ spec:
               value: oc_
             - name: NEXTCLOUD_TRUSTED_DOMAINS
               value: nextcloud.10.20.30.11.xip.io
+            - name: TRUSTED_PROXIES
+              value: 10.0.0.0/8
             - name: REDIS_HOST
               value: nextcloud-redis
             - name: REDIS_HOST_PASSWORD
