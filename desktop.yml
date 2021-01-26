@@ -33,6 +33,7 @@
           - bijiben           # Note taking
           - cheese            # Webcamera
           - compsize          # Check the compression ratio on btrfs
+          - davfs2            # DavFS for mounting Nextcloud, no need to sync everything
           - dstat             # Stat system values in colors
           - duply             # Vrapper for Duplicity backup
           - etckeeper         # Watch what happens in /etc
@@ -213,3 +214,5 @@
           [Link]
           TCPSegmentationOffload=false
           NamePolicy=keep kernel database onboard slot path
+
+
