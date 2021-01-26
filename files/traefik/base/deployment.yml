@@ -49,16 +49,22 @@ spec:
             - --providers.kubernetesingress
             # Listen to port 80 and redirect to 443
             - --entrypoints.web.address=:80
+            - --entrypoints.web.proxyprotocol=true
+            - --entrypoints.web.proxyprotocol.trustedips=10.0.0.0/8
             - --entrypoints.web.http.redirections.entrypoint.to=websecure
             - --entrypoints.web.http.redirections.entrypoint.scheme=https
             # Listen to port 443 with SSL
             - --entrypoints.websecure.address=:443
+            - --entrypoints.websecure.proxyprotocol=true
+            - --entrypoints.websecure.proxyprotocol.trustedips=10.0.0.0/8
             - --entrypoints.websecure.http.tls=true
             - --entrypoints.websecure.http.tls.options=mintls12@file
             # - --entrypoints.websecure.http.tls.certresolver=letsencrypt
             - --entrypoints.websecure.http.middlewares=default-https-headers@file
             # Listen to port 5487 with SSL
             - --entrypoints.registrysecure.address=:5487
+            - --entrypoints.registrysecure.proxyprotocol=true
+            - --entrypoints.registrysecure.proxyprotocol.trustedips=10.0.0.0/8
             - --entrypoints.registrysecure.http.tls=true
             - --entrypoints.registrysecure.http.tls.options=mintls12@file
             # - --entrypoints.registrysecure.http.tls.certresolver=letsencrypt
@@ -92,8 +98,8 @@ metadata:
   labels:
     app: traefik
 spec:
-  # type: LoadBalancer
-  # externalTrafficPolicy: Local
+  type: LoadBalancer
+  externalTrafficPolicy: Local
   selector:
     app: traefik
   ports:
@@ -106,5 +112,3 @@ spec:
     - protocol: TCP
       name: registry
       port: 5487
-  externalIPs:
-    - 10.20.30.11

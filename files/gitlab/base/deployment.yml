@@ -43,6 +43,9 @@ spec:
                 registry_external_url "http://registry.10.20.30.11.xip.io:5487"
                 nginx['listen_https'] = false
                 nginx['listen_port'] = 80
+                nginx['real_ip_trusted_addresses'] = [ '10.0.0.0/8' ]
+                nginx['real_ip_header'] = 'X-Forwarded-For'
+                nginx['real_ip_recursive'] = 'on'
                 gitlab_rails['time_zone'] = "UTC"
                 gitlab_rails['gitlab_ssh_host'] = "gitlab.10.20.30.11.xip.io:2222"
                 gitlab_rails['registry_enabled'] = true
