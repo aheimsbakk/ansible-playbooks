@@ -101,7 +101,7 @@ metadata:
   name: munin
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: munin-redirect@file,auth-private-service@file
+    traefik.ingress.kubernetes.io/router.middlewares: munin-redirect@file,private-ip-ranges@file
   labels:
     app: munin
 spec:
