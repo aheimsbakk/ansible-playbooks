@@ -35,7 +35,7 @@ spec:
       serviceAccountName: traefik-ingress-controller
       containers:
         - name: traefik
-          image: traefik:v2.3
+          image: traefik:v2.4
           imagePullPolicy: Always
           args:
             - --api=true
