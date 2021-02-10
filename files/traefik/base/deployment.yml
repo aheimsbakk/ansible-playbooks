@@ -22,6 +22,7 @@ metadata:
   name: traefik
   labels:
     app: traefik
+    auto-update-hour: '00'
 spec:
   replicas: 1
   selector:

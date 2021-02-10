@@ -30,6 +30,7 @@ metadata:
   name: munin
   labels:
     app: munin
+    auto-update-hour: '00'
 
 spec:
   replicas: 1

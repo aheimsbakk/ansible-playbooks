@@ -20,6 +20,7 @@ metadata:
   namespace: build
   labels:
     app: gitlab-runner
+    auto-update-hour: '00'
 spec:
   replicas: 1
   selector:

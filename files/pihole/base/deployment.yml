@@ -33,6 +33,7 @@ metadata:
   name: pihole
   labels:
     app: pihole
+    auto-update-hour: '00'
 spec:
   replicas: 1
   selector:

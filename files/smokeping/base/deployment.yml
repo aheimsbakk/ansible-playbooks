@@ -20,6 +20,7 @@ metadata:
   name: smokeping
   labels:
     app: smokeping
+    auto-update-hour: '00'
 spec:
   replicas: 1
   selector:

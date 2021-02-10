@@ -4,7 +4,7 @@ kind: CronJob
 metadata:
   name: auto-update-pods
 spec:
-  schedule: "0 0 * * *"
+  schedule: "0 * * * *"
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
@@ -21,7 +21,7 @@ spec:
                 - /bin/sh
               args:
                 - -c
-                - for i in $(kubectl get deployments -o name); do kubectl patch $i -p '{"spec":{"template":{"metadata":{"labels":{"restarted-by":"'${POD_NAME}'"}}}}}'; done
+                - for i in $(kubectl get deployments -o name -l auto-update-hour=$(date +%H)); do kubectl patch $i -p '{"spec":{"template":{"metadata":{"labels":{"restarted-by":"'${POD_NAME}'"}}}}}'; done
               env:
                 - name: POD_NAME
                   valueFrom:

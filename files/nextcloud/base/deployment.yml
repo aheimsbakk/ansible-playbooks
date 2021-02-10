@@ -21,6 +21,7 @@ metadata:
   name: nextcloud-mysql
   labels:
     app: nextcloud-mysql
+    auto-update-hour: '00'
 
 spec:
   replicas: 1
@@ -110,6 +111,7 @@ metadata:
   name: nextcloud-redis
   labels:
     app: nextcloud-redis
+    auto-update-hour: '00'
 spec:
   replicas: 1
   selector:
@@ -203,6 +205,7 @@ metadata:
   name: nextcloud
   labels:
     app: nextcloud
+    auto-update-hour: '00'
 spec:
   replicas: 1
   selector:

@@ -20,6 +20,7 @@ metadata:
   name: diun
   labels:
     app: diun
+    auto-update-hour: '00'
 spec:
   replicas: 1
   selector:

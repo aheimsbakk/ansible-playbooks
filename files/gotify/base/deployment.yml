@@ -32,6 +32,7 @@ metadata:
   name: gotify
   labels:
     app: gotify
+    auto-update-hour: '00'
 spec:
   replicas: 1
   selector:

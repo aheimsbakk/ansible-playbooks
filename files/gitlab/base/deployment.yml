@@ -20,6 +20,7 @@ metadata:
   name: gitlab
   labels:
     app: gitlab
+    auto-update-hour: '06'
 spec:
   replicas: 1
   selector:
