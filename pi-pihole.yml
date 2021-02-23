@@ -120,7 +120,7 @@
     - name: pihole container
       docker_container:
         name: pihole
-        image: pihole/pihole:v5.7
+        image: pihole/pihole:v5.6
         pull: true
         log_driver: journald
         restart_policy: unless-stopped
