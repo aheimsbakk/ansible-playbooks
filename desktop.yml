@@ -50,7 +50,6 @@
           - gnome-characters  # Install what was snap
           - gnome-clocks      # Gnome <3
           - gnome-dictionary  # Gnome <3
-          - gnome-documents   # Gnome <3
           - gnome-logs        # Install what was snap
           - gnome-maps        # Gnome <3
           - gnome-power-manager  # Power statistics
