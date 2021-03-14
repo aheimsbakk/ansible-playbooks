@@ -130,6 +130,7 @@
           ServerIPv6: '{{ pihole_server_ipv6 | default(ansible_default_ipv6.address) | default(omit) }}'
           DNS1: 127.0.0.1#5053
           DNS2: 'no'
+          DNSSEC: "true"
         network_mode: host
         volumes:
           - /srv/pihole/conf:/etc/pihole/
