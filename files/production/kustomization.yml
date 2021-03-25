@@ -1,0 +1,13 @@
+---
+bases:
+  - ../deployment
+patchesStrategicMerge:
+  - diun.yml
+  - gitlab.yml
+  - gotify.yml
+  - munin.yml
+  - nextcloud.yml
+  - smokeping.yml
+  - traefik.yml
+
+

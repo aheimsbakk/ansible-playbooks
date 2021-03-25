@@ -1,0 +1,10 @@
+---
+namespace: default
+bases:
+  - ../../base/diun
+  - ../../base/gitlab
+  - ../../base/gotify
+  - ../../base/munin
+  - ../../base/nextcloud
+  - ../../base/smokeping
+  - ../../base/pod-updater

@@ -1,0 +1,30 @@
+---
+bases:
+  - traefik
+  - build
+  - default
+images:
+  - name: docker.io/gitlab/gitlab-runner
+    newTag: latest
+  - name: docker.io/rancher/k3s
+    newTag: latest
+  - name: docker.io/crazymax/diun
+    newTag: latest
+  - name: docker.io/gitlab/gitlab-ce
+    newTag: latest
+  - name: docker.io/gotify/server
+    newTag: "2.0"
+  - name: docker.io/aheimsbakk/munin-alpine
+    newTag: latest
+  - name: docker.io/mariadb
+    newTag: "10"
+  - name: docker.io/redis
+    newTag: latest
+  - name: docker.io/nextcloud
+    newName: docker.io/aheimsbakk/nextcloud-21-apache
+    newTag: latest
+  - name: docker.io/aheimsbakk/smokeping
+    newTag: latest
+  - name: docker.io/traefik
+    newTag: v2.4
+

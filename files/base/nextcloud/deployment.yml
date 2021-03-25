@@ -1,0 +1,342 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nextcloud
+  labels:
+    app: nextcloud
+type: Opaque
+stringData:
+  REDIS_HOST_PASSWORD: password
+  MYSQL_USER: nextcloud
+  MYSQL_PASSWORD: password
+  MYSQL_ROOT_PASSWORD: password
+  NEXTCLOUD_ADMIN_USER: admin
+  NEXTCLOUD_ADMIN_PASSWORD: password
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud-mysql
+  labels:
+    app: nextcloud-mysql
+    auto-update-hour: '00'
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud-mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: nextcloud-mysql
+    spec:
+      containers:
+        - name: nextcloud-mysql
+          image: docker.io/mariadb:10
+          imagePullPolicy: Always
+          args:
+            - --transaction-isolation=READ-COMMITTED
+            - --binlog-format=ROW
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+          env:
+            - name: MYSQL_DATABASE
+              value: nextcloud
+            - name: MYSQL_HOST
+              value: nc_db
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud
+                  key: MYSQL_PASSWORD
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud
+                  key: MYSQL_ROOT_PASSWORD
+          ports:
+            - name: nextcloud-mysql
+              containerPort: 3306
+      volumes:
+        - name: mysql-data
+          hostPath:
+            path: /srv/nextcloud/mysql
+            type: DirectoryOrCreate
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextcloud-mysql
+  labels:
+    app: nextcloud-mysql
+spec:
+  selector:
+    app: nextcloud-mysql
+  ports:
+    - protocol: TCP
+      name: mysql
+      port: 3306
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-redis
+  labels:
+    app: nextcloud-redis
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 250Mi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud-redis
+  labels:
+    app: nextcloud-redis
+    auto-update-hour: '00'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud-redis
+  template:
+    metadata:
+      labels:
+        app: nextcloud-redis
+    spec:
+      containers:
+        - name: nextcloud-redis
+          image: docker.io/redis:latest
+          imagePullPolicy: Always
+          command:
+            - redis-server
+            - --save
+            - "900"
+            - "1"
+            - --requirepass
+            - "$(REDIS_HOST_PASSWORD)"
+          env:
+            - name: REDIS_HOST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud
+                  key: REDIS_HOST_PASSWORD
+          ports:
+            - name: nextcloud-redis
+              containerPort: 6379
+          volumeMounts:
+            - name: nextcloud-redis
+              mountPath: /data
+      volumes:
+        - name: nextcloud-redis
+          persistentVolumeClaim:
+            claimName: nextcloud-redis
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextcloud-redis
+  labels:
+    app: nextcloud-redis
+spec:
+  selector:
+    app: nextcloud-redis
+  ports:
+    - protocol: TCP
+      name: nextcloud-redis
+      port: 6379
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-html
+  labels:
+    app: nextcloud-html
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nextcloud-html
+  labels:
+    app: nextcloud-html
+data:
+  mpm_prefork.conf: |
+    <IfModule mpm_prefork_module>
+      StartServers                5
+      MinSpareServers             5
+      MaxSpareServers            10
+      MaxRequestWorkers          25
+      MaxConnectionsPerChild  10000
+    </IfModule>
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud
+  labels:
+    app: nextcloud
+    auto-update-hour: '00'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud
+  template:
+    metadata:
+      labels:
+        app: nextcloud
+    spec:
+      containers:
+        - name: nextcloud
+          image: docker.io/nextcloud:21
+          imagePullPolicy: Always
+          # resources:
+          #   limits:
+          #     memory: 2Gi
+          env:
+            - name: NEXTCLOUD_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud
+                  key: NEXTCLOUD_ADMIN_USER
+            - name: NEXTCLOUD_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud
+                  key: NEXTCLOUD_ADMIN_PASSWORD
+            - name: NEXTCLOUD_DATA_DIR
+              value: /var/www/html/data
+            - name: NEXTCLOUD_TABLE_PREFIX
+              value: oc_
+            - name: NEXTCLOUD_TRUSTED_DOMAINS
+              value: nextcloud.10.20.30.11.xip.io
+            - name: TRUSTED_PROXIES
+              value: 10.0.0.0/8
+            - name: REDIS_HOST
+              value: nextcloud-redis
+            - name: REDIS_HOST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud
+                  key: REDIS_HOST_PASSWORD
+            - name: MYSQL_DATABASE
+              value: nextcloud
+            - name: MYSQL_HOST
+              value: nextcloud-mysql
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud
+                  key: MYSQL_PASSWORD
+          ports:
+            - name: nextcloud
+              containerPort: 80
+          volumeMounts: &nextcloud-volumes
+            - name: nextcloud-html
+              mountPath: /var/www/html
+              subPath: html
+            - name: nextcloud-html
+              mountPath: /var/www/html/custom_apps
+              subPath: custom-apps
+            - name: nextcloud-config
+              mountPath: /var/www/html/config
+            - name: nextcloud-data
+              mountPath: /var/www/html/data
+            - name: apache-config
+              mountPath: /etc/apache2/mods-enabled/mpm_prefork.conf
+              subPath: mpm_prefork.conf
+              readOnly: true
+        - name: nextcloud-cron
+          image: docker.io/nextcloud:21
+          imagePullPolicy: Always
+          command:
+            - /cron.sh
+          volumeMounts: *nextcloud-volumes
+      volumes:
+        - name: nextcloud-html
+          persistentVolumeClaim:
+            claimName: nextcloud-html
+        - name: nextcloud-config
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/nextcloud/config
+        - name: nextcloud-data
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/nextcloud/data
+        - name: apache-config
+          configMap:
+            name: nextcloud-html
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextcloud
+  labels:
+    app: nextcloud
+spec:
+  selector:
+    app: nextcloud
+  ports:
+    - protocol: TCP
+      name: web
+      port: 80
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: nextcloud
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: nextcloud-redirect@file
+  labels:
+    app: nextcloud
+spec:
+  rules:
+    - host: nextcloud.10.20.30.11.xip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nextcloud
+                port:
+                  number: 80

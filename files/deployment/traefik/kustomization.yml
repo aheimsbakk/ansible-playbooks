@@ -1,0 +1,5 @@
+---
+namespace: traefik
+bases:
+  - ../../base/traefik
+  - ../../base/pod-updater
