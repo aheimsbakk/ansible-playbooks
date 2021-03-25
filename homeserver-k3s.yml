@@ -5,7 +5,7 @@
 
   vars:
     k3s_version: v1.20.4+k3s1
-    k9s_version: v0.24.2
+    k9s_version: v0.24.4
     use_docker: false
     docker_json:
       log-driver: json-file
