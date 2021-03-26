@@ -9,5 +9,3 @@ patchesStrategicMerge:
   - nextcloud.yml
   - smokeping.yml
   - traefik.yml
-
-

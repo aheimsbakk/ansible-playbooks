@@ -3,4 +3,3 @@ namespace: build
 bases:
   - ../../base/gitlab-runner
   - ../../base/pod-updater
-

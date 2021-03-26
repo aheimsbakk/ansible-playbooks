@@ -213,5 +213,3 @@
           [Link]
           TCPSegmentationOffload=false
           NamePolicy=keep kernel database onboard slot path
-
-

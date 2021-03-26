@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # yamllint
-find -regex .*.yml -exec yamllint {} +
+find . -regex '.*.yml' -exec yamllint {} +
 
 # ansible-lint
-ansible-lint *yml
+ansible-lint ./*yml

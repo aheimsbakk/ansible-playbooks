@@ -27,4 +27,3 @@ images:
     newTag: latest
   - name: docker.io/traefik
     newTag: v2.4
-
