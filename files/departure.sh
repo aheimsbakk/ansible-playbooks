@@ -10,13 +10,13 @@ FROMTTEXT=""
 NEED_UPDATE=0
 STATION="NSR:StopPlace:5823"
 TMP_FILE="/tmp/departure.tmp"
-LAST_UPDATE=0
+DEPARTURES_COUNT=2
 
 function get_update() {
   curl -s https://api.entur.io/journey-planner/v2/graphql \
        -H 'Content-Type: application/json' \
        -H 'ET-Client-Name: heimsbakk.no-rasberrypi' \
-       -d '{"query":"{stopPlace(id:\"'$STATION'\"){id name estimatedCalls(timeRange:72100 numberOfDepartures:5 omitNonBoarding:true){expectedDepartureTime destinationDisplay{frontText}serviceJourney{journeyPattern{line{transportMode}}}situations{description{language value}}}}}"}' > "$TMP_FILE"
+       -d '{"query":"{stopPlace(id:\"'$STATION'\"){id name estimatedCalls(timeRange:72100 numberOfDepartures:'$DEPARTURES_COUNT' omitNonBoarding:true){expectedDepartureTime destinationDisplay{frontText}serviceJourney{journeyPattern{line{transportMode}}}situations{description{language value}}}}}"}' > "$TMP_FILE"
 }
 
 function get_departure_data() {
@@ -59,12 +59,12 @@ function get_overview() {
     get_update
   fi
 
-  get_departure_data 0
-  get_departure "$DATETIME" "$FRONTTEXT" | $FIGLET
-  [[ -z "$SITUATIONS" ]] || echo $SITUATIONS | fold -sw $(tput cols)
-  [[ -z "$SITUATIONS" ]] && echo --- | $FIGLET
-  get_departure_data 1
-  get_departure "$DATETIME" "$FRONTTEXT" | $FIGLET
+  for (( i=0; i < $DEPARTURES_COUNT; i++ )); do
+    get_departure_data $i
+    get_departure "$DATETIME" "$FRONTTEXT" | $FIGLET
+    [[ -z "$SITUATIONS" ]] || echo $SITUATIONS | fold -sw $(tput cols)
+    [[ -z "$SITUATIONS" ]] && echo --- | $FIGLET
+  done
 }
 
 function run() {
