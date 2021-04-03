@@ -5,7 +5,7 @@ set -e
 # API IDE: https://api.entur.io/journey-planner/v2/ide/
 
 DATETIME=""
-FIGLET="figlet -t -c -C utf8  -k -f mini"
+FIGLET="figlet -w 53 -c -C utf8  -k -f mini"
 FROMTTEXT=""
 NEED_UPDATE=0
 STATION="NSR:StopPlace:5823"
@@ -72,6 +72,8 @@ function run() {
   ed=$(tput ed)               # clear to of screen
   el=$(tput el)               # clear to end of line
   printf '%s%s' "$home" "$ed"
+  echo -n $(tput setaf 7)
+  echo -n $(tput bold)
   while true
   do
     rows=$(( $(tput lines) - 1 ))

@@ -1,8 +1,17 @@
 localhost ansible_connection=local
-pihole ansible_user=pi ansible_host=192.168.1.254
-piscreen ansible_user=pi ansible_host=10.42.0.75
+bootstrap ansible_user=pi ansible_host=10.42.0.75
+hole ansible_user=pi ansible_host=192.168.1.254
+pihole ansible_user=pi ansible_host=192.168.1.253
+
+[piscreen]
+bootstrap
+hole
+
+[pihole]
+hole
+
+[piscripts]
+hole
 
 [master_node]
 nuc ansible_host=192.168.1.10 node_ip=192.168.1.20 env=production
-
-

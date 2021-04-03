@@ -38,17 +38,16 @@
       #    tls_auth_name: "cloudflare-dns.com"
 
   tasks:
-    - name: dependencies
+    - name: install dependencies for runnin --check
       apt:
         name:
           - python-apt
-          - python-docker
+          - git
       check_mode: false
 
     - name: install packages
       apt:
         name:
-          - docker.io
           - dstat
           - stubby
           - ufw
@@ -95,14 +94,12 @@
         state: started
         enabled: true
       loop:
-        - docker
         - ufw
         - stubby
 
     - name: add my stubby config file
       copy:
         dest: /etc/stubby/stubby.yml
-        # content: '{{ stubby_config | to_nice_yaml(indent=2, width=1337) }}'
         content: '{{ stubby_config }}'
         mode: 0644
       register: stubby_yml_file
@@ -117,52 +114,41 @@
       tags:
         - stubby
 
-    - name: pihole container
-      docker_container:
-        name: pihole
-        image: pihole/pihole:master
-        pull: true
-        log_driver: journald
-        restart_policy: unless-stopped
-        env:
-          TZ: 'Europe/Oslo'
-          ServerIP: '{{ ansible_default_ipv4.address }}'
-          ServerIPv6: '{{ pihole_server_ipv6 | default(ansible_default_ipv6.address) | default(omit) }}'
-          DNS1: 127.0.0.1#5053
-          DNS2: 'no'
-          DNSSEC: "true"
-        network_mode: host
-        volumes:
-          - /srv/pihole/conf:/etc/pihole/
-          - /srv/pihole/dnsmasq_conf:/etc/dnsmasq.d/
-        dns_servers:
-          - 127.0.0.1
-          - 9.9.9.9
-        capabilities:
-          - NET_ADMIN
+    - name: fetch pihole console stats script
+      git:
+        repo: https://github.com/pi-hole/PADD.git
+        dest: /opt/padd
+        version: v3.5.1
       tags:
-        - container
+        - git
 
-    - name: watchtower container
-      docker_container:
-        name: watchtower
-        image: containrrr/watchtower:armhf-latest
-        pull: true
-        command: -i 3600
-        log_driver: journald
-        restart_policy: unless-stopped
-        volumes:
-          - /var/run/docker.sock:/var/run/docker.sock
-        env: '{{ watchtower_env | default(omit) }}'
+    - name: fetch pihole
+      git:
+        repo: https://github.com/pi-hole/pi-hole.git
+        dest: /opt/pi-hole
+        version: v5.2.4
       tags:
-        - container
+        - git
 
-    - name: keep docker environment tidy
-      cron:
-        name: purge old dockers and images
-        minute: "0"
-        hour: "*/6"
-        job: |
-          bash -c "docker system prune -a -f --filter until=48h --filter label!=prune=false 2>&1 | systemd-cat -t CRON_DOCKER"
-      tags:
-        - cron
+    - name: make it possible to turn on and off wifi power management
+      copy:
+        dest: /etc/systemd/system/wifi_powersave@.service
+        content: |
+          [Unit]
+          Description=Set WiFi power save %i
+          After=sys-subsystem-net-devices-wlan0.device
+
+          [Service]
+          Type=oneshot
+          RemainAfterExit=yes
+          ExecStart=/sbin/iw dev wlan0 set power_save %i
+
+          [Install]
+          WantedBy=sys-subsystem-net-devices-wlan0.device
+        mode: 0644
+
+    - name: turn off wifi powersaving
+      systemd:
+        name: wifi_powersave@off.service
+        enabled: true
+        state: started

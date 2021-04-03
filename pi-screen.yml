@@ -1,5 +1,5 @@
 ---
-- name: configure raspberian os with adafruid 2.8" screen
+- name: configure raspberian os with adafruid 2.8" screen / generic bootstrap
   hosts: piscreen
   become: true
 
@@ -10,7 +10,7 @@
         fail_msg: "Variable USER is not defined, can't find ~USER/.ssh folder"
         success_msg: "Will search ~{{ USER|default('') }}/.ssh for public SSH keys on localhost"
 
-    - name: find public keys
+    - name: find public keys on localhost
       local_action:
         module: find
         paths: '~{{ USER }}/.ssh'
@@ -53,13 +53,14 @@
         name:
           - python-setuptools       # allow to use the ansible pip module
           - python3-pip             # python pip and dependencies
+          - unattended-upgrades     # unattended upgrades
           - wiringpi                # gpio set pin values
         cache_valid_time: 3600
 
     - name: install pip packages
       pip:
         name:
-          - RPi.GPIO==0.7.0   # https://pypi.org/project/RPi.GPIO/
+          - https://github.com/aheimsbakk/gpiocmd/archive/refs/tags/0.9.0.zip
         executable: pip3
 
     - name: enable screen in config.txt
@@ -77,20 +78,14 @@
       lineinfile:
         path: /boot/cmdline.txt
         regexp: '^(.* rootwait).*$'
-        line: '\1 fbcon=map:10 fbcon=font:VGA8x8'
+        line: '\1 fbcon=map:10 fbcon=font:VGA8x8 consoleblank=0'
         backrefs: true
       register: cmdline
 
-    - name: disable terminal timeout and turn down screen brightness to 3/4
-      blockinfile:
-        marker: '# {mark} disable timeout and turn down brightness'
-        path: /etc/rc.local
-        block: |
-          gpio -g mode 18 pwm
-          gpio -g pwm 18 750
-          sudo sh -c "TERM=linux setterm -blank 0 >/dev/tty0"
-        mode: 0755
-        insertbefore: '^exit.*$'
+    - name: disable console messages from kernel
+      sysctl:
+        name: kernel.printk
+        value: '1'
 
     - name: make directory for tty0
       file:
@@ -100,23 +95,26 @@
 
     - name: enable autologin on tty1
       copy:
-        dest: /etc/systemd/system/getty@tty1.service.d/noclear.conf
+        dest: /etc/systemd/system/getty@tty1.service.d/override.conf
         content: |
           # Ansible managed
           [Service]
           ExecStart=
-          ExecStart=-/sbin/agetty --autologin pi --noclear %I $TERM
-          TTYVTDisallocate=no
+          ExecStart=-/usr/local/bin/gpiocmd -k -c /etc/gpiocmd.yml
+          # /sbin/agetty --autologin pi --noclear %I $TERM
+          StandardInput=tty
+          StandardOutput=tty
+          Restart=always
+          RestartSec=10
+          # TTYVTDisallocate=no
         mode: 0644
+      register: tty1_service
 
-    - name: disable clearing of the terminal on getty invocation
-      ini_file:
-        path: /etc/systemd/system/getty@tty1.service.d/noclear.conf
-        section: Service
-        option: TTYVTDisallocate
-        value: 'no'
-        create: true
-        no_extra_spaces: true
+    - name: distribute gpiocmd configuration
+      copy:
+        dest: /etc/gpiocmd.yml
+        content: |
+          {{ gpiocmd_yml | default({}) | to_nice_yaml }}
         mode: 0644
 
     - name: set console fonts
@@ -140,6 +138,27 @@
         enabled: true
         state: started
 
+    - name: set inventory_hostname as hostname
+      hostname:
+        name: '{{ inventory_hostname }}'
+
+    - name: make it possible to turn on and off wifi power management
+      copy:
+        dest: /etc/systemd/system/wifi_powersave@.service
+        content: |
+          [Unit]
+          Description=Set WiFi power save %i
+          After=sys-subsystem-net-devices-wlan0.device
+
+          [Service]
+          Type=oneshot
+          RemainAfterExit=yes
+          ExecStart=/sbin/iw dev wlan0 set power_save %i
+
+          [Install]
+          WantedBy=sys-subsystem-net-devices-wlan0.device
+        mode: 0644
+
     - name: reboot raspberry pi
       reboot:
-      when: cmdline is changed
+      when: cmdline is changed or tty1_service is changed

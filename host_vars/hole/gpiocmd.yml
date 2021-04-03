@@ -1,0 +1,37 @@
+---
+gpiocmd_yml:
+  17:
+    commands:
+      - run: /opt/departure.sh
+      - run: clear
+        pressed_for: 1
+
+  22:
+    commands:
+      - run: /opt/padd/padd.sh
+
+  23:
+    commands:
+      - run: clear; curl wttr.in?0
+      - run: clear; dstat -cdn
+        pressed_for: 1
+
+  27:
+    commands:
+      - run: gpio -g mode 18 pwm; gpio -g pwm 18 1000
+        background: true
+      - run: gpio -g mode 18 pwm; gpio -g pwm 18 750
+        background: true
+        pressed_for: 1
+      - run: gpio -g mode 18 pwm; gpio -g pwm 18 500
+        background: true
+        pressed_for: 2
+      - run: gpio -g mode 18 pwm; gpio -g pwm 18 250
+        background: true
+        pressed_for: 3
+      - run: gpio -g mode 18 pwm; gpio -g pwm 18 0
+        background: true
+        pressed_for: 4
+      - run: reboot
+        background: true
+        pressed_for: 10

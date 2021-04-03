@@ -1,0 +1,45 @@
+# Example Adafruid 2.8" config file
+---
+gpiocmd_yml:
+  # Button 1 echoes to screen.
+  # Button released after less than 1 second,
+  # start a loop writing out the text every second.
+  # Released after 1 and 2 seconds, only write out the corresponding text.
+  17:
+    commands:
+      - run: echo button 1 pressed
+        repeat_every: 1
+      - run: echo button 1 pressed for 1 second
+        pressed_for: 1
+      - run: echo button 1 pressed for 2 seconds
+        pressed_for: 2
+
+  # Button 2 starts watch ls.
+  22:
+    commands:
+      - run: watch ls
+
+  # Button 3 start top if button is released after 1 or more seconds.
+  23:
+    commands:
+      - run: top
+        pressed_for: 1
+
+  # Button 4 dimms screen, but don't kill running process.
+  # If button is pressed 4 seconds or more, turn off backlight.
+  27:
+    commands:
+      - run: gpio -g mode 18 pwm; gpio -g pwm 18 1000
+        background: true
+      - run: gpio -g mode 18 pwm; gpio -g pwm 18 750
+        background: true
+        pressed_for: 1
+      - run: gpio -g mode 18 pwm; gpio -g pwm 18 500
+        background: true
+        pressed_for: 2
+      - run: gpio -g mode 18 pwm; gpio -g pwm 18 250
+        background: true
+        pressed_for: 3
+      - run: gpio -g mode 18 pwm; gpio -g pwm 18 0
+        background: true
+        pressed_for: 4
