@@ -71,7 +71,7 @@ function get_overview() {
     for (( i=0; i < STATION_COUNT; i++ )); do
       get_departure_data "$i" "$updated_json"
       get_departure "$DEP_DATETIME" "$DEP_FRONTTEXT" | $FIGLET -w "$cols"
-      [[ -z "$DEP_SITUATIONS" ]] || echo "$DEP_SITUATIONS" | tr -d '\n' | fold -sw "$cols"
+      [[ -z "$DEP_SITUATIONS" ]] || echo "$DEP_SITUATIONS" | fold -sw "$cols"
       [[ -z "$DEP_SITUATIONS" ]] && echo --- | $FIGLET -w "$cols"
     done
   fi
