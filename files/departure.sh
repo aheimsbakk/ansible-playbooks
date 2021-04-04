@@ -51,9 +51,10 @@ function get_departure() {
 }
 
 function get_overview() {
-  local updated_json updated_time
+  local updated_json updated_time cols
   updated_json="$(cat "$UPDATED_JSON_FILE")"
   updated_time="$(cat "$UPDATED_TIME_FILE")"
+  cols=$(tput cols)
 
   # check if we need update
   if [[ $(( updated_time + (60 * UPDATE_FREQ_MIN) )) -lt $(date +%s) ]]; then
@@ -69,9 +70,9 @@ function get_overview() {
   if [[ -n "$updated_json" ]]; then
     for (( i=0; i < STATION_COUNT; i++ )); do
       get_departure_data "$i" "$updated_json"
-      get_departure "$DEP_DATETIME" "$DEP_FRONTTEXT" | $FIGLET
-      [[ -z "$DEP_SITUATIONS" ]] || echo "$DEP_SITUATIONS" | fold -sw "$(tput cols)"
-      [[ -z "$DEP_SITUATIONS" ]] && echo --- | $FIGLET
+      get_departure "$DEP_DATETIME" "$DEP_FRONTTEXT" | $FIGLET -w "$cols"
+      [[ -z "$DEP_SITUATIONS" ]] || echo "$DEP_SITUATIONS" | tr -d '\n' | fold -sw "$cols"
+      [[ -z "$DEP_SITUATIONS" ]] && echo --- | $FIGLET -w "$cols"
     done
   fi
 }
