@@ -30,7 +30,7 @@ function get_departure_data() {
 
   DEP_DATETIME=$(echo "$json" | jq -r ".data.stopPlace.estimatedCalls[$number] | .expectedDepartureTime")
   DEP_FRONTTEXT=$(echo "$json" | jq -r ".data.stopPlace.estimatedCalls[$number] | .destinationDisplay.frontText")
-  DEP_SITUATIONS=$(echo "$json" | jq -r ".data.stopPlace.estimatedCalls[1] | .situations[]?.description[]? |  select(.language == \"no\") | .value")
+  DEP_SITUATIONS=$(echo "$json" | jq -r ".data.stopPlace.estimatedCalls[$number] | .situations[]?.description[]? |  select(.language == \"no\") | .value")
 }
 
 function get_datetime_diff() {
