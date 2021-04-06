@@ -7,12 +7,13 @@ set -e
 DEP_DATETIME=""
 DEP_FRONTTEXT=""
 DEP_SITUATIONS=""
-FIGLET="figlet -w $(tput cols) -c -C utf8  -k -f mini"
+FIGLET_TIME="figlet -w $(tput cols) -c -C utf8 -k -f mini"
+FIGLET_TEXT="figlet -w $(tput cols) -c -C utf8 -S -f mini"
 STATION_COUNT=2
 STATION_ID="NSR:StopPlace:5823"
 UPDATED_JSON_FILE="$(mktemp --suffix -json)"
 UPDATED_TIME_FILE="$(mktemp --suffix -time)"
-UPDATE_FREQ_MIN=5
+UPDATE_FREQ_MIN=10
 
 trap 'rm -f "$UPDATED_JSON_FILE" "$UPDATED_TIME_FILE"' INT TERM QUIT
 
@@ -40,25 +41,36 @@ function get_datetime_diff() {
   echo $(( $(date -d"$datetime" +%s) - $(date +%s) ))
 }
 
-function get_departure() {
-  local datetime fronttext sec
+function get_departure_departuretime() {
+  local datetime sec
   datetime="$1"
-  fronttext="$2"
   sec="$(get_datetime_diff "$datetime")"
 
-  [[ -z "$fronttext" ]] || printf "%s\n" "$fronttext"
   printf "%02d:%02d\n" $(( sec / 60 )) $(( sec % 60 ))
 }
 
+function get_departure_fronttext() {
+  local fronttext
+  fronttext="$1"
+
+  [[ -z "$fronttext" ]] || printf "%s\n" "$fronttext"
+}
+
 function get_overview() {
-  local updated_json updated_time cols
+  local updated_json updated_time cols now
   updated_json="$(cat "$UPDATED_JSON_FILE")"
   updated_time="$(cat "$UPDATED_TIME_FILE")"
   cols=$(tput cols - 1)
+  now=$(date +%s)
 
   # check if we need update
-  if [[ $(( updated_time + (60 * UPDATE_FREQ_MIN) )) -lt $(date +%s) ]]; then
+  if [[ $(( updated_time + (60 * UPDATE_FREQ_MIN) )) -lt $now ]]; then
     updated_json=""
+  elif [[ -n "$updated_json" ]]; then
+    get_departure_data 0 "$updated_json"
+    if [[ $(get_datetime_diff "$DEP_DATETIME") -lt 0 ]]; then
+      updated_json=""
+    fi
   fi
 
   # update if no json in buffer
@@ -70,7 +82,8 @@ function get_overview() {
   if [[ -n "$updated_json" ]]; then
     for (( i=0; i < STATION_COUNT; i++ )); do
       get_departure_data "$i" "$updated_json"
-      get_departure "$DEP_DATETIME" "$DEP_FRONTTEXT" | $FIGLET -w "$cols"
+      get_departure_fronttext "$DEP_FRONTTEXT" | $FIGLET_TEXT -w "$cols"
+      get_departure_departuretime "$DEP_DATETIME" | $FIGLET_TIME -w "$cols"
       [[ -z "$DEP_SITUATIONS" ]] || echo "$DEP_SITUATIONS" | tr -s '\n' ' ' | fold -sw "$cols" && echo
       [[ -z "$DEP_SITUATIONS" ]] && echo --- | $FIGLET -w "$cols"
     done
