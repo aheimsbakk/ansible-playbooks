@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Find stations: https://stoppested.entur.org/
+# Find stations: https://stoppested.entur.org/ user:guest pass:guest
 # API IDE: https://api.entur.io/journey-planner/v2/ide/
 
 DEP_DATETIME=""
