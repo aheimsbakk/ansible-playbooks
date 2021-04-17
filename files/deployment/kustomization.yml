@@ -21,8 +21,8 @@ images:
   - name: docker.io/redis
     newTag: latest
   - name: docker.io/nextcloud
-    newName: docker.io/aheimsbakk/nextcloud-21-apache
-    newTag: latest
+    newName: docker.io/aheimsbakk/nextcloud
+    newTag: 21-apache-ffmpeg
   - name: docker.io/aheimsbakk/smokeping
     newTag: latest
   - name: docker.io/traefik
