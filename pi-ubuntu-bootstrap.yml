@@ -1,0 +1,105 @@
+---
+- name: bootstrap default configuration for a raspberry pi running ubuntu
+  hosts: bootstrap_pi_ubuntu
+  become: true
+
+  tasks:
+    - name: check if USER variable is defined
+      assert:
+        that: USER is defined
+        fail_msg: "Variable USER is not defined, can't find ~USER/.ssh folder"
+        success_msg: "Will search ~{{ USER|default('') }}/.ssh for public SSH keys on localhost"
+
+    - name: find public keys on localhost
+      local_action:
+        module: find
+        paths: '~{{ USER }}/.ssh'
+        file_type: file
+        use_regex: true
+        patterns:
+          - '^.*.pub$'
+      become: '{{ USER }}'
+      register: found_keys
+      run_once: true
+
+    - name: slurp public keys
+      local_action:
+        module: slurp
+        src: '{{ item.path }}'
+      become: '{{ USER }}'
+      loop: '{{ found_keys.files }}'
+      loop_control:
+        label: '{{ item.path }}'
+      register: ssh_public_keys
+      run_once: true
+
+    - name: add keys to raspberry pi, user ubuntu
+      authorized_key:
+        user: ubuntu
+        key: '{{ item.content | b64decode }}'
+      loop: '{{ ssh_public_keys.results }}'
+      loop_control:
+        label: '{{ item.content | b64decode }}'
+      register: authorized_keys
+
+    - name: remove password from rapsberry user
+      user:
+        name: ubuntu
+        password: '!'
+      when: authorized_keys is changed
+
+    - name: enable sshd
+      systemd:
+        name: sshd
+        enabled: true
+        state: started
+
+    - name: set inventory_hostname as hostname
+      hostname:
+        name: '{{ bootstrap_hostname | default(inventory_hostname) }}'
+
+    - name: check if snap is installed
+      stat:
+        path: /usr/bin/snap
+      register: snap_binary
+
+    - name: remove all snaps
+      command: "snap remove --purge {{ item }}"
+      args:
+        warn: false
+      loop:
+        - lxd
+        - core18
+        - core20
+        - snapd
+      when: snap_binary.stat.exists
+
+    - name: remove snapd
+      apt:
+        name: snapd
+        state: absent
+      when: snap_binary.stat.exists
+
+    - name: install packages
+      apt:
+        name:
+          - network-manager
+
+    # Can be done on globally as this, or based on SSID:
+    # sudo nmcli connection modify MY_SSID 802-11-wireless.powersave 2
+
+    # Values are 0 (use default), 1 (ignore/don't touch), 2 (disable) or 3 (enable).
+    - name: turn off wifi power saving in network manager
+      ini_file:
+        path: /etc/NetworkManager/conf.d/default-wifi-powersave-on.conf
+        section: connection
+        option: wifi.powersave
+        value: '2'
+        mode: 0644
+      register: wifi_power_saving
+
+    - name: restart network manager if power saving has changed
+      systemd:
+        name: NetworkManager
+        state: restarted
+      when: wifi_power_saving is changed
