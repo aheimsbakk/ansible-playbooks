@@ -106,3 +106,13 @@
         name: NetworkManager
         state: restarted
       when: wifi_power_saving is changed
+
+    - name: disable cloud init
+      systemd:
+        name: '{{ item }}'
+        enabled: false
+      loop:
+        - cloud-config
+        - cloud-final
+        - cloud-init
+        - cloud-init-local
