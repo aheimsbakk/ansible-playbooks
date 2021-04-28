@@ -2,6 +2,7 @@ localhost ansible_connection=local
 bootstrap ansible_user=pi ansible_host=10.42.0.217
 hole ansible_user=pi ansible_host=192.168.1.254
 backup ansible_user=pi ansible_host=192.168.1.253
+bootstrap.lan
 
 [bootstrap_pi_ubuntu]
 10.42.0.[2:254] ansible_user=ubuntu bootstrap_hostname=bootstrap

@@ -7,6 +7,10 @@
     k3s_version: v1.20.5+k3s1
     k9s_version: v0.24.7
     use_docker: false
+    architecture_map:
+      aarch64: arm64
+      armv7l: arm
+      amd64: amd64
     docker_json:
       log-driver: json-file
       log-opts:
@@ -186,8 +190,8 @@
 
     - name: get k3s install script from stable branch
       get_url:
-        url: https://raw.githubusercontent.com/k3s-io/k3s/release-1.19/install.sh
-        checksum: sha256:e98ad0e3f19e4b042136f5b481a13c289f513387e3ea66e939445dc790f355a8
+        url: https://raw.githubusercontent.com/k3s-io/k3s/release-1.20/install.sh
+        checksum: sha256:c63032985492e6fb3e7642b244a22ec7ad2f5a4f023a729de77b941dd19c6a59
         dest: /root/install.sh
         mode: 0755
 
@@ -215,7 +219,7 @@
 
     - name: get k9s
       get_url:
-        url: 'https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/k9s_Linux_{{ ansible_architecture }}.tar.gz'
+        url: 'https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/k9s_Linux_{{ architecture_map[ansible_architecture] }}.tar.gz'
         checksum: 'sha256:https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/checksums.txt'
         dest: /tmp/k9s.tar.gz
       register: k9s_download
