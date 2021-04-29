@@ -1,3 +1,5 @@
 ---
 bases:
   - ../deployment
+patchesStrategicMerge:
+  - nfs-provisioner.yml

@@ -23,7 +23,8 @@ Vagrant.configure("2") do |config|
     config.vm.provision "ansible-playbook k3s.yml", type: "ansible" do |a|
       a.compatibility_mode = "2.0"
       a.groups = {
-        "master_node": [ "k3s-m1" ]
+        "master_node": [ "k3s-m1" ],
+        "worker_node": [ ]
       }
       a.playbook = "homeserver-k3s.yml"
       a.extra_vars = {

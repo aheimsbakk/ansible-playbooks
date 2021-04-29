@@ -70,13 +70,15 @@
     - name: export filesystes to
       set_fact:
         export_to_address: "{{ export_to_address | default([ '10.42.0.0/16', '127.0.0.1/32' ]) }}"
+        master_nodes: "{{ groups['master_node'] | map('extract', hostvars, 'node_ip') | list }}"
+        worker_nodes: "{{ groups['worker_node'] | map('extract', hostvars, 'node_ip') | list }}"
 
     - name: share /srv to the kubernetes cluster, so other nodes can start containers
       lineinfile:
         path: /etc/exports
         line: /srv {{ item }}(rw,fsid=0,sync,no_subtree_check,no_auth_nlm,insecure,no_root_squash)
         mode: 0644
-      loop: '{{ export_to_address }}'
+      loop: '{{ master_nodes + worker_nodes }}'
       register: etc_exportfs
 
     - name: export filesystems through nfs
@@ -86,7 +88,7 @@
     # https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
     - name: prepare space for nfs-subdir-external-provisioner
       file:
-        path: /srv/autmatic-pvcs
+        path: /srv/automatic-pvcs
         state: directory
         mode: a=rwxt
 
@@ -167,6 +169,13 @@
         rule: allow
         port: '6443'
         proto: tcp
+
+    - name: allow nfs from the nodes
+      ufw:
+        rule: allow
+        port: '2049'
+        from: '{{ item }}'
+      loop: '{{ master_nodes + worker_nodes }}'
 
     - name: allow internal kubernetes communication
       ufw:
