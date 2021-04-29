@@ -60,10 +60,35 @@
       check_mode: false
       when: ansible_check_mode|bool
 
-    - name: auto update operating system
+    - name: install packages
       apt:
-        name: unattended-upgrades
+        name:
+          - unattended-upgrades     # auto-upgrade packages
+          - nfs-kernel-server       # nfs server for serving files to k3s
         update_cache: true
+
+    - name: export filesystes to
+      set_fact:
+        export_to_address: "{{ export_to_address | default([ '10.42.0.0/16', '127.0.0.1/32' ]) }}"
+
+    - name: share /srv to the kubernetes cluster, so other nodes can start containers
+      lineinfile:
+        path: /etc/exports
+        line: /srv {{ item }}(rw,fsid=0,sync,no_subtree_check,no_auth_nlm,insecure,no_root_squash)
+        mode: 0644
+      loop: '{{ export_to_address }}'
+      register: etc_exportfs
+
+    - name: export filesystems through nfs
+      command: exportfs -r
+      when: etc_exportfs is changed
+
+    # https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
+    - name: prepare space for nfs-subdir-external-provisioner
+      file:
+        path: /srv/autmatic-pvcs
+        state: directory
+        mode: 1777
 
     - name: install docker runtime
       apt:
