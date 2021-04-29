@@ -5,7 +5,7 @@
 
   vars:
     k3s_version: v1.20.5+k3s1
-    k9s_version: v0.24.7
+    k9s_version: v0.24.8
     use_docker: false
     architecture_map:
       aarch64: arm64
@@ -88,7 +88,7 @@
       file:
         path: /srv/autmatic-pvcs
         state: directory
-        mode: 1777
+        mode: a=rwxt
 
     - name: install docker runtime
       apt:

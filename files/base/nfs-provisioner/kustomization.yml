@@ -1,0 +1,5 @@
+---
+resources:
+  - nfs-subdir-external-provisioner/deploy/class.yaml
+  - nfs-subdir-external-provisioner/deploy/deployment.yaml
+  - nfs-subdir-external-provisioner/deploy/rbac.yaml

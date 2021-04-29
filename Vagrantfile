@@ -31,16 +31,16 @@ Vagrant.configure("2") do |config|
         "node_ip": "10.20.30.#{10 + n}"
       }
     end
-    #config.vm.provision "ansible-playbook deployments.yml", type: "ansible", run: "always" do |a|
-    #  a.compatibility_mode = "2.0"
-    #  a.groups = {
-    #    "master_node": [ "k3s-m1" ]
-    #  }
-    #  a.playbook = "deployments.yml"
-    #  a.extra_vars = {
-    #    "node_ip": "10.20.30.#{10 + n}",
-    #    "env": "dev"
-    #  }
-    #end
+    config.vm.provision "ansible-playbook deployments.yml", type: "ansible", run: "always" do |a|
+      a.compatibility_mode = "2.0"
+      a.groups = {
+        "master_node": [ "k3s-m1" ]
+      }
+      a.playbook = "deployments.yml"
+      a.extra_vars = {
+        "node_ip": "10.20.30.#{10 + n}",
+        "env": "dev"
+      }
+    end
   end
 end
