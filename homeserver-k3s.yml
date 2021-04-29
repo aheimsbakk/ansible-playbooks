@@ -176,13 +176,13 @@
         from: '{{ item }}'
       loop: '{{ master_nodes + worker_nodes }}'
 
-    # - name: ufw allow kubernets api
-    #   ufw:
-    #     rule: allow
-    #     port: '6443'
-    #     proto: tcp
-    #     from: '{{ item }}'
-    #   loop: '{{ master_nodes + worker_nodes }}'
+    - name: ufw allow kubernets api
+      ufw:
+        rule: allow
+        port: '6443'
+        proto: tcp
+        from: '{{ item }}'
+      loop: '{{ master_nodes + worker_nodes }}'
 
     - name: allow nfs from the nodes
       ufw:
