@@ -1,6 +1,8 @@
 ---
 - name: configure k3s master
-  hosts: master_node
+  hosts: all
+#    - master_node
+#    - worker_node
   become: true
 
   vars:
@@ -16,26 +18,18 @@
       log-opts:
         max-size: 100m
       storage-driver: overlay2
-      dns:
         - 9.9.9.9
         - 149.112.112.112
 
   tasks:
-    - name: set apt proxy
-      set_fact:
-        apt_proxy: 'Acquire::http::proxy "http://{{ proxy_address }}:3142/";'
-      when:
-        - proxy_address is defined
-        - proxy_address|length > 0
-      check_mode: false
+    - debug:
+        var: inventory_hostname
 
-    - name: update proxy file
-      copy:
-        dest: /etc/apt/apt.conf.d/80proxy
-        content: |
-          {{ apt_proxy|default("") }}
-        mode: 0644
-      when: apt_proxy is defined
+    - debug:
+        var: ansible_hostname
+
+    - assert:
+        that: false
 
     - name: set legacy iptables for k3s for debian
       alternatives:
@@ -45,14 +39,6 @@
         - iptables
         - ip6tables
       when: ansible_distribution | lower == "debian"
-
-    - name: set docker proxy
-      set_fact:
-        docker_json: '{{ docker_json | combine({ "registry-mirrors": [ "http://" + proxy_address + ":5000" ] }) }}'
-      when:
-        - proxy_address is defined
-        - proxy_address|length > 0
-        - use_docker
 
     - name: install python-apt
       apt:
@@ -67,6 +53,10 @@
           - nfs-kernel-server       # nfs server for serving storage to cluster
           - wireguard               # wireguard for communication between k3s nodes
         update_cache: true
+      register: apt_status
+      until: apt_status is success
+      delay: 10
+      retries: 20
 
     - name: set node_ip to ansible_default_ipv4 if undefined
       set_fact:
@@ -97,6 +87,8 @@
         state: directory
         mode: a=rwxt
 
+    # docker
+
     - name: install docker runtime
       apt:
         name: docker.io
@@ -126,32 +118,7 @@
         docker_arg: '--docker'
       when: use_docker
 
-    ## Other config
-
-    - name: set cri proxy
-      set_fact:
-        cri_proxy:
-          mirrors:
-            docker.io:
-              endpoint:
-                - 'http://{{ proxy_address }}:5000'
-      when:
-        - proxy_address is defined
-        - proxy_address|length > 0
-
-    - name: create k3s config directory
-      file:
-        path: /etc/rancher/k3s
-        state: directory
-        mode: 0755
-
-    - name: cri dockker caching proxy
-      copy:
-        dest: /etc/rancher/k3s/registries.yaml
-        content: |
-          {{ cri_proxy|default({})|to_nice_yaml }}
-        mode: 0644
-      when: cri_proxy is defined
+    ## ufw
 
     - name: install ufw
       package:
@@ -223,6 +190,8 @@
         policy: reject
         state: enabled
 
+    # install kubernetes
+
     - name: remove swapfile from /etc/fstab
       mount:
         name: '{{ item }}'
@@ -243,51 +212,42 @@
         dest: /root/install.sh
         mode: 0755
 
-    - name: get join token form the master node
-      slurp:
-        src: /etc/rancher/node/password
-      register: k3s_token
-      delegate_to: '{{ groups["master_node"][0] }}'
-      rune_once: true
+    # install master node
 
-    - name:
-      set_fact:
-        k3s_url: '{{ groups["master_node"][0] }}'
-        k3s_token: '{{ k3s_token.content | b64decode }}'
-      when: inventory_hostname in groups["worker_node"]
-
-    - name: run k3s installation
+    - name: install / upgrade k3s on master
       command: /root/install.sh
       environment:
-        INSTALL_K3S_EXEC: '{{ docker_arg|default("") }} --node-ip {{ node_ip }} --disable=traefik --disable local-storage --default-local-storage-path=/opt/local-path-provider --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75 --flannel-backend wireguard'
+        INSTALL_K3S_EXEC: '{{ docker_arg|default("") }} --node-ip {{ node_ip }} --disable=traefik --disable local-storage --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75 --flannel-backend wireguard'
         INSTALL_K3S_VERSION: '{{ k3s_version }}'
-        K3S_URL: '{{ k3s_url }}'
-        K3S_TOKEN: '{{ k3s_token }}'
       register: k3s_server
       changed_when: k3s_server.rc == 0
+      when: inventory_hostname in groups["master_node"]
 
-    - name: bash completion
+    - name: bash completion directory on master
       file:
         path: /etc/bash_completion.d
         state: directory
         mode: 0755
+      when: inventory_hostname in groups["master_node"]
 
-    - name: generate bash completion
+    - name: generate bash completion on master
       shell: '{{ item }} completion bash > /etc/bash_completion.d/{{ item }}'
       args:
         creates: '/etc/bash_completion.d/{{ item }}'
       loop:
         - kubectl
         - crictl
+      when: inventory_hostname in groups["master_node"]
 
-    - name: get k9s
+    - name: download k9s on master
       get_url:
         url: 'https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/k9s_Linux_{{ architecture_map[ansible_architecture] }}.tar.gz'
         checksum: 'sha256:https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/checksums.txt'
         dest: /tmp/k9s.tar.gz
       register: k9s_download
+      when: inventory_hostname in groups["master_node"]
 
-    - name: uncompress k9s
+    - name: uncompress k9s on master
       unarchive:
         src: /tmp/k9s.tar.gz
         dest: /usr/local/bin
@@ -296,3 +256,37 @@
       when:
         - not ansible_check_mode
         - k9s_download is changed
+        - inventory_hostname in groups["master_node"]
+
+    # worker node
+
+    - name: wait for master node to finish
+      wait_for:
+        port: 6443
+      run_once: true
+      delegate_to: groups["master_node"][0]
+      when: inventory_hostname in groups["worker_node"]
+
+    - name: get join token form the master node
+      slurp:
+        src: /etc/rancher/node/password
+      register: k3s_token
+      delegate_to: '{{ groups["master_node"][0] }}'
+      when: inventory_hostname in groups["worker_node"]
+
+    - name: prepare variables for joining master
+      set_fact:
+        k3s_url: '{{ groups["master_node"][0] }}'
+        k3s_token: '{{ k3s_token.content | b64decode }}'
+      when: inventory_hostname in groups["worker_node"]
+
+    - name: install / upgrade k3s on worker
+      command: /root/install.sh
+      environment:
+        INSTALL_K3S_EXEC: '{{ docker_arg|default("") }} --node-ip {{ node_ip }} --disable=traefik --disable local-storage --default-local-storage-path=/opt/local-path-provider --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75 --flannel-backend wireguard'
+        INSTALL_K3S_VERSION: '{{ k3s_version }}'
+        K3S_URL: '{{ k3s_url }}'
+        K3S_TOKEN: '{{ k3s_token }}'
+      register: k3s_server
+      changed_when: k3s_server.rc == 0
+      when: inventory_hostname in groups["worker_node"]
