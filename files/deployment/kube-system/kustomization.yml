@@ -2,5 +2,3 @@
 namespace: kube-system
 bases:
   - ../../base/nfs-provisioner
-resources:
-  - nfs-client.yml
