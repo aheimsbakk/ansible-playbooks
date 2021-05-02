@@ -1,9 +1,11 @@
 ---
 bases:
-  - nfs-provisioner
-#  - traefik
+  - kube-system
+  - traefik
 #  - build
 #  - default
+#patchesStrategicMerge:
+#  - storageclass_patch.yml
 images:
   - name: k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner
     newTag: v4.0.2
