@@ -1,6 +1,6 @@
 ---
 bases:
-  - ../base/nfs-provisioner
+  - nfs-provisioner
 #  - traefik
 #  - build
 #  - default
