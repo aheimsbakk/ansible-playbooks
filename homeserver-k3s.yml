@@ -197,7 +197,7 @@
     - name: mount nfs shared volume on srv
       mount:
         path: /srv
-        src: '{{ node_ip }}:/nfs4/srv'
+        src: '{{ node_ip }}:/srv'
         opts: tcp
         state: mounted
         fstype: nfs4

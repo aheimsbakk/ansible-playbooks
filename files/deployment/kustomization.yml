@@ -3,7 +3,7 @@ bases:
   - kube-system
   - traefik
 #  - build
-#  - default
+  - default
 #patchesStrategicMerge:
 #  - storageclass_patch.yml
 images:
