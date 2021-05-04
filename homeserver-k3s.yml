@@ -97,6 +97,14 @@
         from: '{{ item }}'
       loop: '{{ k3s_master + k3s_agents }}'
 
+    - name: allow reading metrics from nodes
+      ufw:
+        rule: allow
+        port: '10250'
+        proto: tcp
+        from: '{{ item }}'
+      loop: '{{ k3s_master + k3s_agents }}'
+
     - name: allow internal kubernetes communication
       ufw:
         rule: allow

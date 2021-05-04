@@ -13,7 +13,7 @@ base_cron: []
 ## notify on ssh
 ##
 
-gotify_domain: gotify.10.0.0.10.xip.io
+gotify_domain: gotify.10.0.0.10.nip.io
 gotify_token: TOKEN
 
 ##

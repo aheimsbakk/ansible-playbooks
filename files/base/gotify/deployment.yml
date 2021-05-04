@@ -109,7 +109,7 @@ metadata:
     app: gotify
 spec:
   rules:
-    - host: gotify.10.20.30.11.xip.io
+    - host: gotify.10.20.30.11.nip.io
       http:
         paths:
           - path: /

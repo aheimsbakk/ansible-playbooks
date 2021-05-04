@@ -9,7 +9,7 @@ type: Opaque
 stringData:
   TZ: UTC
   WEBPASSWORD: password
-  VIRTUAL_HOST: pihole.10.20.30.11.xip.io
+  VIRTUAL_HOST: pihole.10.20.30.11.nip.io
 
 ---
 apiVersion: v1
@@ -189,7 +189,7 @@ spec:
     - websecure
   routes:
     - kind: Rule
-      match: "Host(`pihole.10.20.30.11.xip.io`)"
+      match: "Host(`pihole.10.20.30.11.nip.io`)"
       middlewares:
         - name: auth-private-service
           namespace: traefik

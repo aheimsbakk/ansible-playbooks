@@ -81,7 +81,7 @@ data:
     http:
       routers:
         dashboard:
-          rule: Host(`traefik.10.20.30.11.nip.io`) || Host(`traefik.10.20.30.12.nip.io`) || Host(`traefik.10.20.30.13.nip.io`)
+          rule: Host(`traefik.10.20.30.11.nip.io`)
           service: api@internal
           middlewares:
             - private-ip-ranges

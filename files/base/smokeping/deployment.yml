@@ -83,7 +83,7 @@ metadata:
     app: smokeping
 spec:
   rules:
-    - host: smokeping.10.20.30.11.xip.io
+    - host: smokeping.10.20.30.11.nip.io
       http:
         paths:
           - path: /
