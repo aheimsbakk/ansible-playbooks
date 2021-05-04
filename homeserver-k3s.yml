@@ -90,18 +90,9 @@
         port: '22'
         proto: tcp
 
-    - name: allow wire guard between nodes, kubernetes intercommunication
+    - name: not for production, allow communication between nodes
       ufw:
         rule: allow
-        port: '51820'
-        from: '{{ item }}'
-      loop: '{{ k3s_master + k3s_agents }}'
-
-    - name: allow reading metrics from nodes
-      ufw:
-        rule: allow
-        port: '10250'
-        proto: tcp
         from: '{{ item }}'
       loop: '{{ k3s_master + k3s_agents }}'
 
@@ -181,25 +172,20 @@
           - nfs-kernel-server
           - nfs-client
 
-    - name: ufw allow kubernets api
-      ufw:
-        rule: allow
-        port: '6443'
-        proto: tcp
-        from: '{{ item }}'
-      loop: '{{ k3s_master + k3s_agents }}'
+    # https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
+    - name: prepare space for nfs-subdir-external-provisioner and general volume to all nodes
+      file:
+        path: /nfs4/{{ item }}
+        state: directory
+        mode: a=rwxt
+      loop:
+        - automatic-pvcs
+        - srv
 
-    - name: allow nfs from the nodes
-      ufw:
-        rule: allow
-        port: '2049'
-        from: '{{ item }}'
-      loop: '{{ k3s_master + k3s_agents }}'
-
-    - name: share /srv to the kubernetes cluster, so other nodes can start containers
+    - name: share /nfs4 to the kubernetes cluster, so other nodes can start containers
       lineinfile:
         path: /etc/exports
-        line: /srv {{ item }}(rw,fsid=0,sync,no_subtree_check,no_auth_nlm,insecure,no_root_squash)
+        line: /nfs4 {{ item }}(rw,fsid=0,sync,no_subtree_check,no_auth_nlm,insecure,no_root_squash)
         mode: 0644
       loop: '{{ k3s_master + k3s_agents }}'
       register: etc_exportfs
@@ -208,12 +194,13 @@
       command: exportfs -r
       when: etc_exportfs is changed
 
-    # https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
-    - name: prepare space for nfs-subdir-external-provisioner
-      file:
-        path: /srv/automatic-pvcs
-        state: directory
-        mode: a=rwxt
+    - name: mount nfs shared volume on srv
+      mount:
+        path: /srv
+        src: '{{ node_ip }}:/nfs4/srv'
+        opts: tcp
+        state: mounted
+        fstype: nfs4
 
     - name: install / upgrade k3s on master
       command: /root/install.sh
@@ -273,6 +260,14 @@
     - name: install nfs client for mounting nfs on all agents
       apt:
         name: nfs-client
+
+    - name: mount nfs shared volume on srv
+      mount:
+        path: /srv
+        src: '{{ hostvars[groups["k3s_master"][0]]["node_ip"] }}:/nfs4/srv'
+        opts: tcp
+        state: mounted
+        fstype: nfs4
 
     - name: get join token form the master node
       slurp:
