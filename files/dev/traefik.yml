@@ -1,0 +1,24 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traefik
+spec:
+  template:
+    spec:
+      nodeName: k3s-m1
+      containers:
+        - name: traefik
+          ports:
+            - name: web
+              containerPort: 80
+              hostPort: 80
+              hostIP: 10.20.30.11
+            - name: websecure
+              containerPort: 443
+              hostPort: 443
+              hostIP: 10.20.30.11
+            - name: registry
+              containerPort: 5487
+              hostPort: 5487
+              hostIP: 10.20.30.11
