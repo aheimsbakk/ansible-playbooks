@@ -163,7 +163,7 @@
     - name: set default variables
       set_fact:
         k3s_version: '{{ k3s_version | default("v1.20.5+k3s1") }}'
-        k9s_version: '{{ k9s_version | default("v0.24.8") }}'
+        k9s_version: '{{ k9s_version | default("v0.24.9") }}'
         use_docker: '{{ use_docker | default(false) }}'
 
     - name: install nfs for serving storage to the cluster
@@ -264,7 +264,7 @@
     - name: mount nfs shared volume on srv
       mount:
         path: /srv
-        src: '{{ hostvars[groups["k3s_master"][0]]["node_ip"] }}:/nfs4/srv'
+        src: '{{ hostvars[groups["k3s_master"][0]]["node_ip"] }}:/srv'
         opts: tcp
         state: mounted
         fstype: nfs4

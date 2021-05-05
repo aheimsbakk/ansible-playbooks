@@ -313,6 +313,7 @@ metadata:
 spec:
   selector:
     app: nextcloud
+  clusterIP: None
   ports:
     - protocol: TCP
       name: web
