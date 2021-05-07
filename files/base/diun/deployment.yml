@@ -69,6 +69,12 @@ spec:
                 secretKeyRef:
                   name: diun
                   key: DIUN_NOTIF_GOTIFY_TOKEN
+          securityContext:
+            allowPrivilegeEscalation: false
+            #readOnlyRootFilesystem: true
+            #capabilities:
+            #  drop: [ "all" ]
+            #  add: [ "chown" ]
           volumeMounts:
             - mountPath: /data
               name: data

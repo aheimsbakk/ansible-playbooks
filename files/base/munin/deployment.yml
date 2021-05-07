@@ -61,6 +61,12 @@ spec:
                   key: SNMP_NODES
             - name: TZ
               value: UTC
+          securityContext:
+            allowPrivilegeEscalation: false
+            #readOnlyRootFilesystem: true
+            #capabilities:
+            #  drop: [ "all" ]
+            #  add: [ "chown" ]
           ports:
             - name: web
               containerPort: 80

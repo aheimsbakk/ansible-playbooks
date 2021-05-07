@@ -90,6 +90,12 @@ spec:
               mountPath: /acme
             - name: traefik
               mountPath: /etc/traefik
+          securityContext:
+            allowPrivilegeEscalation: false
+            #readOnlyRootFilesystem: true
+            #capabilities:
+            #  drop: [ "all" ]
+            #  add: [ "chown" ]
       volumes:
         - name: letsencrypt
           persistentVolumeClaim:

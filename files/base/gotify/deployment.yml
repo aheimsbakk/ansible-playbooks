@@ -72,6 +72,12 @@ spec:
               value: /data/plugins
             - name: GOTIFY_SERVER_RESPONSEHEADERS
               value: "Access-Control-Allow-Origin: \"*\"\nAccess-Control-Allow-Methods: \"GET,POST\""
+          securityContext:
+            allowPrivilegeEscalation: false
+            #readOnlyRootFilesystem: true
+            #capabilities:
+            #  drop: [ "all" ]
+            #  add: [ "chown" ]
           ports:
             - name: web
               containerPort: 80

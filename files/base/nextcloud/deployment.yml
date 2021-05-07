@@ -22,7 +22,6 @@ metadata:
   labels:
     app: nextcloud-mysql
     auto-update-hour: '00'
-
 spec:
   replicas: 1
   selector:
@@ -65,6 +64,12 @@ spec:
                 secretKeyRef:
                   name: nextcloud
                   key: MYSQL_ROOT_PASSWORD
+          securityContext:
+            allowPrivilegeEscalation: false
+            #readOnlyRootFilesystem: true
+            #capabilities:
+            #  drop: [ "all" ]
+            #  add: [ "chown" ]
           ports:
             - name: nextcloud-mysql
               containerPort: 3306
@@ -133,6 +138,12 @@ spec:
             - "1"
             - --requirepass
             - "$(REDIS_HOST_PASSWORD)"
+          securityContext:
+            allowPrivilegeEscalation: false
+            #readOnlyRootFilesystem: true
+            #capabilities:
+            #  drop: [ "all" ]
+            #  add: [ "chown" ]
           env:
             - name: REDIS_HOST_PASSWORD
               valueFrom:
@@ -263,6 +274,12 @@ spec:
                 secretKeyRef:
                   name: nextcloud
                   key: MYSQL_PASSWORD
+          securityContext:
+            allowPrivilegeEscalation: false
+            #readOnlyRootFilesystem: true
+            #capabilities:
+            #  drop: [ "all" ]
+            #  add: [ "chown" ]
           ports:
             - name: nextcloud
               containerPort: 80
