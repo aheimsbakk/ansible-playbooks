@@ -72,7 +72,6 @@ metadata:
 spec:
   selector:
     app: smokeping
-  clusterIP: None
   ports:
     - protocol: TCP
       name: web

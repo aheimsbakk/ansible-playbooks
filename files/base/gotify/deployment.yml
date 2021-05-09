@@ -99,7 +99,6 @@ metadata:
 spec:
   selector:
     app: gotify
-  clusterIP: None
   ports:
     - protocol: TCP
       name: web

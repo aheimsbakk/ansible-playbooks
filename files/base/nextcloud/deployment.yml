@@ -192,24 +192,6 @@ spec:
       storage: 1Gi
 
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nextcloud-html
-  labels:
-    app: nextcloud-html
-data:
-  mpm_prefork.conf: |
-    <IfModule mpm_prefork_module>
-      StartServers                2
-      MinSpareServers             4
-      MaxSpareServers             8
-      MaxRequestWorkers          16
-      MaxConnectionsPerChild  10000
-    </IfModule>
-
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -294,9 +276,13 @@ spec:
               mountPath: /var/www/html/config
             - name: nextcloud-data
               mountPath: /var/www/html/data
-            - name: apache-config
+            - name: nextcloud-apache-config
               mountPath: /etc/apache2/mods-enabled/mpm_prefork.conf
               subPath: mpm_prefork.conf
+              readOnly: true
+            - name: nextcloud-apache-config
+              mountPath: /etc/apache2/apache2.conf
+              subPath: apache2.conf
               readOnly: true
         - name: nextcloud-cron
           image: docker.io/nextcloud:21
@@ -316,9 +302,9 @@ spec:
           hostPath:
             type: DirectoryOrCreate
             path: /srv/nextcloud/data
-        - name: apache-config
+        - name: nextcloud-apache-config
           configMap:
-            name: nextcloud-html
+            name: nextcloud-apache-config
 
 ---
 apiVersion: v1
@@ -330,7 +316,6 @@ metadata:
 spec:
   selector:
     app: nextcloud
-  clusterIP: None
   ports:
     - protocol: TCP
       name: web

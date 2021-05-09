@@ -1,4 +1,9 @@
 ---
+configMapGenerator:
+  - files:
+      - mpm_prefork.conf
+      - apache2.conf
+    name: nextcloud-apache-config
 resources:
   - rbac.yml
   - deployment.yml

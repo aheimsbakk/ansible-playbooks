@@ -94,7 +94,6 @@ kind: Service
 metadata:
   name: munin
 spec:
-  clusterIP: None
   selector:
     app: munin
   ports:

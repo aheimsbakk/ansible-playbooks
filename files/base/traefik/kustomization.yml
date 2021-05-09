@@ -1,7 +1,17 @@
 ---
+configMapGenerator:
+  - files:
+      - config/tls-mintls12.yaml
+      - config/tls-mintls13.yaml
+      - config/middleware-default-https-headers.yaml
+      - config/middleware-private-ip-ranges.yaml
+      - config/middleware-munin-redirect.yaml
+      - config/middleware-nextcloud-redirect.yaml
+      - config/middleware-auth-private-service.yaml
+      - config/router-traefik.yaml
+    name: traefik
 resources:
   - ns.yml
   - rbac.yml
-  - config.yml
   - deployment.yml
   - ingress.yml
