@@ -1,31 +1,16 @@
 # vim: ai et ts=2 st=2 sw=2 :
 ---
 - name: homeserver configuration
-  hosts: master_node
+  hosts: k3s_master
   become: true
 
   tasks:
-    - name: install packages
-      apt:
-        name:
-          - etckeeper
-          - munin-node
-          - munin-plugins-extra
-          - ufw
-          - unattended-upgrades
-        cache_valid_time: 3600
-
     - name: allow other things
       ufw:
         rule: allow
         port: "{{ item.port }}"
         proto: "{{ item.proto }}"
       loop: '{{ base_ufw_rules }}'
-
-    - name: hardening mss value, CVE-2019-11479
-      sysctl:
-        name: net.ipv4.tcp_min_snd_mss
-        value: "536"
 
     - name: add cron jobs
       cron:
