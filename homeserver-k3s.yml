@@ -1,41 +1,22 @@
 ---
-- name: configure k3s master
-  hosts: master_node
+- name: common configuration for k3s nodes
+  hosts:
+    - k3s_master
+    - k3s_agents
   become: true
-
   vars:
-    k3s_version: v1.20.5+k3s1
-    k9s_version: v0.24.7
-    use_docker: false
-    architecture_map:
-      aarch64: arm64
-      armv7l: arm
-      amd64: amd64
     docker_json:
       log-driver: json-file
       log-opts:
         max-size: 100m
       storage-driver: overlay2
-      dns:
         - 9.9.9.9
         - 149.112.112.112
 
   tasks:
-    - name: set apt proxy
+    - name: set default variables
       set_fact:
-        apt_proxy: 'Acquire::http::proxy "http://{{ proxy_address }}:3142/";'
-      when:
-        - proxy_address is defined
-        - proxy_address|length > 0
-      check_mode: false
-
-    - name: update proxy file
-      copy:
-        dest: /etc/apt/apt.conf.d/80proxy
-        content: |
-          {{ apt_proxy|default("") }}
-        mode: 0644
-      when: apt_proxy is defined
+        use_docker: '{{ use_docker | default(false) }}'
 
     - name: set legacy iptables for k3s for debian
       alternatives:
@@ -46,24 +27,26 @@
         - ip6tables
       when: ansible_distribution | lower == "debian"
 
-    - name: set docker proxy
-      set_fact:
-        docker_json: '{{ docker_json | combine({ "registry-mirrors": [ "http://" + proxy_address + ":5000" ] }) }}'
-      when:
-        - proxy_address is defined
-        - proxy_address|length > 0
-        - use_docker
-
     - name: install python-apt
       apt:
         name: python3-apt
       check_mode: false
       when: ansible_check_mode|bool
 
-    - name: auto update operating system
+    - name: install packages
       apt:
-        name: unattended-upgrades
+        name:
+          - unattended-upgrades     # auto-upgrade packages
+          - wireguard               # wireguard for communication between k3s nodes
         update_cache: true
+
+    - name: export filesystes to
+      set_fact:
+        export_to_address: '{{ export_to_address | default(["10.42.0.0/16", "127.0.0.1/32"]) }}'
+        k3s_master: '{{ groups["k3s_master"] | map("extract", hostvars, "node_ip") | list }}'
+        k3s_agents: '{{ groups["k3s_agents"] | map("extract", hostvars, "node_ip") | list }}'
+
+    # docker
 
     - name: install docker runtime
       apt:
@@ -73,7 +56,7 @@
     - name: configure docker
       copy:
         dest: /etc/docker/daemon.json
-        content: "{{ docker_json | default({}) | to_nice_json  }}"
+        content: '{{ docker_json | default({}) | to_nice_json  }}'
         mode: 0644
       register: docker_json_file
       when:
@@ -89,37 +72,7 @@
         - docker_json_file is changed
         - use_docker
 
-    - name: set docker arg for k3s
-      set_fact:
-        docker_arg: "--docker"
-      when: use_docker
-
-    ## Other config
-
-    - name: set cri proxy
-      set_fact:
-        cri_proxy:
-          mirrors:
-            docker.io:
-              endpoint:
-                - "http://{{ proxy_address }}:5000"
-      when:
-        - proxy_address is defined
-        - proxy_address|length > 0
-
-    - name: create k3s config directory
-      file:
-        path: /etc/rancher/k3s
-        state: directory
-        mode: 0755
-
-    - name: cri dockker caching proxy
-      copy:
-        dest: /etc/rancher/k3s/registries.yaml
-        content: |
-          {{ cri_proxy|default({})|to_nice_yaml }}
-        mode: 0644
-      when: cri_proxy is defined
+    ## ufw
 
     - name: install ufw
       package:
@@ -137,11 +90,11 @@
         port: '22'
         proto: tcp
 
-    - name: ufw allow kubernets api
+    - name: not for production, allow communication between nodes
       ufw:
         rule: allow
-        port: '6443'
-        proto: tcp
+        from: '{{ item }}'
+      loop: '{{ k3s_master + k3s_agents }}'
 
     - name: allow internal kubernetes communication
       ufw:
@@ -177,7 +130,7 @@
 
     - name: remove swapfile from /etc/fstab
       mount:
-        name: "{{ item }}"
+        name: '{{ item }}'
         fstype: swap
         state: absent
       with_items:
@@ -195,21 +148,76 @@
         dest: /root/install.sh
         mode: 0755
 
-    - name: run k3s installation
+###############################################################################
+
+- name: configure k3s master node
+  hosts: k3s_master
+  become: true
+  vars:
+    architecture_map:
+      aarch64: arm64
+      armv7l: arm
+      x86_64: x86_64
+
+  tasks:
+    - name: set default variables
+      set_fact:
+        k3s_version: '{{ k3s_version | default("v1.20.5+k3s1") }}'
+        k9s_version: '{{ k9s_version | default("v0.24.9") }}'
+        use_docker: '{{ use_docker | default(false) }}'
+
+    - name: install nfs for serving storage to the cluster
+      apt:
+        name:
+          - nfs-kernel-server
+          - nfs-client
+
+    # https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
+    - name: prepare space for nfs-subdir-external-provisioner and general volume to all nodes
+      file:
+        path: /nfs4/{{ item }}
+        state: directory
+        mode: a=rwxt
+      loop:
+        - automatic-pvcs
+        - srv
+
+    - name: share /nfs4 to the kubernetes cluster, so other nodes can start containers
+      lineinfile:
+        path: /etc/exports
+        line: /nfs4 {{ item }}(rw,fsid=0,async,no_subtree_check,no_auth_nlm,insecure,no_root_squash)
+        mode: 0644
+        create: true
+      loop: '{{ k3s_master + k3s_agents }}'
+      register: etc_exportfs
+
+    - name: export filesystems through nfs
+      command: exportfs -r
+      when: etc_exportfs is changed
+
+    - name: mount nfs shared volume on srv
+      mount:
+        path: /srv
+        src: '{{ node_ip }}:/srv'
+        opts: tcp
+        state: mounted
+        fstype: nfs4
+
+    - name: install / upgrade k3s on master
       command: /root/install.sh
       environment:
-        INSTALL_K3S_EXEC: "{{ docker_arg|default('') }} --node-ip {{ node_ip }} --disable=traefik --default-local-storage-path=/opt/local-path-provider --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75"
-        INSTALL_K3S_VERSION: "{{ k3s_version }}"
+        INSTALL_K3S_EXEC: '{{ "--docker" if use_docker else "" }} --node-external-ip {{ node_ip }} --disable=traefik --disable local-storage --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75 --flannel-backend wireguard {{ k3s_opts | default("") }}'
+        INSTALL_K3S_VERSION: '{{ k3s_version }}'
       register: k3s_server
       changed_when: k3s_server.rc == 0
 
-    - name: bash completion
+    - name: bash completion directory on master
       file:
         path: /etc/bash_completion.d
         state: directory
         mode: 0755
 
-    - name: generate bash completion
+    - name: generate bash completion on master
       shell: '{{ item }} completion bash > /etc/bash_completion.d/{{ item }}'
       args:
         creates: '/etc/bash_completion.d/{{ item }}'
@@ -217,14 +225,14 @@
         - kubectl
         - crictl
 
-    - name: get k9s
+    - name: download k9s on master
       get_url:
         url: 'https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/k9s_Linux_{{ architecture_map[ansible_architecture] }}.tar.gz'
         checksum: 'sha256:https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/checksums.txt'
         dest: /tmp/k9s.tar.gz
       register: k9s_download
 
-    - name: uncompress k9s
+    - name: uncompress k9s on master
       unarchive:
         src: /tmp/k9s.tar.gz
         dest: /usr/local/bin
@@ -233,3 +241,52 @@
       when:
         - not ansible_check_mode
         - k9s_download is changed
+
+    - name: wait for master node to finish
+      wait_for:
+        port: 6443
+
+###############################################################################
+
+- name: configure k3s agent node
+  hosts: k3s_agents
+  become: true
+
+  tasks:
+    - name: set default variables
+      set_fact:
+        k3s_version: '{{ k3s_version | default("v1.20.5+k3s1") }}'
+        use_docker: '{{ use_docker | default(false) }}'
+
+    - name: install nfs client for mounting nfs on all agents
+      apt:
+        name: nfs-client
+
+    - name: mount nfs shared volume on srv
+      mount:
+        path: /srv
+        src: '{{ hostvars[groups["k3s_master"][0]]["node_ip"] }}:/srv'
+        opts: tcp
+        state: mounted
+        fstype: nfs4
+
+    - name: get join token form the master node
+      slurp:
+        src: /var/lib/rancher/k3s/server/node-token
+      register: k3s_token
+      delegate_to: '{{ groups["k3s_master"][0] }}'
+
+    - name: prepare variables for joining master
+      set_fact:
+        k3s_url: '{{ hostvars[groups["k3s_master"][0]]["node_ip"] }}'
+        k3s_token: '{{ k3s_token.content | b64decode | trim }}'
+
+    - name: install / upgrade k3s on agent
+      command: /root/install.sh
+      environment:
+        INSTALL_K3S_EXEC: '{{ "--docker" if use_docker else "" }} --node-external-ip {{ node_ip }} --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75 {{ k3s_opts | default("") }}'
+        INSTALL_K3S_VERSION: '{{ k3s_version }}'
+        K3S_URL: 'https://{{ k3s_url }}:6443'
+        K3S_TOKEN: '{{ k3s_token }}'
+      register: k3s_server
+      changed_when: k3s_server.rc == 0

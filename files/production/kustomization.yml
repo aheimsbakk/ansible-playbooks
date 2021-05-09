@@ -2,10 +2,15 @@
 bases:
   - ../deployment
 patchesStrategicMerge:
-  - diun.yml
+  # - diun.yml
   - gitlab.yml
+  - nfs-provisioner.yml
   - gotify.yml
   - munin.yml
   - nextcloud.yml
   - smokeping.yml
   - traefik.yml
+images:
+  - name: docker.io/gotify/server
+    newName: docker.io/gotify/server-arm64
+    newTag: "2.0"

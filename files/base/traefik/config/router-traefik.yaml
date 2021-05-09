@@ -1,0 +1,10 @@
+---
+http:
+  routers:
+    dashboard:
+      rule: Host(`traefik.10.20.30.11.nip.io`)
+      service: api@internal
+      middlewares:
+        - private-ip-ranges
+      entryPoints:
+        - websecure

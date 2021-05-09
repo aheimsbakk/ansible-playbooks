@@ -1,9 +1,14 @@
 ---
 bases:
+  - kube-system
   - traefik
-  - build
+#  - build
   - default
+#patchesStrategicMerge:
+#  - storageclass_patch.yml
 images:
+  - name: k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner
+    newTag: v4.0.2
   - name: docker.io/gitlab/gitlab-runner
     newTag: latest
   - name: docker.io/rancher/k3s

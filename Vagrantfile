@@ -4,43 +4,53 @@
 CURRENT_PATH = File.dirname(File.expand_path(__FILE__))
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "ubuntu/focal64"
-  config.vm.synced_folder "./", "/vagrant", type: :sshfs, disabled: true
+  k3s_master = [ "k3s-m1" ]
+  k3s_agents = [ ]
+  nodes = k3s_master + k3s_agents
 
-  config.vm.provider "virtualbox" do |vb|
-    vb.memory = "6000"
-    vb.cpus = 4
-    vb.linked_clone = true
-    vb.customize ["modifyvm", :id, "--uart1", "0x3F8", "4"]
-    vb.customize ["modifyvm", :id, "--uartmode1", "file", "#{CURRENT_PATH}/console.out"]
-  end
+  last_octet = 10
+  octet = last_octet
 
-  (1..1).each do |n|
-    config.vm.define "k3s-m#{n}", primary: n == 1 do |v|
-      v.vm.hostname = "k3s-m#{n}"
-      v.vm.network "private_network", ip: "10.20.30.#{10 + n}"
-    end
-    config.vm.provision "ansible-playbook k3s.yml", type: "ansible" do |a|
-      a.compatibility_mode = "2.0"
-      a.groups = {
-        "master_node": [ "k3s-m1" ]
-      }
-      a.playbook = "homeserver.yml"
-      a.extra_vars = {
-        "proxy_address": "#{ENV['PROXY']}",
-        "node_ip": "10.20.30.#{10 + n}"
-      }
-    end
-    config.vm.provision "ansible-playbook deployments.yml", type: "ansible", run: "always" do |a|
-      a.compatibility_mode = "2.0"
-      a.groups = {
-        "master_node": [ "k3s-m1" ]
-      }
-      a.playbook = "deployments.yml"
-      a.extra_vars = {
-        "node_ip": "10.20.30.#{10 + n}",
-        "env": "dev"
-      }
+  nodes.each do |node|
+    config.vm.define "#{node}", primary: node == nodes.first do |config|
+      config.vm.hostname = "#{node}"
+      config.vm.network "private_network", ip: "10.20.30.#{octet+=1}"
+      config.vm.box = "ubuntu/focal64"
+      config.vm.synced_folder "./", "/vagrant", type: :sshfs, disabled: true
+
+      config.vm.provider "virtualbox" do |vb|
+        vb.memory = "8000"
+        vb.cpus = 2
+        vb.linked_clone = true
+      end
+
+      if node == nodes.last
+        config.vm.provision "ansible-playbook k3s.yml", type: "ansible" do |a|
+          octet = last_octet
+          host_vars = {}
+          nodes.each do |n|
+            host_vars[n] = { "node_ip": "10.20.30.#{octet+=1}",
+                             "k3s_opts": "--flannel-iface enp0s8",
+                             "env": "dev" }
+          end
+
+          a.compatibility_mode = "2.0"
+          a.host_vars = host_vars
+          a.groups = {
+            "k3s_master" => k3s_master,
+            "k3s_agents" => k3s_agents
+          }
+          a.limit = "all"
+          a.playbook = "homeserver-k3s.yml"
+        end
+        config.vm.provision "ansible-playbook deployments.yml", type: "ansible", run: "always" do |a|
+          a.compatibility_mode = "2.0"
+          a.groups = { "k3s_master": k3s_master,
+                       "k3s_master:vars": { "env": "dev" } }
+          a.limit = "all"
+          a.playbook = "deployments.yml"
+        end
+      end
     end
   end
 end

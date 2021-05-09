@@ -1,3 +1,6 @@
 ---
 bases:
   - ../deployment
+patchesStrategicMerge:
+  - nfs-provisioner.yml
+  - traefik.yml

@@ -1,0 +1,5 @@
+---
+tls:
+  options:
+    mintls13:
+      minVersion: VersionTLS13

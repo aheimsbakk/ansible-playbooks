@@ -22,7 +22,6 @@ metadata:
   labels:
     app: nextcloud-mysql
     auto-update-hour: '00'
-
 spec:
   replicas: 1
   selector:
@@ -65,6 +64,12 @@ spec:
                 secretKeyRef:
                   name: nextcloud
                   key: MYSQL_ROOT_PASSWORD
+          securityContext:
+            allowPrivilegeEscalation: false
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
           ports:
             - name: nextcloud-mysql
               containerPort: 3306
@@ -99,7 +104,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: local-path
+  storageClassName: nfs-client
   resources:
     requests:
       storage: 250Mi
@@ -133,6 +138,12 @@ spec:
             - "1"
             - --requirepass
             - "$(REDIS_HOST_PASSWORD)"
+          securityContext:
+            allowPrivilegeEscalation: false
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
           env:
             - name: REDIS_HOST_PASSWORD
               valueFrom:
@@ -175,28 +186,10 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: local-path
+  storageClassName: nfs-client
   resources:
     requests:
       storage: 1Gi
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nextcloud-html
-  labels:
-    app: nextcloud-html
-data:
-  mpm_prefork.conf: |
-    <IfModule mpm_prefork_module>
-      StartServers                5
-      MinSpareServers             5
-      MaxSpareServers            10
-      MaxRequestWorkers          25
-      MaxConnectionsPerChild  10000
-    </IfModule>
-
 
 ---
 apiVersion: apps/v1
@@ -239,7 +232,7 @@ spec:
             - name: NEXTCLOUD_TABLE_PREFIX
               value: oc_
             - name: NEXTCLOUD_TRUSTED_DOMAINS
-              value: nextcloud.10.20.30.11.xip.io
+              value: nextcloud.10.20.30.11.nip.io
             - name: TRUSTED_PROXIES
               value: 10.0.0.0/8
             - name: REDIS_HOST
@@ -263,6 +256,12 @@ spec:
                 secretKeyRef:
                   name: nextcloud
                   key: MYSQL_PASSWORD
+          securityContext:
+            allowPrivilegeEscalation: false
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
           ports:
             - name: nextcloud
               containerPort: 80
@@ -277,9 +276,13 @@ spec:
               mountPath: /var/www/html/config
             - name: nextcloud-data
               mountPath: /var/www/html/data
-            - name: apache-config
+            - name: nextcloud-apache-config
               mountPath: /etc/apache2/mods-enabled/mpm_prefork.conf
               subPath: mpm_prefork.conf
+              readOnly: true
+            - name: nextcloud-apache-config
+              mountPath: /etc/apache2/apache2.conf
+              subPath: apache2.conf
               readOnly: true
         - name: nextcloud-cron
           image: docker.io/nextcloud:21
@@ -299,9 +302,9 @@ spec:
           hostPath:
             type: DirectoryOrCreate
             path: /srv/nextcloud/data
-        - name: apache-config
+        - name: nextcloud-apache-config
           configMap:
-            name: nextcloud-html
+            name: nextcloud-apache-config
 
 ---
 apiVersion: v1
@@ -330,7 +333,7 @@ metadata:
     app: nextcloud
 spec:
   rules:
-    - host: nextcloud.10.20.30.11.xip.io
+    - host: nextcloud.10.20.30.11.nip.io
       http:
         paths:
           - path: /

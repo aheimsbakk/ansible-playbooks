@@ -8,7 +8,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: local-path
+  storageClassName: nfs-client
   resources:
     requests:
       storage: 1Gi
@@ -49,6 +49,12 @@ spec:
           ports:
             - name: web
               containerPort: 80
+          # securityContext:
+          #   allowPrivilegeEscalation: false
+          #   readOnlyRootFilesystem: true
+          #   capabilities:
+          #    drop: [ "all" ]
+          #    add: [ "chown" ]
       volumes:
         - name: smokeping
           hostPath:
@@ -83,7 +89,7 @@ metadata:
     app: smokeping
 spec:
   rules:
-    - host: smokeping.10.20.30.11.xip.io
+    - host: smokeping.10.20.30.11.nip.io
       http:
         paths:
           - path: /

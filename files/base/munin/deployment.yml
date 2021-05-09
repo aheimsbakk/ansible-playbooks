@@ -18,7 +18,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: local-path
+  storageClassName: nfs-client
   resources:
     requests:
       storage: 1Gi
@@ -61,6 +61,12 @@ spec:
                   key: SNMP_NODES
             - name: TZ
               value: UTC
+          securityContext:
+            allowPrivilegeEscalation: false
+            #readOnlyRootFilesystem: true
+            #capabilities:
+            #  drop: [ "all" ]
+            #  add: [ "chown" ]
           ports:
             - name: web
               containerPort: 80
@@ -107,7 +113,7 @@ metadata:
     app: munin
 spec:
   rules:
-    - host: munin.10.20.30.11.xip.io
+    - host: munin.10.20.30.11.nip.io
       http:
         paths:
           - path: /

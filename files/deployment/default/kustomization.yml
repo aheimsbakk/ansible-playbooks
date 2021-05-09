@@ -1,8 +1,8 @@
 ---
 namespace: default
 bases:
-  - ../../base/diun
-  - ../../base/gitlab
+  # - ../../base/diun
+  # - ../../base/gitlab
   - ../../base/gotify
   - ../../base/munin
   - ../../base/nextcloud

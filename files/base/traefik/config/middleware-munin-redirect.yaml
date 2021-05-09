@@ -1,0 +1,7 @@
+---
+http:
+  middlewares:
+    munin-redirect:
+      redirectRegex:
+        regex: ^(.+)://([^/]+)/$
+        replacement: ${1}://${2}/munin/

@@ -9,7 +9,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: local-path
+  storageClassName: nfs-client
   resources:
     requests:
       storage: 250Mi
@@ -25,6 +25,8 @@ metadata:
     auto-update-hour: '00'
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: traefik
@@ -82,6 +84,12 @@ spec:
               mountPath: /acme
             - name: traefik
               mountPath: /etc/traefik
+          securityContext:
+            allowPrivilegeEscalation: false
+            #readOnlyRootFilesystem: true
+            #capabilities:
+            #  drop: [ "all" ]
+            #  add: [ "chown" ]
       volumes:
         - name: letsencrypt
           persistentVolumeClaim:
@@ -99,17 +107,22 @@ metadata:
   labels:
     app: traefik
 spec:
-  type: LoadBalancer
-  externalTrafficPolicy: Local
+  #type: LoadBalancer
+  #externalTrafficPolicy: Local
   selector:
     app: traefik
   ports:
     - protocol: TCP
       name: web
+      targetPort: web
       port: 80
     - protocol: TCP
       name: websecure
+      targetPort: websecure
       port: 443
     - protocol: TCP
       name: registry
+      targetPort: registry
       port: 5487
+  externalIPs:
+    - 10.20.30.11

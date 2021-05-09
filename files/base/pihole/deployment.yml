@@ -9,7 +9,7 @@ type: Opaque
 stringData:
   TZ: UTC
   WEBPASSWORD: password
-  VIRTUAL_HOST: pihole.10.20.30.11.xip.io
+  VIRTUAL_HOST: pihole.10.20.30.11.nip.io
 
 ---
 apiVersion: v1
@@ -21,7 +21,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: local-path
+  storageClassName: nfs-client
   resources:
     requests:
       storage: 1Gi
@@ -82,6 +82,12 @@ spec:
                   key: VIRTUAL_HOST
             - name: DNSMASQ_USER
               value: pihole
+          securityContext:
+            allowPrivilegeEscalation: false
+            #readOnlyRootFilesystem: true
+            #capabilities:
+            #  drop: [ "all" ]
+            #  add: [ "chown" ]
           ports:
             - name: web
               containerPort: 80
@@ -189,7 +195,7 @@ spec:
     - websecure
   routes:
     - kind: Rule
-      match: "Host(`pihole.10.20.30.11.xip.io`)"
+      match: "Host(`pihole.10.20.30.11.nip.io`)"
       middlewares:
         - name: auth-private-service
           namespace: traefik
