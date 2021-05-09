@@ -185,7 +185,7 @@
     - name: share /nfs4 to the kubernetes cluster, so other nodes can start containers
       lineinfile:
         path: /etc/exports
-        line: /nfs4 {{ item }}(rw,fsid=0,sync,no_subtree_check,no_auth_nlm,insecure,no_root_squash)
+        line: /nfs4 {{ item }}(rw,fsid=0,async,no_subtree_check,no_auth_nlm,insecure,no_root_squash)
         mode: 0644
         create: true
       loop: '{{ k3s_master + k3s_agents }}'

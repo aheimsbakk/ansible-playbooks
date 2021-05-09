@@ -66,10 +66,10 @@ spec:
                   key: MYSQL_ROOT_PASSWORD
           securityContext:
             allowPrivilegeEscalation: false
-            #readOnlyRootFilesystem: true
-            #capabilities:
-            #  drop: [ "all" ]
-            #  add: [ "chown" ]
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
           ports:
             - name: nextcloud-mysql
               containerPort: 3306
@@ -140,10 +140,10 @@ spec:
             - "$(REDIS_HOST_PASSWORD)"
           securityContext:
             allowPrivilegeEscalation: false
-            #readOnlyRootFilesystem: true
-            #capabilities:
-            #  drop: [ "all" ]
-            #  add: [ "chown" ]
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
           env:
             - name: REDIS_HOST_PASSWORD
               valueFrom:
@@ -276,10 +276,10 @@ spec:
                   key: MYSQL_PASSWORD
           securityContext:
             allowPrivilegeEscalation: false
-            #readOnlyRootFilesystem: true
-            #capabilities:
-            #  drop: [ "all" ]
-            #  add: [ "chown" ]
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
           ports:
             - name: nextcloud
               containerPort: 80

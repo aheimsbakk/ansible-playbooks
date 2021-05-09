@@ -49,12 +49,12 @@ spec:
           ports:
             - name: web
               containerPort: 80
-          securityContext:
-            allowPrivilegeEscalation: false
-            #readOnlyRootFilesystem: true
-            #capabilities:
-            #  drop: [ "all" ]
-            #  add: [ "chown" ]
+          # securityContext:
+          #   allowPrivilegeEscalation: false
+          #   readOnlyRootFilesystem: true
+          #   capabilities:
+          #    drop: [ "all" ]
+          #    add: [ "chown" ]
       volumes:
         - name: smokeping
           hostPath:
