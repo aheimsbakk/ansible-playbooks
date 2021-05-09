@@ -7,4 +7,4 @@ bases:
   - ../../base/munin
   - ../../base/nextcloud
   - ../../base/smokeping
-#  - ../../base/pod-updater
+  - ../../base/pod-updater

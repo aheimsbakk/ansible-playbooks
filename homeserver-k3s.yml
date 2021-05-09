@@ -187,6 +187,7 @@
         path: /etc/exports
         line: /nfs4 {{ item }}(rw,fsid=0,sync,no_subtree_check,no_auth_nlm,insecure,no_root_squash)
         mode: 0644
+        create: true
       loop: '{{ k3s_master + k3s_agents }}'
       register: etc_exportfs
 
