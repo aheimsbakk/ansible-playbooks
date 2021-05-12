@@ -15,5 +15,6 @@ hole
 
 [k3s_master]
 futhark ansible_host=192.168.1.104 node_ip=192.168.1.104 env=production
+futhark-ng ansible_host=192.168.1.20 node_ip=192.168.1.20 env=production nfs_ip=192.168.1.10
 
 [k3s_agents]

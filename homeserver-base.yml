@@ -21,6 +21,7 @@
         hour: '{{ item.hour | default(omit) }}'
         user: root
         job: '{{ item.job }}'
+        state: '{{ item.state | default("present") }}'
       loop: '{{ base_cron }}'
       tags:
         - cron

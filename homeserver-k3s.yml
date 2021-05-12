@@ -168,9 +168,12 @@
 
     - name: install nfs for serving storage to the cluster
       apt:
-        name:
-          - nfs-kernel-server
-          - nfs-client
+        name: nfs-kernel-server
+      when: nfs_ip is not defined
+
+    - name: install nfs client
+      apt:
+        name: nfs-client
 
     # https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
     - name: prepare space for nfs-subdir-external-provisioner and general volume to all nodes
@@ -181,6 +184,7 @@
       loop:
         - automatic-pvcs
         - srv
+      when: nfs_ip is not defined
 
     - name: share /nfs4 to the kubernetes cluster, so other nodes can start containers
       lineinfile:
@@ -190,15 +194,18 @@
         create: true
       loop: '{{ k3s_master + k3s_agents }}'
       register: etc_exportfs
+      when: nfs_ip is not defined
 
     - name: export filesystems through nfs
       command: exportfs -r
-      when: etc_exportfs is changed
+      when:
+        - etc_exportfs is changed
+        - nfs_ip is not defined
 
     - name: mount nfs shared volume on srv
       mount:
         path: /srv
-        src: '{{ node_ip }}:/srv'
+        src: '{{ nfs_ip | default( node_ip ) }}:/srv'
         opts: tcp
         state: mounted
         fstype: nfs4
@@ -206,7 +213,7 @@
     - name: install / upgrade k3s on master
       command: /root/install.sh
       environment:
-        INSTALL_K3S_EXEC: '{{ "--docker" if use_docker else "" }} --node-external-ip {{ node_ip }} --disable=traefik --disable local-storage --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75 --flannel-backend wireguard {{ k3s_opts | default("") }}'
+        INSTALL_K3S_EXEC: '{{ "--docker" if use_docker else "" }} --node-external-ip {{ node_ip }} --disable=traefik --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75 --flannel-backend wireguard {{ k3s_opts | default("") }}'
         INSTALL_K3S_VERSION: '{{ k3s_version }}'
       register: k3s_server
       changed_when: k3s_server.rc == 0
@@ -265,7 +272,7 @@
     - name: mount nfs shared volume on srv
       mount:
         path: /srv
-        src: '{{ hostvars[groups["k3s_master"][0]]["node_ip"] }}:/srv'
+        src: '{{ nfs_ip | default( hostvars[groups["k3s_master"][0]]["node_ip"] ) }}:/srv'
         opts: tcp
         state: mounted
         fstype: nfs4
