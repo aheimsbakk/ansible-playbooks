@@ -55,6 +55,7 @@ spec:
           image: docker.io/pihole/pihole:latest
           imagePullPolicy: Always
           securityContext:
+            allowPrivilegeEscalation: false
             capabilities:
               add:
                 - NET_ADMIN

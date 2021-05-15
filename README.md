@@ -10,13 +10,6 @@ Traefik TLS configuration gives A+ on [SSL Labs](https://www.ssllabs.com/ssltest
 
 * `desktop.yml` --- my desktop configuration for Fedora
 
-### Home server plays
-
-* `homeserver.yml` --- includes all playbooks in sensible order
-* `homeserver-base.yml` --- base configuration
-* `homeserver-fail2ban.yml` --- install `fail2ban`
-* `homeserver-k3s.yml` --- install and configure Kubernetes variant k3s
-
 ### Kubernetes deployments
 
 * `deployments.yml` --- copy out deployment configuration files and apply them to running kubernetes

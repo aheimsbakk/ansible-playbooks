@@ -25,8 +25,6 @@ metadata:
     auto-update-hour: '00'
 spec:
   replicas: 1
-  strategy:
-    type: Recreate
   selector:
     matchLabels:
       app: traefik
@@ -36,6 +34,9 @@ spec:
         app: traefik
     spec:
       serviceAccountName: traefik-ingress-controller
+      nodeSelector:
+        # Ensure that we run a node that can handle SSL better than aarch64
+        kubernetes.io/arch: amd64
       containers:
         - name: traefik
           image: docker.io/traefik:v2.4
@@ -72,6 +73,12 @@ spec:
             - --entrypoints.registrysecure.http.tls.options=mintls12@file
             # - --entrypoints.registrysecure.http.tls.certresolver=letsencrypt
             - --entrypoints.registrysecure.http.middlewares=default-https-headers@file
+          securityContext:
+            allowPrivilegeEscalation: false
+            #readOnlyRootFilesystem: true
+            #capabilities:
+            #  drop: [ "all" ]
+            #  add: [ "chown" ]
           ports:
             - name: web
               containerPort: 80

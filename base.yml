@@ -1,7 +1,7 @@
 # vim: ai et ts=2 st=2 sw=2 :
 ---
 - name: homeserver configuration
-  hosts: k3s_master
+  hosts: base
   become: true
 
   tasks:
@@ -10,7 +10,7 @@
         rule: allow
         port: "{{ item.port }}"
         proto: "{{ item.proto }}"
-      loop: '{{ base_ufw_rules }}'
+      loop: '{{ base_ufw_rules | default([]) }}'
 
     - name: add cron jobs
       cron:
@@ -22,7 +22,7 @@
         user: root
         job: '{{ item.job }}'
         state: '{{ item.state | default("present") }}'
-      loop: '{{ base_cron }}'
+      loop: '{{ base_cron | default([]) }}'
       tags:
         - cron
 
@@ -36,3 +36,10 @@
       lineinfile:
         path: /etc/pam.d/common-session
         line: session optional pam_exec.so /usr/local/bin/sshnotif
+      when: ansible_os_family | lower  == "debian"
+
+    - name: add notify on ssh
+      lineinfile:
+        path: /etc/pam.d/sshd
+        line: session optional pam_exec.so /usr/local/bin/sshnotif
+      when: ansible_os_family | lower  == "redhat"
