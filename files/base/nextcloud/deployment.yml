@@ -268,10 +268,8 @@ spec:
           volumeMounts: &nextcloud-volumes
             - name: nextcloud-html
               mountPath: /var/www/html
-              subPath: html
-            - name: nextcloud-html
+            - name: nextcloud-custom-apps
               mountPath: /var/www/html/custom_apps
-              subPath: custom-apps
             - name: nextcloud-config
               mountPath: /var/www/html/config
             - name: nextcloud-data
@@ -302,6 +300,10 @@ spec:
           hostPath:
             type: DirectoryOrCreate
             path: /srv/nextcloud/data
+        - name: nextcloud-custom-apps
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/nextcloud/custom-apps
         - name: nextcloud-apache-config
           configMap:
             name: nextcloud-apache-config
