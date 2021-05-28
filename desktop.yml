@@ -37,6 +37,7 @@
           - compsize          # Check the compression ratio on btrfs
           - davfs2            # DavFS for mounting Nextcloud, no need to sync everything
           - dstat             # Stat system values in colors
+          - duperemove        # Dedup btrfs
           - duply             # Vrapper for Duplicity backup
           - etckeeper         # Watch what happens in /etc
           - evolution-bogofilter  # Mail spam filtering
