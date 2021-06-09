@@ -146,6 +146,15 @@
       tags:
         - tlp
 
+    - name: zstd zram swap
+      ini_file:
+        path: /etc/systemd/zram-generator.conf
+        section: zram0
+        option: compression-algorithm
+        value: zstd
+        create: true
+        mode: 0644
+
     - name: disable the unsecure firewire-dma
       copy:
         dest: /etc/modprobe.d/blacklist-dma.conf
