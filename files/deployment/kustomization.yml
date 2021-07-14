@@ -22,7 +22,7 @@ images:
   - name: docker.io/aheimsbakk/munin-alpine
     newTag: latest
   - name: docker.io/mariadb
-    newTag: "10"
+    newTag: "10.5"
   - name: docker.io/redis
     newTag: latest
   - name: docker.io/nextcloud
