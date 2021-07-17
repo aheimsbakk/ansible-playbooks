@@ -265,7 +265,7 @@ spec:
           ports:
             - name: nextcloud
               containerPort: 80
-          volumeMounts: &nextcloud-volumes
+          volumeMounts:
             - name: nextcloud-html
               mountPath: /var/www/html
             - name: nextcloud-custom-apps
@@ -287,7 +287,23 @@ spec:
           imagePullPolicy: Always
           command:
             - /cron.sh
-          volumeMounts: *nextcloud-volumes
+          volumeMounts:
+            - name: nextcloud-html
+              mountPath: /var/www/html
+            - name: nextcloud-custom-apps
+              mountPath: /var/www/html/custom_apps
+            - name: nextcloud-config
+              mountPath: /var/www/html/config
+            - name: nextcloud-data
+              mountPath: /var/www/html/data
+            - name: nextcloud-apache-config
+              mountPath: /etc/apache2/mods-enabled/mpm_prefork.conf
+              subPath: mpm_prefork.conf
+              readOnly: true
+            - name: nextcloud-apache-config
+              mountPath: /etc/apache2/apache2.conf
+              subPath: apache2.conf
+              readOnly: true
       volumes:
         - name: nextcloud-html
           persistentVolumeClaim:
