@@ -1,0 +1,9 @@
+---
+generatorOptions:
+  disableNameSuffixHash: true
+configMapGenerator:
+  - files:
+      - config/prometheus.yml
+    name: prometheus-config
+resources:
+  - deployment.yml

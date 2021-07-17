@@ -32,3 +32,5 @@ images:
     newTag: latest
   - name: docker.io/traefik
     newTag: v2.5
+  - name: docker.io/prom/prometheus
+    newTag: v2.28.1

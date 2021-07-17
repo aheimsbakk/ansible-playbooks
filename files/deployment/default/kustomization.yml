@@ -8,3 +8,4 @@ bases:
   - ../../base/nextcloud
   - ../../base/smokeping
   - ../../base/pod-updater
+  - ../../base/prometheus
