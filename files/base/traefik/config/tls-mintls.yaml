@@ -1,0 +1,5 @@
+---
+tls:
+  options:
+    mintls:
+      preferServerCipherSuites: true

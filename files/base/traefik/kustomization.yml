@@ -1,6 +1,9 @@
 ---
+generatorOptions:
+  disableNameSuffixHash: true
 configMapGenerator:
   - files:
+      - config/tls-mintls.yaml
       - config/tls-mintls12.yaml
       - config/tls-mintls13.yaml
       - config/middleware-default-https-headers.yaml

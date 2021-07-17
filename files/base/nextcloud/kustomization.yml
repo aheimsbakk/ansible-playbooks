@@ -1,4 +1,6 @@
 ---
+generatorOptions:
+  disableNameSuffixHash: true
 configMapGenerator:
   - files:
       - mpm_prefork.conf
