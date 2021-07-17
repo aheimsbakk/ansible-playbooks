@@ -101,21 +101,15 @@ spec:
           volumeMounts:
             - name: letsencrypt
               mountPath: /acme
-            - name: traefik
+            - name: traefik-config
               mountPath: /etc/traefik
-          # securityContext:
-            # allowPrivilegeEscalation: false
-            # readOnlyRootFilesystem: true
-            # capabilities:
-            #  drop: [ "all" ]
-            #  add: [ "chown" ]
       volumes:
         - name: letsencrypt
           persistentVolumeClaim:
             claimName: traefik-letsencrypt
-        - name: traefik
+        - name: traefik-config
           configMap:
-            name: traefik
+            name: traefik-config
 
 # ---
 # apiVersion: v1
