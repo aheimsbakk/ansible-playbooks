@@ -11,3 +11,4 @@ patchesStrategicMerge:
   - smokeping.yml
   - traefik.yml
   - prometheus.yml
+  - grafana.yml

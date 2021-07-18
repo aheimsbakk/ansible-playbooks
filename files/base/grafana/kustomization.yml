@@ -1,0 +1,9 @@
+---
+generatorOptions:
+  disableNameSuffixHash: true
+configMapGenerator:
+  - files:
+      - config/grafana.ini
+    name: grafana-config
+resources:
+  - deployment.yml

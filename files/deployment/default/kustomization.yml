@@ -9,3 +9,4 @@ bases:
   - ../../base/smokeping
   - ../../base/pod-updater
   - ../../base/prometheus
+  - ../../base/grafana
