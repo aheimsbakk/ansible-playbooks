@@ -142,6 +142,10 @@
           v: auto
         - o: RADEON_POWER_PROFILE_ON_BAT
           v: low
+        - o: RADEON_DPM_PERF_LEVEL_ON_AC
+          v: auto
+        - o: RADEON_DPM_PERF_LEVEL_ON_BAT
+          v: low
       register: tlp_config
       tags:
         - tlp
