@@ -16,6 +16,17 @@ spec:
       labels:
         app: grafana
     spec:
+      initContainers:
+        - name: grafana-init
+          image: docker.io/alpine:latest
+          command:
+            - chown
+            - -R
+            - "472"
+            - /mnt
+          volumeMounts:
+            - name: grafana-data
+              mountPath: /mnt
       containers:
         - name: grafana
           image: docker.io/grafana/grafana:latest

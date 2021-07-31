@@ -5,7 +5,7 @@ CURRENT_PATH = File.dirname(File.expand_path(__FILE__))
 
 Vagrant.configure("2") do |config|
   k3s_master = [ "k3s-m1" ]
-  k3s_agents = [ ]
+  k3s_agents = [ "k3s-a1", "k3s-a2" ]
   nodes = k3s_master + k3s_agents
 
   last_octet = 10
@@ -19,7 +19,7 @@ Vagrant.configure("2") do |config|
       config.vm.synced_folder "./", "/vagrant", type: :sshfs, disabled: true
 
       config.vm.provider "virtualbox" do |vb|
-        vb.memory = "8000"
+        vb.memory = "2000"
         vb.cpus = 2
         vb.linked_clone = true
       end
