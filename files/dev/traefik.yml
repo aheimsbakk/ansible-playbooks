@@ -1,15 +1,19 @@
 ---
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  namespace: traefik
   name: traefik
 spec:
   template:
     spec:
       nodeSelector:
-        k3s.io/hostname: k3s-m1
-
+        kubernetes.io/hostname: k3s-m1
+      tolerations:
+        - effect: NoExecute
+          operator: Exists
+        - effect: NoSchedule
+          operator: Exists
 
 #apiVersion: v1
 #kind: Service

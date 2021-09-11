@@ -4,28 +4,14 @@
     - k3s_master
     - k3s_agents
   become: true
-  vars:
-    docker_json:
-      log-driver: json-file
-      log-opts:
-        max-size: 100m
-      storage-driver: overlay2
-        - 9.9.9.9
-        - 149.112.112.112
 
   tasks:
-    - name: set default variables
+    - name: set variables for all plays
       set_fact:
-        use_docker: '{{ use_docker | default(false) }}'
-
-    - name: set legacy iptables for k3s for debian
-      alternatives:
-        name: '{{ item }}'
-        path: '/usr/sbin/{{ item }}-legacy'
-      loop:
-        - iptables
-        - ip6tables
-      when: ansible_distribution | lower == "debian"
+        k3s_master: '{{ groups["k3s_master"] | map("extract", hostvars, "node_ip") | list }}'
+        k3s_agents: '{{ groups["k3s_agents"] | map("extract", hostvars, "node_ip") | list }}'
+        k3s_version: '{{ k3s_version | default("v1.21.4+k3s1") }}'
+        k9s_version: '{{ k9s_version | default("v0.24.15") }}'
 
     - name: install python-apt
       apt:
@@ -39,38 +25,6 @@
           - unattended-upgrades     # auto-upgrade packages
           - wireguard               # wireguard for communication between k3s nodes
         update_cache: true
-
-    - name: export filesystes to
-      set_fact:
-        export_to_address: '{{ export_to_address | default(["10.42.0.0/16", "127.0.0.1/32"]) }}'
-        k3s_master: '{{ groups["k3s_master"] | map("extract", hostvars, "node_ip") | list }}'
-        k3s_agents: '{{ groups["k3s_agents"] | map("extract", hostvars, "node_ip") | list }}'
-
-    # docker
-
-    - name: install docker runtime
-      apt:
-        name: docker.io
-      when: use_docker
-
-    - name: configure docker
-      copy:
-        dest: /etc/docker/daemon.json
-        content: '{{ docker_json | default({}) | to_nice_json  }}'
-        mode: 0644
-      register: docker_json_file
-      when:
-        - docker_json is defined
-        - use_docker
-
-    - name: restart docker
-      systemd:
-        name: docker
-        enabled: true
-        state: restarted
-      when:
-        - docker_json_file is changed
-        - use_docker
 
     ## ufw
 
@@ -90,16 +44,43 @@
         port: '22'
         proto: tcp
 
-    - name: not for production, allow communication between nodes
+    - name: ufw allow wireguard
       ufw:
         rule: allow
+        port: '51820'
+        proto: udp
+
+    # - name: allow internal kubernetes communication
+    #   ufw:
+    #     rule: allow
+    #     from: 10.42.0.0/16
+    #     to: 10.42.0.0/16
+
+    - name: ufw allow kubelet metrics
+      ufw:
+        rule: allow
+        port: '10250'
+        proto: tcp
         from: '{{ item }}'
       loop: '{{ k3s_master + k3s_agents }}'
 
-    - name: allow internal kubernetes communication
+    - name: ufw allow kubernetes api
       ufw:
         rule: allow
-        from_ip: 10.42.0.0/16
+        port: '6443'
+        proto: tcp
+        from: '{{ item }}'
+      loop: '{{ k3s_master + k3s_agents + [ "10.42.0.0/16" ] }}'
+      when: inventory_hostname in groups["k3s_master"]
+
+    - name: ufw allow etcd between masters
+      ufw:
+        rule: allow
+        port: '2379:2380'
+        proto: tcp
+        from: '{{ item }}'
+      loop: '{{ k3s_master }}'
+      when: inventory_hostname in groups["k3s_master"]
 
     - name: allow kubernetes and pods to connect to systemd-resolv
       ufw:
@@ -143,14 +124,14 @@
 
     - name: get k3s install script from stable branch
       get_url:
-        url: https://raw.githubusercontent.com/k3s-io/k3s/release-1.20/install.sh
-        checksum: sha256:c63032985492e6fb3e7642b244a22ec7ad2f5a4f023a729de77b941dd19c6a59
+        url: https://raw.githubusercontent.com/k3s-io/k3s/release-1.21/install.sh
+        checksum: sha256:3a053a6acb6d348b8dc15c4c3d0eb78ff05e77021dbf30a537c7dd6574f2e84c
         dest: /root/install.sh
         mode: 0755
 
 ###############################################################################
 
-- name: configure k3s master node
+- name: configure k3s master nodes
   hosts: k3s_master
   become: true
   vars:
@@ -160,20 +141,18 @@
       x86_64: x86_64
 
   tasks:
-    - name: set default variables
-      set_fact:
-        k3s_version: '{{ k3s_version | default("v1.20.5+k3s1") }}'
-        k9s_version: '{{ k9s_version | default("v0.24.14") }}'
-        use_docker: '{{ use_docker | default(false) }}'
+    - name: ufw allow nfs
+      ufw:
+        rule: allow
+        port: '{{ item.0 | string }}'
+        from: '{{ item.1 }}'
+      loop: '{{ [111,2049,20048] | product(k3s_master + k3s_agents) | list }}'
+      when: nfs_ip is not defined
 
     - name: install nfs for serving storage to the cluster
       apt:
         name: nfs-kernel-server
       when: nfs_ip is not defined
-
-    - name: install nfs client
-      apt:
-        name: nfs-client
 
     # https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
     - name: prepare space for nfs-subdir-external-provisioner and general volume to all nodes
@@ -202,6 +181,10 @@
         - etc_exportfs is changed
         - nfs_ip is not defined
 
+    - name: install nfs client
+      apt:
+        name: nfs-client
+
     - name: mount nfs shared volume on srv
       mount:
         path: /srv
@@ -211,9 +194,9 @@
         fstype: nfs4
 
     - name: install / upgrade k3s on master
-      command: /root/install.sh
+      command: /root/install.sh server --cluster-init
       environment:
-        INSTALL_K3S_EXEC: '{{ "--docker" if use_docker else "" }} --node-external-ip {{ node_ip }} --disable=traefik --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75 --flannel-backend wireguard {{ k3s_opts | default("") }}'
+        INSTALL_K3S_EXEC: '--node-ip {{ node_ip }} --disable=traefik --write-kubeconfig-mode 600 --write-kubeconfig /root/.kube/config --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75 --flannel-backend wireguard'
         INSTALL_K3S_VERSION: '{{ k3s_version }}'
       register: k3s_server
       changed_when: k3s_server.rc == 0
@@ -225,12 +208,16 @@
         mode: 0755
 
     - name: generate bash completion on master
-      shell: '{{ item }} completion bash > /etc/bash_completion.d/{{ item }}'
-      args:
-        creates: '/etc/bash_completion.d/{{ item }}'
-      loop:
-        - kubectl
-        # - crictl
+      copy:
+        content: |
+          #!/bin/bash
+          if [[ $(id -u) -eq 0 ]]
+          then
+            . <(kubectl completion bash)
+            . <(crictl completion bash)
+          fi
+        dest: /etc/bash_completion.d/k3s
+        mode: 0644
 
     - name: download k9s on master
       get_url:
@@ -260,11 +247,6 @@
   become: true
 
   tasks:
-    - name: set default variables
-      set_fact:
-        k3s_version: '{{ k3s_version | default("v1.20.5+k3s1") }}'
-        use_docker: '{{ use_docker | default(false) }}'
-
     - name: install nfs client for mounting nfs on all agents
       apt:
         name: nfs-client
@@ -291,7 +273,7 @@
     - name: install / upgrade k3s on agent
       command: /root/install.sh
       environment:
-        INSTALL_K3S_EXEC: '{{ "--docker" if use_docker else "" }} --node-external-ip {{ node_ip }} --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75 {{ k3s_opts | default("") }}'
+        INSTALL_K3S_EXEC: '--node-ip {{ node_ip }} --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75'
         INSTALL_K3S_VERSION: '{{ k3s_version }}'
         K3S_URL: 'https://{{ k3s_url }}:6443'
         K3S_TOKEN: '{{ k3s_token }}'

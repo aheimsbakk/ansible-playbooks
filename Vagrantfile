@@ -5,7 +5,7 @@ CURRENT_PATH = File.dirname(File.expand_path(__FILE__))
 
 Vagrant.configure("2") do |config|
   k3s_master = [ "k3s-m1" ]
-  k3s_agents = [ "k3s-a1", "k3s-a2" ]
+  k3s_agents = [ "k3s-a1", "k3s-a2", "k3s-a3" ]
   nodes = k3s_master + k3s_agents
 
   last_octet = 10
@@ -14,14 +14,16 @@ Vagrant.configure("2") do |config|
   nodes.each do |node|
     config.vm.define "#{node}", primary: node == nodes.first do |config|
       config.vm.hostname = "#{node}"
-      config.vm.network "private_network", ip: "10.20.30.#{octet+=1}"
-      config.vm.box = "ubuntu/focal64"
+      config.vm.network "private_network", autostart: true, ip: "10.20.30.#{octet+=1}"
+      config.vm.box = "debian/bullseye64"
       config.vm.synced_folder "./", "/vagrant", type: :sshfs, disabled: true
 
-      config.vm.provider "virtualbox" do |vb|
-        vb.memory = "2000"
-        vb.cpus = 2
-        vb.linked_clone = true
+      config.vm.provider "libvirt" do |l|
+        l.cpus = 1
+        l.memory = "2560"
+        l.qemu_use_session = false
+        l.autostart = true
+        l.management_network_autostart = true
       end
 
       if node == nodes.last
@@ -30,7 +32,7 @@ Vagrant.configure("2") do |config|
           host_vars = {}
           nodes.each do |n|
             host_vars[n] = { "node_ip": "10.20.30.#{octet+=1}",
-                             "k3s_opts": "--flannel-iface enp0s8",
+                             "k3s_opts": "--flannel-iface eth1",
                              "env": "dev" }
           end
 
