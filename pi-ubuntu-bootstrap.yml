@@ -73,6 +73,7 @@
         - core20
         - snapd
       when: snap_binary.stat.exists
+      ignore_errors: true
 
     - name: remove snapd
       apt:

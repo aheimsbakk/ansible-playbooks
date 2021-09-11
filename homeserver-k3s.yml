@@ -230,7 +230,7 @@
         creates: '/etc/bash_completion.d/{{ item }}'
       loop:
         - kubectl
-        - crictl
+        # - crictl
 
     - name: download k9s on master
       get_url:
