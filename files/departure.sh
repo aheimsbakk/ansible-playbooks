@@ -9,6 +9,7 @@ DEP_FRONTTEXT=""
 DEP_SITUATIONS=""
 FIGLET_TIME="figlet -w $(tput cols) -c -C utf8 -k -f mini"
 FIGLET_TEXT="figlet -w $(tput cols) -c -C utf8 -S -f mini"
+FIGLET="figlet -w $(tput cols) -c -C utf8 -S -f future"
 STATION_COUNT=2
 STATION_ID="NSR:StopPlace:5823"
 UPDATED_JSON_FILE="$(mktemp --suffix -json)"
@@ -84,7 +85,7 @@ function get_overview() {
       get_departure_data "$i" "$updated_json"
       get_departure_fronttext "$DEP_FRONTTEXT" | $FIGLET_TEXT -w "$cols"
       get_departure_departuretime "$DEP_DATETIME" | $FIGLET_TIME -w "$cols"
-      [[ -z "$DEP_SITUATIONS" ]] || echo "$DEP_SITUATIONS" | tr -s '\n' ' ' | fold -sw "$cols" && echo
+      [[ -z "$DEP_SITUATIONS" ]] || echo "$DEP_SITUATIONS" | tr -s '\n' ' ' | ( fold -sw "$cols" && echo )
       [[ -z "$DEP_SITUATIONS" ]] && echo --- | $FIGLET_TIME -w "$cols"
     done
   fi
