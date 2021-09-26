@@ -85,7 +85,7 @@ function get_overview() {
       get_departure_fronttext "$DEP_FRONTTEXT" | $FIGLET_TEXT -w "$cols"
       get_departure_departuretime "$DEP_DATETIME" | $FIGLET_TIME -w "$cols"
       [[ -z "$DEP_SITUATIONS" ]] || echo "$DEP_SITUATIONS" | tr -s '\n' ' ' | fold -sw "$cols" && echo
-      [[ -z "$DEP_SITUATIONS" ]] && echo --- | $FIGLET -w "$cols"
+      [[ -z "$DEP_SITUATIONS" ]] && echo --- | $FIGLET_TIME -w "$cols"
     done
   fi
 }
