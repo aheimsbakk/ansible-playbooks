@@ -53,6 +53,7 @@
           - gnome-characters  # Install what was snap
           - gnome-clocks      # Gnome <3
           - gnome-dictionary  # Gnome <3
+          - gnome-extensions-app  # Handle gnome extensions
           - gnome-logs        # Install what was snap
           - gnome-maps        # Gnome <3
           - gnome-power-manager  # Power statistics
@@ -84,10 +85,11 @@
           - python3-pygments  # Syntax highlighting in Hugo
           - python3-qrcode    # Generate QR-codes in terminal with qr
           - remmina           # Remote desktop
-          - rkhunter          # Root kit hunter, just the basics
+          # - rkhunter          # Root kit hunter, just the basics
           - rsync             # Syncing files, syncing life
           - seahorse          # GPG graphical interface
           - shotwell          # Photo album
+          - syncthing         # To sync stuff
           - strace            # String trace processes
           - sysfsutils        # Control /sys
           - tlp               # Save battery power on laptops
@@ -130,6 +132,10 @@
           v: '1'
         - o: CPU_BOOST_ON_BAT
           v: '0'
+        - o: CPU_HWP_DYN_BOOST_ON_AC
+          v: '1'
+        - o: CPU_HWP_DYN_BOOST_ON_BAT
+          v: '0'
         - o: CPU_SCALING_GOVERNOR_ON_AC
           v: schedutil
         - o: CPU_SCALING_GOVERNOR_ON_BAT
@@ -146,6 +152,8 @@
           v: auto
         - o: RADEON_DPM_PERF_LEVEL_ON_BAT
           v: low
+        - o: STOP_CHARGE_THRESH_BAT0
+          v: '1'
       register: tlp_config
       tags:
         - tlp
@@ -167,19 +175,19 @@
           blacklist firewire-core
           blacklist thunderbolt
 
-    - name: fix rotation on ideapad d330
-      copy:
-        dest: /etc/udev/hwdb.d/61-sensor-local.hwdb
-        mode: 0644
-        content: |
-          # IdeaPad D330
-          sensor:modalias:acpi:BOSC0200*:dmi:*:svnLENOVO:*:pvrLenovoideapadD330*
-              ACCEL_MOUNT_MATRIX=0, 1, 0; -1, 0, 0; 0, 0, 1
-      register: hwdb_update
+    # - name: fix rotation on ideapad d330
+    #   copy:
+    #     dest: /etc/udev/hwdb.d/61-sensor-local.hwdb
+    #     mode: 0644
+    #     content: |
+    #       # IdeaPad D330
+    #       sensor:modalias:acpi:BOSC0200*:dmi:*:svnLENOVO:*:pvrLenovoideapadD330*
+    #           ACCEL_MOUNT_MATRIX=0, 1, 0; -1, 0, 0; 0, 0, 1
+    #   register: hwdb_update
 
-    - name: update hwdb
-      command: systemd-hwdb update
-      when: hwdb_update is changed
+    # - name: update hwdb
+    #   command: systemd-hwdb update
+    #   when: hwdb_update is changed
 
     - name: pam yubikey
       lineinfile:
