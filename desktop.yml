@@ -115,6 +115,8 @@
         name: fs.inotify.max_user_watches
         value: "2097152"
 
+    # In grub intel_pstate=disable
+
     - name: configure tlp
       ini_file:
         path: /etc/tlp.d/99-custom.conf
