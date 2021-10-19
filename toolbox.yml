@@ -1,0 +1,110 @@
+# vim: ai et ts=2 st=2 sw=2 :
+#
+# How to run this playbook:
+# $ ansible-playbook -K dekstop.yml
+---
+- name: configure fedora desktop
+  hosts: localhost
+  become: true
+
+  tasks:
+    - name: run only on fedora
+      assert:
+        that: ansible_distribution == "Fedora"
+
+    - name: rpmfusion repositories
+      dnf:
+        name:
+          - "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+          - "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+        disable_gpg_check: true
+
+    # - name: add tainted repo (libdvdcss)
+    #   dnf:
+    #     name: rpmfusion-free-release-tainted
+
+    - name: install packages
+      dnf:
+        name:
+          - ansible           # Automate everything
+          - ansible-lint      # Lint everything
+          - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
+          # - audacity          # Audio editing
+          # - bijiben           # Note taking
+          # - btrfs-heatmap     # Visualize how data is stored on disk
+          - catimg            # Display images in terminal
+          # - cheese            # Webcamera
+          # - compsize          # Check the compression ratio on btrfs
+          # - davfs2            # DavFS for mounting Nextcloud, no need to sync everything
+          - dstat             # Stat system values in colors
+          # - duperemove        # Dedup btrfs
+          # - duply             # Vrapper for Duplicity backup
+          # - etckeeper         # Watch what happens in /etc
+          # - evolution-bogofilter  # Mail spam filtering
+          # - exfalso           # Edit tags on mp3s
+          - ffmpeg            # Transcode audio and video
+          - flac              # Lossless audio
+          # - gimp              # Pixelbased drawing
+          # - git               # Version control <3
+          # - gnome-backgrounds  # More backgrounds
+          # - gnome-backgrounds-extras  # Favorite backgrounds
+          # - gnome-calculator  # Install what was snap
+          # - gnome-calendar    # Gnome <3
+          # - gnome-characters  # Install what was snap
+          # - gnome-clocks      # Gnome <3
+          # - gnome-dictionary  # Gnome <3
+          # - gnome-logs        # Install what was snap
+          # - gnome-maps        # Gnome <3
+          # - gnome-power-manager  # Power statistics
+          # - gnome-system-monitor  # Install what was snap
+          # - gnome-tweaks      # Customize Gnome
+          # - gnupg-pkcs11-scd  # Smart card functionality for SSH keys on Yubikey
+          # - gthumb            # Photo manager that works with remote folders
+          # - haveged           # More random data from CPU flutter
+          # - hugo              # Static blog generator
+          # - iucode-tool       # Intel microcode tool
+          # - keepassxc         # Password safe
+          - lame              # Encode mp3
+          - lftp              # FTP isn't dead
+          # - libdvdcss         # Play your old DVDs on Linux
+          # - libgnome-keyring  # Save passwords in Nextcloud, missing dep.
+          # - libmp4v2          # Need it, realy need it
+          # - libvirt-client    # Libvirts virsh
+          - ltrace            # Trace library calls
+          # - marker            # A good GTK markdown editor
+          # - nextcloud-client  # <3
+          - nmap              # Scan network ports
+          - offlineimap       # Make local backup of IMAP
+          # - pam-u2f           # U2F token 2 factor in PAM
+          # - pamu2fcfg         # Set up U2F token
+          # - pcsc-lite         # Smart card daemon
+          # - powertop          # What is using my power
+          - pv                # How fast do we transfer
+          - python3-boto      # S3 library for Duplicity
+          - python3-pygments  # Syntax highlighting in Hugo
+          - python3-qrcode    # Generate QR-codes in terminal with qr
+          # - remmina           # Remote desktop
+          # - rkhunter          # Root kit hunter, just the basics
+          - rsync             # Syncing files, syncing life
+          # - seahorse          # GPG graphical interface
+          # - shotwell          # Photo album
+          - strace            # String trace processes
+          # - sysfsutils        # Control /sys
+          # - tlp               # Save battery power on laptops
+          - tmux              # <3
+          # - totem             # Video player
+          # - u2f-host          # Commandline U2F operations
+          # - ufw               # Uncomplicated firewall
+          # - vagrant           # Automate VMs
+          # - vagrant-sshfs     # Better to do this, than using buggy nfs
+          - vim               # <3
+          # - vim-syntastic     # <3
+          # - virt-manager      # Graphical interface to Libvirt
+          # - vlc               # Video viewer with built in codecs
+          - whois             # A must
+          - yamllint          # YAML files need to be linted too
+          # - yubikey-personalization-gui  # Yubico configuration
+          # - yubioath-desktop  # The Yubico Authenticator
+          - zmap              # Map internet
+          # - zram              # Zram swap
+
