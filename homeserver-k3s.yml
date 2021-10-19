@@ -196,7 +196,8 @@
     - name: install / upgrade k3s on master
       command: /root/install.sh server --cluster-init
       environment:
-        INSTALL_K3S_EXEC: '--node-ip {{ node_ip }} --disable traefik --node-taint "k3s-controlplane=true:NoSchedule" --write-kubeconfig-mode 600 --write-kubeconfig /root/.kube/config --kubelet-arg image-gc-low-threshold=70 --kubelet-arg image-gc-high-threshold=75 --flannel-backend wireguard'
+        INSTALL_K3S_EXEC: '--node-ip {{ node_ip }} --disable traefik --write-kubeconfig-mode 600 --write-kubeconfig /root/.kube/config --kubelet-arg image-gc-low-threshold=70 --kubelet-arg image-gc-high-threshold=75 --flannel-backend wireguard'
+        # INSTALL_K3S_EXEC: '--node-ip {{ node_ip }} --disable traefik --node-taint "k3s-controlplane=true:NoSchedule" --write-kubeconfig-mode 600 --write-kubeconfig /root/.kube/config --kubelet-arg image-gc-low-threshold=70 --kubelet-arg image-gc-high-threshold=75 --flannel-backend wireguard'
         INSTALL_K3S_VERSION: '{{ k3s_version }}'
       register: k3s_server
       changed_when: k3s_server.rc == 0
