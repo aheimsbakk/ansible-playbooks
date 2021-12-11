@@ -18,8 +18,6 @@
             # - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
             # - bijiben           # Note taking
             # - duply             # Vrapper for Duplicity backup
-            # - exfalso           # Edit tags on mp3s
-            # - gnome-backgrounds-extras  # Favorite backgrounds
             # - gthumb            # Photo manager that works with remote folders
             # - iucode-tool       # Intel microcode tool
             # - libdvdcss         # Play your old DVDs on Linux
@@ -30,10 +28,9 @@
             # - powertop          # What is using my power
             # - python3-boto      # S3 library for Duplicity
             # - rkhunter          # Root kit hunter, just the basics
-            # - seahorse          # GPG graphical interface
             # - syncthing         # To sync stuff
-            # - tlp               # Save battery power on laptops
             # - vim-syntastic     # <3
+            # - virtualbox-ext-pack  # Allow USB2.0/3.0
           - ansible              # Automate everything
           - ansible-lint         # Lint everything
           - btrfs-compsize       # Check the compression ratio on btrfs
@@ -72,6 +69,7 @@
           - rsync                # Syncing files, syncing life
           - strace               # String trace processes
           - sysfsutils           # Control /sys
+          - tlp               # Save battery power on laptops
           - tmux                 # <3
           - u2f-host             # Commandline U2F operations
           - ufw                  # Uncomplicated firewall
@@ -80,7 +78,6 @@
           - vim-nox              # <3
           - virt-manager         # Graphical interface to Libvirt
           - virtualbox           # Desktop virtualization
-            # - virtualbox-ext-pack  # Allow USB2.0/3.0
           - whois                # A must
           - yamllint             # YAML files need to be linted too
           - yubikey-personalization-gui  # Yubico configuration
@@ -125,6 +122,14 @@
           Pin: release a=unstable
           Pin-Priority: 1000
 
+    - name: add debian unstable repository
+      apt_repository:
+        repo: '{{ item }}'
+        filename: unstable
+      loop:
+        - deb http://deb.debian.org/debian unstable main contrib non-free
+        - deb-src http://deb.debian.org/debian unstable main contrib non-free
+
     - name: install gnome-shell from unstable
       apt:
         default_release: unstable
@@ -138,20 +143,12 @@
           - gnome-tweaks
           - mutter
 
-    - name: add debian unstable repository
-      apt_repository:
-        repo: '{{ item }}'
-        filename: unstable
-      loop:
-        - deb http://deb.debian.org/debian unstable main contrib non-free
-        - deb-src http://deb.debian.org/debian unstable main contrib non-free
-
     - name: increase user watches
       sysctl:
         name: fs.inotify.max_user_watches
         value: "2097152"
 
-    # In grub intel_pstate=disable
+    # Removed: grub intel_pstate=disable
 
     - name: configure tlp
       ini_file:
@@ -196,14 +193,14 @@
       tags:
         - tlp
 
-    - name: zstd zram swap
-      ini_file:
-        path: /etc/systemd/zram-generator.conf
-        section: zram0
-        option: compression-algorithm
-        value: zstd
-        create: true
-        mode: 0644
+          # - name: zstd zram swap
+          #   ini_file:
+          #     path: /etc/systemd/zram-generator.conf
+          #     section: zram0
+          #     option: compression-algorithm
+          #     value: zstd
+          #     create: true
+          #     mode: 0644
 
     - name: disable the unsecure firewire-dma
       copy:
@@ -248,7 +245,7 @@
         - pcscd               # Smart card daemon
         - ufw                 # Simpler firewall, Ubuntus default
         - zramswap            # Use only ram based swap
-          # - tlp                 # Enable powersavings on battery
+        - tlp                 # Enable powersavings on battery
 
     - name: deny incomming, and don't bother to log
       ufw:
