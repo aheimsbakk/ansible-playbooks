@@ -23,10 +23,7 @@
             # - libdvdcss         # Play your old DVDs on Linux
             # - libgnome-keyring  # Save passwords in Nextcloud, missing dep.
             # - libmp4v2          # Need it, realy need it
-            # - libvirt-client    # Libvirts virsh
             # - marker            # A good GTK markdown editor
-            # - powertop          # What is using my power
-            # - python3-boto      # S3 library for Duplicity
             # - rkhunter          # Root kit hunter, just the basics
             # - syncthing         # To sync stuff
             # - vim-syntastic     # <3
@@ -57,6 +54,7 @@
           - lftp                 # FTP isn't dead
           - libpam-u2f           # U2F token 2 factor in PAM
           - ltrace               # Trace library calls
+          - menulibre            # Edit Gnome menu items
           - nmap                 # Scan network ports
           - npm                  # Needed by vim-lsp
           - offlineimap          # Make local backup of IMAP
@@ -69,8 +67,9 @@
           - rsync                # Syncing files, syncing life
           - strace               # String trace processes
           - sysfsutils           # Control /sys
-          - tlp               # Save battery power on laptops
+          - tlp                  # Save battery power on laptops
           - tmux                 # <3
+          - tree                 # Show dirs as tree structure
           - u2f-host             # Commandline U2F operations
           - ufw                  # Uncomplicated firewall
           - vagrant              # Automate testing with full OSes
