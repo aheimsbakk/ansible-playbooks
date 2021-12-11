@@ -292,6 +292,7 @@
         - io.github.quodlibet.ExFalso
         - org.chromium.Chromium
         - org.gimp.GIMP
+        - org.gnome.Calendar
         - org.gnome.Cheese
         - org.gnome.Dictionary
         - org.gnome.Evolution
@@ -299,6 +300,9 @@
         - org.gnome.Maps
         - org.gnome.Shotwell
         - org.gnome.Totem
+        - org.gnome.Weather
+        - org.gnome.baobab
+        - org.gnome.clocks
         - org.keepassxc.KeePassXC
         - org.mozilla.firefox
         - org.remmina.Remmina
