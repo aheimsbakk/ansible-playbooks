@@ -50,6 +50,7 @@
           - ffmpeg               # Transcode audio and video
           - flac                 # Lossless audio
           - flatpak              # Flatpak for extra graphical programs
+          - gedit-plugins        # Extra plugins for gedit
           - git                  # Version control <3
           - gnome-backgrounds    # More backgrounds
           - gnome-software-plugin-flatpak  # Integrate flatpak with gnome-software
