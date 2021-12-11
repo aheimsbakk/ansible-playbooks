@@ -33,8 +33,6 @@
             # - seahorse          # GPG graphical interface
             # - syncthing         # To sync stuff
             # - tlp               # Save battery power on laptops
-            # - vagrant           # Automate VMs
-            # - vagrant-sshfs     # Better to do this, than using buggy nfs
             # - vim-syntastic     # <3
           - ansible              # Automate everything
           - ansible-lint         # Lint everything
@@ -68,6 +66,7 @@
           - pamu2fcfg            # Set up U2F token
           - pcscd                # Smart card daemon
           - pv                   # How fast do we transfer
+          - python3-pip          # Yes, need to install python packages
           - python3-pygments     # Syntax highlighting in Hugo
           - python3-qrcode       # Generate QR-codes in terminal with qr
           - rsync                # Syncing files, syncing life
@@ -76,18 +75,76 @@
           - tmux                 # <3
           - u2f-host             # Commandline U2F operations
           - ufw                  # Uncomplicated firewall
+          - vagrant              # Automate testing with full OSes
+          - vagrant-sshfs        # Mount filesystem into vagrant via SSH
           - vim-nox              # <3
           - virt-manager         # Graphical interface to Libvirt
+          - virtualbox           # Desktop virtualization
+            # - virtualbox-ext-pack  # Allow USB2.0/3.0
           - whois                # A must
           - yamllint             # YAML files need to be linted too
           - yubikey-personalization-gui  # Yubico configuration
           - yubioath-desktop     # The Yubico Authenticator
           - zmap                 # Map internet
           - zram-tools           # Zram swap
-          - virtualbox           # Desktop virtualization
-          - virtualbox-ext-pack  # Allow USB2.0/3.0
-          - vagrant              # Automate testing with full OSes
-          - vagrant-sshfs        # Mount filesystem into vagrant via SSH
+
+    - name: pin gnome-shell from unstable
+      copy:
+        dest: /etc/apt/preferences.d/gnome
+        mode: 0664
+        content: |
+          Package: *
+          Pin: release a=unstable
+          Pin-Priority: 50
+
+          Package: gnome-session
+          Pin: release a=unstable
+          Pin-Priority: 1000
+
+          Package: gnome-backgrounds
+          Pin: release a=unstable
+          Pin-Priority: 1000
+
+          Package: gnome-applets
+          Pin: release a=unstable
+          Pin-Priority: 1000
+
+          Package: gnome-control-center
+          Pin: release a=unstable
+          Pin-Priority: 1000
+
+          Package: mutter
+          Pin: release a=unstable
+          Pin-Priority: 1000
+
+          Package: gjs
+          Pin: release a=unstable
+          Pin-Priority: 1000
+
+          Package: gnome-tweaks
+          Pin: release a=unstable
+          Pin-Priority: 1000
+
+    - name: install gnome-shell from unstable
+      apt:
+        default_release: unstable
+        name:
+          - gjs
+          - gnome-applets
+          - gnome-backgrounds
+          - gnome-control-center
+          - gnome-session
+          - gnome-shell
+          - gnome-tweaks
+          - mutter
+
+    - name: add debian unstable repository
+      apt_repository:
+        repo: '{{ item }}'
+        filename: unstable
+      loop:
+        - deb http://deb.debian.org/debian unstable main contrib non-free
+        - deb-src http://deb.debian.org/debian unstable main contrib non-free
 
     - name: increase user watches
       sysctl:
@@ -235,7 +292,6 @@
         - io.github.quodlibet.ExFalso
         - org.chromium.Chromium
         - org.gimp.GIMP
-        - org.gnome.Calendar
         - org.gnome.Cheese
         - org.gnome.Dictionary
         - org.gnome.Evolution
@@ -243,9 +299,6 @@
         - org.gnome.Maps
         - org.gnome.Shotwell
         - org.gnome.Totem
-        - org.gnome.Weather
-        - org.gnome.baobab
-        - org.gnome.clocks
         - org.keepassxc.KeePassXC
         - org.mozilla.firefox
         - org.remmina.Remmina
