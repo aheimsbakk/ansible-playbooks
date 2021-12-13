@@ -27,7 +27,6 @@
             # - rkhunter          # Root kit hunter, just the basics
             # - syncthing         # To sync stuff
             # - vim-syntastic     # <3
-            # - virtualbox-ext-pack  # Allow USB2.0/3.0
           - ansible              # Automate everything
           - ansible-lint         # Lint everything
           - btrfs-compsize       # Check the compression ratio on btrfs
@@ -72,8 +71,6 @@
           - tree                 # Show dirs as tree structure
           - u2f-host             # Commandline U2F operations
           - ufw                  # Uncomplicated firewall
-          - vagrant              # Automate testing with full OSes
-          - vagrant-sshfs        # Mount filesystem into vagrant via SSH
           - vim-nox              # <3
           - virt-manager         # Graphical interface to Libvirt
           - whois                # A must
@@ -140,6 +137,39 @@
           - gnome-shell
           - gnome-tweaks
           - mutter
+
+    - name: pin extra software
+      copy:
+        dest: /etc/apt/preferences.d/software
+        mode: 0664
+        content: |
+          Package: vagrant
+          Pin: origin download.virtualbox.org
+          Pin-Priority: 1000
+
+    - name: add extra software reposity keys
+      apt_key:
+        id: '{{ item.id }}'
+        url: '{{ item.url }}'
+      loop:
+        - id: B9F8D658297AF3EFC18D5CDFA2F683C52980AECF
+          url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
+        - id: E8A032E094D8EB4EA189D270DA418C88A3219F7B
+          url: https://apt.releases.hashicorp.com/gpg
+
+    - name: add extra software repository
+      apt_repository:
+        repo: '{{ item }}'
+        filename: software
+      loop:
+        - deb [arch=amd64] https://download.virtualbox.org/virtualbox/debian {{ ansible_distribution_release }} contrib
+        - deb [arch=amd64] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main
+
+    - name: install extra software
+      apt:
+        name:
+          - vagrant
+          - virtualbox-6.1
 
     - name: increase user watches
       sysctl:
