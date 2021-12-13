@@ -64,6 +64,7 @@
           - python3-pygments     # Syntax highlighting in Hugo
           - python3-qrcode       # Generate QR-codes in terminal with qr
           - rsync                # Syncing files, syncing life
+          - screenfetch          # Screenshot information tool
           - strace               # String trace processes
           - sysfsutils           # Control /sys
           - tlp                  # Save battery power on laptops
