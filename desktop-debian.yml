@@ -76,7 +76,6 @@
           - vagrant-sshfs        # Mount filesystem into vagrant via SSH
           - vim-nox              # <3
           - virt-manager         # Graphical interface to Libvirt
-          - virtualbox           # Desktop virtualization
           - whois                # A must
           - yamllint             # YAML files need to be linted too
           - yubikey-personalization-gui  # Yubico configuration
