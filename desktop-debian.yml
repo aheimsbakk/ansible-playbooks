@@ -54,6 +54,7 @@
           - libpam-u2f            # U2F token 2 factor in PAM
           - ltrace                # Trace library calls
           - menulibre             # Edit Gnome menu items
+          - mtr                   # Better traceroute
           - network-manager-openvpn-gnome  # Connect to OpenVPN server
           - nmap                  # Scan network ports
           - npm                   # Needed by vim-lsp
