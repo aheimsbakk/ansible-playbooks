@@ -54,6 +54,7 @@
           - libpam-u2f            # U2F token 2 factor in PAM
           - ltrace                # Trace library calls
           - menulibre             # Edit Gnome menu items
+          - mtr                   # Better traceroute
           - network-manager-openvpn-gnome  # Connect to OpenVPN server
           - nmap                  # Scan network ports
           - npm                   # Needed by vim-lsp
@@ -64,6 +65,7 @@
           - python3-pip           # Yes, need to install python packages
           - python3-pygments      # Syntax highlighting in Hugo
           - python3-qrcode        # Generate QR-codes in terminal with qr
+          - resolvconf            # Needed for wireguard DNS configuration
           - rsync                 # Syncing files, syncing life
           - screenfetch           # Screenshot information tool
           - strace                # String trace processes
@@ -76,6 +78,7 @@
           - vim-nox               # <3
           - virt-manager          # Graphical interface to Libvirt
           - whois                 # A must
+          - wireguard-tools       # Wireguard VPN
           - yamllint              # YAML files need to be linted too
           - yubikey-personalization-gui  # Yubico configuration
           - yubioath-desktop      # The Yubico Authenticator
