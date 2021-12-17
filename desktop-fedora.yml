@@ -33,6 +33,7 @@
           - catimg            # Display images in terminal
           - compsize          # Check the compression ratio on btrfs
           - davfs2            # DavFS for mounting Nextcloud, no need to sync everything
+          - dconf-editor      # Change configuration under the hood of Gnome
           - dstat             # Stat system values in colors
           - duperemove        # Dedup btrfs
           - etckeeper         # Watch what happens in /etc
