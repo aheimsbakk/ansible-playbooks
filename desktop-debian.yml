@@ -27,59 +27,60 @@
             # - rkhunter          # Root kit hunter, just the basics
             # - syncthing         # To sync stuff
             # - vim-syntastic     # <3
-          - ansible              # Automate everything
-          - ansible-lint         # Lint everything
-          - btrfs-compsize       # Check the compression ratio on btrfs
-          - btrfs-heatmap        # Visualize how data is stored on disk
-          - catimg               # Display images in terminal
-          - curl                 # Fetch stuff from the Internet
-          - davfs2               # DavFS for mounting Nextcloud, no need to sync everything
-          - dconf-editor         # Edit desktop configuration
-          - dstat                # Stat system values in colors
-          - duperemove           # Dedup btrfs
-          - etckeeper            # Watch what happens in /etc
-          - ffmpeg               # Transcode audio and video
-          - flac                 # Lossless audio
-          - flatpak              # Flatpak for extra graphical programs
-          - gedit-plugins        # Extra plugins for gedit
-          - git                  # Version control <3
-          - gnome-backgrounds    # More backgrounds
+          - ansible               # Automate everything
+          - ansible-lint          # Lint everything
+          - btrfs-compsize        # Check the compression ratio on btrfs
+          - btrfs-heatmap         # Visualize how data is stored on disk
+          - catimg                # Display images in terminal
+          - curl                  # Fetch stuff from the Internet
+          - davfs2                # DavFS for mounting Nextcloud, no need to sync everything
+          - dconf-editor          # Edit desktop configuration
+          - dstat                 # Stat system values in colors
+          - duperemove            # Dedup btrfs
+          - etckeeper             # Watch what happens in /etc
+          - ffmpeg                # Transcode audio and video
+          - flac                  # Lossless audio
+          - flatpak               # Flatpak for extra graphical programs
+          - gedit-plugins         # Extra plugins for gedit
+          - git                   # Version control <3
+          - gnome-backgrounds     # More backgrounds
           - gnome-software-plugin-flatpak  # Integrate flatpak with gnome-software
-          - gnome-tweaks         # Customize Gnome
-          - gnupg-pkcs11-scd     # Smart card functionality for SSH keys on Yubikey
-          - haveged              # More random data from CPU flutter
-          - hugo                 # Static blog generator
-          - lame                 # Encode mp3
-          - lftp                 # FTP isn't dead
-          - libpam-u2f           # U2F token 2 factor in PAM
-          - ltrace               # Trace library calls
-          - menulibre            # Edit Gnome menu items
-          - nmap                 # Scan network ports
-          - npm                  # Needed by vim-lsp
-          - offlineimap          # Make local backup of IMAP
-          - pamu2fcfg            # Set up U2F token
-          - pcscd                # Smart card daemon
-          - pv                   # How fast do we transfer
-          - python3-pip          # Yes, need to install python packages
-          - python3-pygments     # Syntax highlighting in Hugo
-          - python3-qrcode       # Generate QR-codes in terminal with qr
-          - rsync                # Syncing files, syncing life
-          - screenfetch          # Screenshot information tool
-          - strace               # String trace processes
-          - sysfsutils           # Control /sys
-          - tlp                  # Save battery power on laptops
-          - tmux                 # <3
-          - tree                 # Show dirs as tree structure
-          - u2f-host             # Commandline U2F operations
-          - ufw                  # Uncomplicated firewall
-          - vim-nox              # <3
-          - virt-manager         # Graphical interface to Libvirt
-          - whois                # A must
-          - yamllint             # YAML files need to be linted too
+          - gnome-tweaks          # Customize Gnome
+          - gnupg-pkcs11-scd      # Smart card functionality for SSH keys on Yubikey
+          - haveged               # More random data from CPU flutter
+          - hugo                  # Static blog generator
+          - lame                  # Encode mp3
+          - lftp                  # FTP isn't dead
+          - libpam-u2f            # U2F token 2 factor in PAM
+          - ltrace                # Trace library calls
+          - menulibre             # Edit Gnome menu items
+          - network-manager-openvpn-gnome  # Connect to OpenVPN server
+          - nmap                  # Scan network ports
+          - npm                   # Needed by vim-lsp
+          - offlineimap           # Make local backup of IMAP
+          - pamu2fcfg             # Set up U2F token
+          - pcscd                 # Smart card daemon
+          - pv                    # How fast do we transfer
+          - python3-pip           # Yes, need to install python packages
+          - python3-pygments      # Syntax highlighting in Hugo
+          - python3-qrcode        # Generate QR-codes in terminal with qr
+          - rsync                 # Syncing files, syncing life
+          - screenfetch           # Screenshot information tool
+          - strace                # String trace processes
+          - sysfsutils            # Control /sys
+          - tlp                   # Save battery power on laptops
+          - tmux                  # <3
+          - tree                  # Show dirs as tree structure
+          - u2f-host              # Commandline U2F operations
+          - ufw                   # Uncomplicated firewall
+          - vim-nox               # <3
+          - virt-manager          # Graphical interface to Libvirt
+          - whois                 # A must
+          - yamllint              # YAML files need to be linted too
           - yubikey-personalization-gui  # Yubico configuration
-          - yubioath-desktop     # The Yubico Authenticator
-          - zmap                 # Map internet
-          - zram-tools           # Zram swap
+          - yubioath-desktop      # The Yubico Authenticator
+          - zmap                  # Map internet
+          - zram-tools            # Zram swap
 
     - name: pin gnome-shell from unstable
       copy:
@@ -157,6 +158,8 @@
           url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
         - id: E8A032E094D8EB4EA189D270DA418C88A3219F7B
           url: https://apt.releases.hashicorp.com/gpg
+        - id: 37C84554E7E0A261E4F76E1ED26E6ED000654A3E
+          url: https://syncthing.net/release-key.gpg
 
     - name: add extra software repository
       apt_repository:
@@ -165,12 +168,14 @@
       loop:
         - deb [arch=amd64] https://download.virtualbox.org/virtualbox/debian {{ ansible_distribution_release }} contrib
         - deb [arch=amd64] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main
+        - deb https://apt.syncthing.net/ syncthing stable
 
     - name: install extra software
       apt:
         name:
-          - vagrant
-          - virtualbox-6.1
+          - vagrant               # Declarative VMs for testing
+          - virtualbox-6.1        # Virtualization for use with vagrant
+          - syncthing             # Sync stuff between machines/mobiles fast
 
     - name: increase user watches
       sysctl:
