@@ -4,50 +4,6 @@
   become: true
 
   tasks:
-    - name: Check if USER variable is defined
-      assert:
-        that: USER is defined
-        fail_msg: "Variable USER is not defined, can't find ~USER/.ssh folder"
-        success_msg: "Will search ~{{ USER|default('') }}/.ssh for public SSH keys on localhost"
-
-    - name: find public keys on localhost
-      local_action:
-        module: find
-        paths: '~{{ USER }}/.ssh'
-        file_type: file
-        use_regex: true
-        patterns:
-          - '^.*.pub$'
-      become: '{{ USER }}'
-      register: found_keys
-      run_once: true
-
-    - name: slurp public keys
-      local_action:
-        module: slurp
-        src: '{{ item.path }}'
-      become: '{{ USER }}'
-      loop: '{{ found_keys.files }}'
-      loop_control:
-        label: '{{ item.path }}'
-      register: ssh_public_keys
-      run_once: true
-
-    - name: add keys to raspberry pi, user pi
-      authorized_key:
-        user: pi
-        key: '{{ item.content | b64decode }}'
-      loop: '{{ ssh_public_keys.results }}'
-      loop_control:
-        label: '{{ item.content | b64decode }}'
-      register: authorized_keys
-
-    - name: remove password from rapsberry user
-      user:
-        name: pi
-        password: '!'
-      when: authorized_keys is changed
-
     - name: install packages
       apt:
         name:
@@ -66,7 +22,7 @@
     - name: enable screen in config.txt
       blockinfile:
         marker: '# {mark} adafruid 2.8"'
-        path: /boot/config.txt
+        path: /boot/firmware/config.txt
         block: |
           hdmi_force_hotplug=0
           dtparam=spi=on
@@ -76,9 +32,9 @@
 
     - name: enable screen in configure cmdline.txt
       lineinfile:
-        path: /boot/cmdline.txt
+        path: /boot/firmware/cmdline.txt
         regexp: '^(.* rootwait).*$'
-        line: '\1 fbcon=map:10 fbcon=font:VGA8x8 consoleblank=0'
+        line: '\1 fbcon=map:2 fbcon=font:VGA8x8 consoleblank=0'
         backrefs: true
       register: cmdline
 
@@ -131,16 +87,6 @@
           value: Terminus
         - option: FONTSIZE
           value: 6x12
-
-    - name: enable sshd
-      systemd:
-        name: sshd
-        enabled: true
-        state: started
-
-    - name: set inventory_hostname as hostname
-      hostname:
-        name: '{{ inventory_hostname }}'
 
     - name: make it possible to turn on and off wifi power management
       copy:
