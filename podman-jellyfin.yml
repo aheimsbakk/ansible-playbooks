@@ -1,0 +1,54 @@
+- name: set up mediaserver jellyfin
+  hosts: nuc.lan
+  become: true
+
+  tasks:
+    - name: create non privileged group for podman
+      ansible.builtin.group:
+        name: podman
+        system: true
+      register: podman_group
+
+    - name: create non privileged user for podman
+      ansible.builtin.user:
+        name: podman
+        system: true
+        group: podman
+        groups: video
+      register: podman_user
+
+    - name: create folders for jellyfin
+      ansible.builtin.file:
+        path: "/srv/jellyfin/{{ item }}"
+        owner: podman
+        group: podman
+        state: directory
+        recurse: true
+      loop:
+        - config
+        - cache
+
+    - name: download and set up jellyfin
+      containers.podman.podman_container:
+        image: docker.io/jellyfin/jellyfin:latest
+        name: jellyfin
+        label:
+          io.containers.autoupdate: registry
+        # rm: true
+        publish:
+          - 8096:8096/tcp
+        user: "{{ podman_user.uid }}"
+        volume:
+          - /srv/jellyfin/config:/config:z
+          - /srv/jellyfin/cache:/cache:z
+          - /var/ftp/pub:/media:ro
+          - /var/ftp/pub/Radio:/media/Radio:ro,z
+        device:
+          - /dev/dri/card0:/dev/dri/card0
+          - /dev/dri/renderD128:/dev/dri/renderD128
+        generate_systemd:
+          new: true
+          names: true
+          time: 60
+          path: /tmp
+
