@@ -88,6 +88,21 @@
           - catimg            # cat a PNG to terminal
           - libnss-mdns       # allow zero config DNS resolution
           - network-manager   # use network manager for handling wifi
+          - tlp               # powermanagement
+
+    - name: configure tlp
+      ini_file:
+        path: /etc/tlp.d/99-custom.conf
+        section: null
+        option: '{{ item.o }}'
+        value: '{{ item.v  }}'
+        no_extra_spaces: true
+        mode: 0644
+      loop:
+        - o: TLP_DEFAULT_MODE
+          v: AC
+        - o: CPU_SCALING_GOVERNOR_ON_AC
+          v: schedutil
 
     # Can be done on globally as this, or based on SSID:
     # sudo nmcli connection modify MY_SSID 802-11-wireless.powersave 2

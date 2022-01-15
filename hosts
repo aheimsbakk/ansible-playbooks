@@ -1,5 +1,4 @@
-hole ansible_user=pi ansible_host=192.168.1.254
-backup ansible_user=pi ansible_host=192.168.1.253
+hole ansible_user=ubuntu ansible_host=192.168.1.254
 
 [bootstrap_pi_ubuntu]
 10.42.0.[2:254] ansible_user=ubuntu bootstrap_hostname=bootstrap
