@@ -12,7 +12,7 @@
       expose:
         - 8096
       user: nobody
-      generate_systemd: "{{ generate_systemd }}"
+      generate_systemd: "{{ generate_systemd | default(omit) }}"
       volume:
         - /srv/jellyfin/config:/config:z,U
         - /srv/jellyfin/cache:/cache:z,U

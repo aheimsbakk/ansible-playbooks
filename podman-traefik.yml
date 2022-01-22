@@ -15,7 +15,7 @@
         - 80:80/tcp
         - 443:443/tcp
         - 443:443/udp
-      generate_systemd: "{{ generate_systemd }}"
+      generate_systemd: "{{ generate_systemd | default(omit) }}"
       volume:
         - /srv/traefik/config:/etc/traefik:z,U
         - /srv/traefik/acme:/acme:z,U

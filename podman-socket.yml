@@ -13,7 +13,7 @@
       expose:
         - 2375
       network: dmz
-      generate_systemd: "{{ generate_systemd }}"
+      generate_systemd: "{{ generate_systemd | default(omit) }}"
       volume:
         - /run/podman/podman.sock:/var/run/docker.sock:ro
       env:
