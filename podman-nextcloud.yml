@@ -59,7 +59,7 @@
         io.containers.autoupdate: registry
         traefik.enable: "true"
         traefik.http.middlewares.nextcloud-redirect.redirectregex.regex: "^https://(.*)/.well-known/(card|cal)dav"
-        traefik.http.middlewares.nextcloud-redirect.redirectregex.replacement: "https://$${1}/remote.php/dav/"
+        traefik.http.middlewares.nextcloud-redirect.redirectregex.replacement: "https://${1}/remote.php/dav/"
         traefik.http.middlewares.nextcloud-redirect.redirectregex.permanent: "true"
         traefik.http.services.nextcloud.loadbalancer.server.port: "80"
         traefik.http.routers.nextcloud.entrypoints: "websecure"
