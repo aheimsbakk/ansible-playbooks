@@ -25,5 +25,5 @@
 
   tasks:
     - name: download and run container
-      ansible.builtin.import_tasks:
+      ansible.builtin.include_tasks:
         file: podman-run.yml

@@ -22,10 +22,10 @@
         traefik.enable: "true"
         traefik.http.services.jellyfin.loadbalancer.server.port: "8096"
         traefik.http.routers.jellyfin.entrypoints: "websecure"
+        traefik.http.routers.jellyfin.service: "jellyfin"
         traefik.http.routers.jellyfin.middlewares: "private-ip-ranges-no-podman"
-
 
   tasks:
     - name: download and run container
-      ansible.builtin.import_tasks:
+      ansible.builtin.include_tasks:
         file: podman-run.yml

@@ -7,7 +7,7 @@
   ansible.builtin.file:
     path: "{{ item | split(':') | first }}"
     recurse: true
-  loop: "{{ container.volume | select('in', '/srv/') }}"
+  loop: "{{ container.volume | select('regex', '^/srv/') }}"
 
 - name: download and set up container
   containers.podman.podman_container: "{{ container }}"
