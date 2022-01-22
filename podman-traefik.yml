@@ -69,6 +69,8 @@
         traefik.http.routers.traefik.service: "api@internal"
         traefik.http.routers.traefik.entrypoints: "websecure"
         traefik.http.routers.traefik.middlewares: "private-ip-ranges-no-podman"
+      restart_policy: always
+      log_driver: journald
 
   tasks:
     - name: tls configuration

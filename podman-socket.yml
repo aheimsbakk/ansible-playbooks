@@ -23,6 +23,8 @@
         TASKS: 1
       label:
         io.containers.autoupdate: registry
+      restart_policy: always
+      log_driver: journald
 
   tasks:
     - name: download and run container

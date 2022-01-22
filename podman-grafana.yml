@@ -1,23 +1,10 @@
 ---
-- name: container nextcloud
+- name: container prometheus and grafana
   hosts: podman
   become: true
 
   vars:
-    container_customization_redis: "{{ container_nextcloud_redis | default( {} ) }}"
-    container_defaults_redis:
-      image: docker.io/redis:alpine
-      name: nextcloud_redis
-      network: int
-      user: nobody
-      volume:
-        - /srv/nextcloud/redis:/data:z,U
-      labels:
-        io.containers.autoupdate: registry
-      restart_policy: always
-      log_driver: journald
-
-    container_customization_mariadb: "{{ container_nextcloud_mariadb | default( {} ) }}"
+    container_customization_prometheus: "{{ container_prometheus | default( {} ) }}"
     container_defaults_mariadb:
       image: docker.io/mariadb:10
       name: nextcloud_mariadb
@@ -34,10 +21,8 @@
       network: int
       labels:
         io.containers.autoupdate: registry
-      restart_policy: always
-      log_driver: journald
 
-    container_customization_nextcloud: "{{ container_nextcloud | default( {} ) }}"
+    container_customization_grafana: "{{ container_grafana | default( {} ) }}"
     container_defaults_nextcloud:
       image: docker.io/aheimsbakk/nextcloud:23-apache-ffmpeg
       name: nextcloud
@@ -69,26 +54,13 @@
         traefik.http.routers.nextcloud.entrypoints: "websecure"
         traefik.http.routers.nextcloud.service: "nextcloud"
         traefik.http.routers.nextcloud.middlewares: "nextcloud-redirect"
-      restart_policy: always
-      log_driver: journald
 
-    container_customization_nextcloud_cron: "{{ container_nextcloud_cron | default( {} ) }}"
-    container_defaults_nextcloud_cron:
-      image: docker.io/aheimsbakk/nextcloud:23-apache-ffmpeg
-      name: nextcloud_cron
-      volume: *nextcloud_volume
-      entrypoint: /cron.sh
-      network: int
-      labels:
-        io.containers.autoupdate: registry
-      restart_policy: always
-      log_driver: journald
 
   tasks:
     - name: nextcloud_redis container
       ansible.builtin.set_fact:
-        container_customization: "{{ container_customization_redis }}"
-        container_defaults: "{{ container_defaults_redis }}"
+        container_customization: "{{ container_prometheus }}"
+        container_defaults: "{{ container_prometheus }}"
 
     - name: download and run container
       ansible.builtin.include_tasks:
@@ -96,27 +68,10 @@
 
     - name: nextcloud_mariadb container
       ansible.builtin.set_fact:
-        container_customization: "{{ container_customization_mariadb }}"
-        container_defaults: "{{ container_defaults_mariadb }}"
+        container_customization: "{{ container_grafana }}"
+        container_defaults: "{{ container_grafana }}"
 
     - name: download and run container
       ansible.builtin.include_tasks:
         file: podman-run.yml
 
-    - name: nextcloud container
-      ansible.builtin.set_fact:
-        container_customization: "{{ container_customization_nextcloud }}"
-        container_defaults: "{{ container_defaults_nextcloud }}"
-
-    - name: download and run container
-      ansible.builtin.include_tasks:
-        file: podman-run.yml
-
-    - name: nextcloud_cron container
-      ansible.builtin.set_fact:
-        container_customization: "{{ container_customization_nextcloud_cron }}"
-        container_defaults: "{{ container_defaults_nextcloud_cron }}"
-
-    - name: download and run container
-      ansible.builtin.include_tasks:
-        file: podman-run.yml

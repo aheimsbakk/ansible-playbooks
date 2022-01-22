@@ -22,6 +22,8 @@
         traefik.http.routers.smokeping.entrypoints: "websecure"
         traefik.http.routers.smokeping.service: "smokeping"
         traefik.http.routers.smokeping.middlewares: "private-ip-ranges-no-podman"
+      restart_policy: always
+      log_driver: journald
 
   tasks:
     - name: download and run container

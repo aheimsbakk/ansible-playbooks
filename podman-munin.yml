@@ -27,6 +27,8 @@
         traefik.http.routers.munin.entrypoints: "websecure"
         traefik.http.routers.munin.service: "munin"
         traefik.http.routers.munin.middlewares: "private-ip-ranges-no-podman,munin-redirect"
+      restart_policy: always
+      log_driver: journald
 
   tasks:
     - name: download and run container

@@ -24,6 +24,8 @@
         traefik.http.routers.jellyfin.entrypoints: "websecure"
         traefik.http.routers.jellyfin.service: "jellyfin"
         traefik.http.routers.jellyfin.middlewares: "private-ip-ranges-no-podman"
+      restart_policy: always
+      log_driver: journald
 
   tasks:
     - name: download and run container

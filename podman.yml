@@ -97,10 +97,10 @@
 ## include pods to start
 ##
 
+- ansible.builtin.import_playbook: podman-socket.yml
+- ansible.builtin.import_playbook: podman-traefik.yml
+- ansible.builtin.import_playbook: podman-smokeping.yml
+- ansible.builtin.import_playbook: podman-munin.yml
+- ansible.builtin.import_playbook: podman-gotify.yml
+- ansible.builtin.import_playbook: podman-jellyfin.yml
 - ansible.builtin.import_playbook: podman-nextcloud.yml
-  #- ansible.builtin.import_playbook: podman-socket.yml
-  #- ansible.builtin.import_playbook: podman-traefik.yml
-  #- ansible.builtin.import_playbook: podman-smokeping.yml
-  #- ansible.builtin.import_playbook: podman-munin.yml
-  #- ansible.builtin.import_playbook: podman-gotify.yml
-  #- ansible.builtin.import_playbook: podman-jellyfin.yml
