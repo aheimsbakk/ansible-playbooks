@@ -1,5 +1,5 @@
 ---
-- name: jellyfin
+- name: container jellyfin
   hosts: podman
   become: true
 
@@ -25,7 +25,7 @@
       containers.podman.podman_container:
         image: docker.io/jellyfin/jellyfin:latest
         name: jellyfin
-        network: int
+        network: dmz
         expose:
           - 8096
         user: nobody

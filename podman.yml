@@ -130,7 +130,7 @@
                   - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
                   - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 
-    - name: podman socket with proxy
+    - name: conainer podman socket proxy
       containers.podman.podman_container:
         image: docker.io/tecnativa/docker-socket-proxy:latest
         name: podman-socket
@@ -151,7 +151,7 @@
           io.containers.autoupdate: registry
         generate_systemd: "{{ generate_systemd }}"
 
-    - name: download and set up traefik
+    - name: conainer traefik
       containers.podman.podman_container:
         image: docker.io/traefik:v2.5
         name: traefik
@@ -227,4 +227,5 @@
 ## include pods to start
 ##
 
+- ansible.builtin.import_playbook: podman-gotify.yml
 - ansible.builtin.import_playbook: podman-jellyfin.yml
