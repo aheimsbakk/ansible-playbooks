@@ -2,3 +2,5 @@
 collections:
   - name: containers.podman
     version: 1.9.0
+  - name: community.general
+    version: 4.2.0

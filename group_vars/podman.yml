@@ -1,0 +1,7 @@
+---
+generate_systemd:
+  new: true
+  names: true
+  time: 60
+  path: /tmp
+

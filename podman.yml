@@ -1,0 +1,230 @@
+---
+- name: configure podman on server
+  hosts: podman
+  become: true
+
+  tasks:
+    - name: install ufw
+      ansible.builtin.apt:
+        name: ufw
+
+    - name: install podman and dnsmasq dependency
+      ansible.builtin.apt:
+        name:
+          - podman
+          - dnsmasq
+        update_cache: yes
+
+    - name: gather the package facts
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: enable ufw
+      ansible.builtin.systemd:
+        name: ufw
+        enabled: true
+        state: started
+      when: "'ufw' in ansible_facts.packages"
+      register: ufw_enabled
+
+    - name: allow ssh and reject all other
+      community.general.ufw:
+        state: enabled
+        default: reject
+      when: "'ufw' in ansible_facts.packages"
+
+    - name: allow ssh and reject all other
+      community.general.ufw:
+        rule: allow
+        port: 22
+        proto: tcp
+        state: enabled
+      when: "'ufw' in ansible_facts.packages"
+
+    - name: allow incomming trafic on podman dmz
+      community.general.ufw:
+        rule: allow
+        route: true
+        from: 0.0.0.0/0
+        to: 10.255.254.0/23
+      when: "'ufw' in ansible_facts.packages"
+
+    - name: enable podman socket and auto update
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+      loop:
+        - podman.socket
+        - podman-auto-update.timer
+      when: "'podman' in ansible_facts.packages"
+
+    - name: exit play if podman is not installed
+      ansible.builtin.meta: end_play
+      when: "'podman' not in ansible_facts.packages"
+      check_mode: false
+
+    ##
+    ## podman networks
+    ##
+
+    - name: create missing directory
+      ansible.builtin.file:
+        path: /usr/libexec/cni
+        state: directory
+        mode: 0755
+
+    - name: copy dnsname plugin to correct path
+      ansible.builtin.copy:
+        src: /usr/lib/dnsname
+        dest: /usr/libexec/cni/dnsname
+        mode: 0755
+        remote_src: true
+
+    - name: podman int network
+      containers.podman.podman_network:
+        name: int
+
+    - name: podman dmz network
+      containers.podman.podman_network:
+        name: dmz
+        subnet: 10.255.254.0/23
+        gateway: 10.255.254.1
+        disable_dns: false
+
+    ##
+    ## traefik for all
+    ##
+
+    - name: set variables for traefik
+      ansible.builtin.set_fact:
+        traefik:
+          volume:
+            - /srv/traefik/config:/etc/traefik
+            - /srv/traefik/acme:/acme
+      when: traefik is not defined
+
+    - name: create folders for traefik
+      ansible.builtin.file:
+        path: "{{ item | split(':') | first }}"
+        owner: root
+        state: directory
+        recurse: true
+      loop: "{{ traefik.volume }}"
+
+    - name: tls configuration
+      ansible.builtin.copy:
+        dest: /srv/traefik/config/tls.yml
+        mode: 0644
+        content: |
+          tls:
+            options:
+              mintls13:
+                minVersion: VersionTLS13
+              mintls12:
+                minVersion: VersionTLS12
+                cipherSuites:
+                  - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+                  - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+                  - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+                  - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+                  - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+
+    - name: podman socket with proxy
+      containers.podman.podman_container:
+        image: docker.io/tecnativa/docker-socket-proxy:latest
+        name: podman-socket
+        security_opt:
+          - label=disable
+        volume:
+          - /run/podman/podman.sock:/var/run/docker.sock:ro
+        env:
+          CONTAINERS: 1
+          NETWORKS: 1
+          SERVICES: 1
+          TASKS: 1
+        expose:
+          - 2375
+        network:
+          - int
+        label:
+          io.containers.autoupdate: registry
+        generate_systemd: "{{ generate_systemd }}"
+
+    - name: download and set up traefik
+      containers.podman.podman_container:
+        image: docker.io/traefik:v2.5
+        name: traefik
+        network:
+          - dmz
+          - int
+        publish:
+          - 80:80/tcp
+          - 443:443/tcp
+          - 443:443/udp
+        volume: "{{ traefik.volume | default([]) }}"
+        env:
+          TRAEFIK_API: "true"
+          TRAEFIK_LOG_LEVEL: debug
+          TRAEFIK_ACCESSLOG: "true"
+          TRAEFIK_EXPERIMENTAL_HTTP3: "true"
+          # don't verfy tls on dockers
+          TRAEFIK_SERVERSTRANSPORT_INSECURESKIPVERIFY: "true"
+          TRAEFIK_SERVERSTRANSPORT_MAXIDLECONNSPERHOST: "5"
+          # file provider
+          TRAEFIK_PROVIDERS_FILE_DIRECTORY: /etc/traefik
+          # docker provider
+          TRAEFIK_PROVIDERS_DOCKER: "true"
+          TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: "false"
+          TRAEFIK_PROVIDERS_DOCKER_NETWORK: dmz
+          TRAEFIK_PROVIDERS_DOCKER_DEFAULTRULE: "host(`{{ '{{' }} (split `-` .Name)._0 {{ '}}' }}.10.10.10.10.nip.io`)"
+          TRAEFIK_PROVIDERS_DOCKER_ENDPOINT: http://podman-socket:2375
+          # listen to port 80 and redirect to 443
+          TRAEFIK_ENTRYPOINTS_WEB_ADDRESS: :80
+          TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_TO: websecure
+          TRAEFIK_ENTRYPOINTS_WEB_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME: https
+          # listen to port 443 with ssl
+          TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS: :443
+          TRAEFIK_ENTRYPOINTS_WEBSECURE_ENABLEHTTP3: "true"
+          TRAEFIK_ENTRYPOINTS_WEBSECURE_HTTP_TLS: "true"
+          TRAEFIK_ENTRYPOINTS_WEBSECURE_HTTP_TLS_OPTIONS: mintls12@file
+          # TRAEFIK_ENTRYPOINTS_WEBSECURE_HTTP_TLS_CERTRESOLVER: letsencrypt
+          TRAEFIK_ENTRYPOINTS_WEBSECURE_HTTP_MIDDLEWARES: default-https-headers
+          # listen to port 5487 with ssl
+          #TRAEFIK_ENTRYPOINTS_REGISTRYSECURE_ADDRESS: :5487
+          #TRAEFIK_ENTRYPOINTS_REGISTRYSECURE_PROXYPROTOCOL: "true"
+          #TRAEFIK_ENTRYPOINTS_REGISTRYSECURE_PROXYPROTOCOL_TRUSTEDIPS: 10.0.0.0/8
+          #TRAEFIK_ENTRYPOINTS_REGISTRYSECURE_HTTP_TLS: "true"
+          #TRAEFIK_ENTRYPOINTS_REGISTRYSECURE_HTTP_TLS_OPTIONS: mintls12@file
+          #TRAEFIK_ENTRYPOINTS_REGISTRYSECURE_HTTP_TLS_CERTRESOLVER: letsencrypt
+          #TRAEFIK_ENTRYPOINTS_REGISTRYSECURE_HTTP_MIDDLEWARES: default-https-headers@file
+          ## letsencrypt, enable and use prod api in production
+          #TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT: "true"
+          ## traefik_certificatesresolvers_letsencrypt_acme_caserver: https://acme-staging-v02.api.letsencrypt.org/directory
+          #TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_CASERVER: https://acme-v02.api.letsencrypt.org/directory
+          #TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL: arnulf.heimsbakk@gmail.com
+          #TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_STORAGE: /acme/letsencrypt.json
+          #TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_TLSCHALLENGE: "true"
+        label:
+          io.containers.autoupdate: registry
+          traefik.enable: "true"
+          traefik.http.middlewares.private-ip-ranges.ipwhitelist.sourcerange: "192.168.0.0/16,172.16.0.0/12,10.0.0.0/8"
+          traefik.http.middlewares.private-ip-ranges-no-podman.ipwhitelist.sourcerange: "192.168.0.0/16,172.16.0.0/12,10.10.10.1"
+          traefik.http.middlewares.default-https-headers.headers.customFrameOptionsValue: "SAMEORIGIN"
+          traefik.http.middlewares.default-https-headers.headers.framedeny: "true"
+          traefik.http.middlewares.default-https-headers.headers.sslredirect: "true"
+          traefik.http.middlewares.default-https-headers.headers.stsIncludeSubdomains: "true"
+          traefik.http.middlewares.default-https-headers.headers.stsPreload: "true"
+          traefik.http.middlewares.default-https-headers.headers.stsSeconds: "15552000"
+          traefik.http.middlewares.default-https-headers.headers.referrerPolicy: "same-origin"
+          traefik.http.routers.traefik.service: "api@internal"
+          traefik.http.routers.traefik.entrypoints: "websecure"
+          traefik.http.routers.traefik.middlewares: "private-ip-ranges-no-podman"
+        generate_systemd: "{{ generate_systemd }}"
+
+
+##
+## include pods to start
+##
+
+- ansible.builtin.import_playbook: podman-jellyfin.yml
