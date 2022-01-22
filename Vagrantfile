@@ -1,6 +1,8 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# export ANSIBLE_INJECT_FACT_VARS=False
+
 Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/impish64"
 
@@ -18,8 +20,8 @@ Vagrant.configure("2") do |config|
     l.cpus = "4"
   end
 
-  config.vm.define "podman" do |config|
-    config.vm.hostname = "podman"
+  config.vm.define "vagrant" do |config|
+    config.vm.hostname = "vagrant"
   end
 
   # config.vm.provision "shell", inline: <<-SHELL
@@ -30,7 +32,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "ansible-playbook --check --diff", run: "always", type: "ansible" do |a|
     a.compatibility_mode = "2.0"
     a.groups = {
-      "podman" => [ "podman" ]
+      "podman" => [ "vagrant" ]
     }
     a.limit = "all"
     a.playbook = "podman.yml"
@@ -40,7 +42,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "ansible-playbook", type: "ansible" do |a|
     a.compatibility_mode = "2.0"
     a.groups = {
-      "podman" => [ "podman" ]
+      "podman" => [ "vagrant" ]
     }
     a.limit = "all"
     a.playbook = "podman.yml"

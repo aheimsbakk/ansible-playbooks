@@ -1,0 +1,14 @@
+---
+- name: combine customization and defaults
+  ansible.builtin.set_fact:
+    container: "{{ container_defaults | combine( container_customization ) }}"
+
+- name: create folders for container
+  ansible.builtin.file:
+    path: "{{ item | split(':') | first }}"
+    recurse: true
+  loop: "{{ container.volume | select('in', '/srv/') }}"
+
+- name: download and set up container
+  containers.podman.podman_container: "{{ container }}"
+

@@ -3,39 +3,29 @@
   hosts: podman
   become: true
 
+  vars:
+    container_customization: "{{ container_jellyfin | default( {} ) }}"
+    container_defaults:
+      image: docker.io/jellyfin/jellyfin:latest
+      name: jellyfin
+      network: dmz
+      expose:
+        - 8096
+      user: nobody
+      generate_systemd: "{{ generate_systemd }}"
+      volume:
+        - /srv/jellyfin/config:/config:z,U
+        - /srv/jellyfin/cache:/cache:z,U
+        - /srv/jellyfin/media:/media:z,U
+      label:
+        io.containers.autoupdate: registry
+        traefik.enable: "true"
+        traefik.http.services.jellyfin.loadbalancer.server.port: "8096"
+        traefik.http.routers.jellyfin.entrypoints: "websecure"
+        traefik.http.routers.jellyfin.middlewares: "private-ip-ranges-no-podman"
+
+
   tasks:
-    - name: set variables for jellyfin
-      ansible.builtin.set_fact:
-        jellyfin:
-          volume:
-            - /srv/jellyfin/config:/config
-            - /srv/jellyfin/cache:/cache
-            - /srv/jellyfin/media:/media
-      when: jellyfin is not defined
-
-    - name: create folders for jellyfin
-      ansible.builtin.file:
-        path: "{{ item | split(':') | first }}"
-        owner: nobody
-        state: directory
-        recurse: true
-      loop: "{{ jellyfin.volume }}"
-
-    - name: download and set up jellyfin
-      containers.podman.podman_container:
-        image: docker.io/jellyfin/jellyfin:latest
-        name: jellyfin
-        network: dmz
-        expose:
-          - 8096
-        user: nobody
-        volume: "{{ jellyfin.volume | default(omit) }}"
-        device: "{{ jellyfin.device | default(omit) }}"
-        generate_systemd: "{{ generate_systemd }}"
-        label:
-          io.containers.autoupdate: registry
-          traefik.enable: "true"
-          traefik.http.services.jellyfin.loadbalancer.server.port: "8096"
-          traefik.http.routers.jellyfin.entrypoints: "websecure"
-
-
+    - name: download and run container
+      ansible.builtin.import_tasks:
+        file: podman-run.yml

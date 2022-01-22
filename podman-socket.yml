@@ -1,0 +1,30 @@
+---
+- name: container podman-socket
+  hosts: podman
+  become: true
+
+  vars:
+    container_customization: "{{ container_socket | default( {} ) }}"
+    container_defaults:
+      image: docker.io/tecnativa/docker-socket-proxy:latest
+      name: podman-socket
+      security_opt:
+        - label=disable
+      expose:
+        - 2375
+      network: dmz
+      generate_systemd: "{{ generate_systemd }}"
+      volume:
+        - /run/podman/podman.sock:/var/run/docker.sock:ro
+      env:
+        CONTAINERS: 1
+        NETWORKS: 1
+        SERVICES: 1
+        TASKS: 1
+      label:
+        io.containers.autoupdate: registry
+
+  tasks:
+    - name: download and run container
+      ansible.builtin.import_tasks:
+        file: podman-run.yml

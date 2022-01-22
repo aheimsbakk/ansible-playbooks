@@ -1,0 +1,29 @@
+---
+- name: container smokeping
+  hosts: podman
+  become: true
+
+  vars:
+    container_customization: "{{ container_smokeping | default( {} ) }}"
+    container_defaults:
+      image: docker.io/aheimsbakk/smokeping:latest
+      name: smokeping
+      network: dmz
+      generate_systemd: "{{ generate_systemd }}"
+      volume:
+        - /srv/smokeping/config:/etc/smokeping:z
+        - /srv/smokeping/data:/var/lib/smokeping:z
+      env:
+        TZ: UTC
+      labels:
+        io.containers.autoupdate: registry
+        traefik.enable: "true"
+        traefik.http.services.smokeping.loadbalancer.server.port: "80"
+        traefik.http.routers.smokeping.entrypoints: "websecure"
+        traefik.http.routers.smokeping.service: "smokeping"
+        traefik.http.routers.smokeping.middlewares: "private-ip-ranges-no-podman"
+
+  tasks:
+    - name: download and run container
+      ansible.builtin.import_tasks:
+        file: podman-run.yml

@@ -3,44 +3,35 @@
   hosts: podman
   become: true
 
+  vars:
+    container_customization: "{{ container_gotify | default( {} ) }}"
+    container_defaults:
+      image: docker.io/gotify/server:2.1
+      name: gotify
+      network: dmz
+      expose:
+        - 8080
+      user: nobody
+      generate_systemd: "{{ generate_systemd }}"
+      volume:
+        - /srv/gotify/data:/data:z,U
+      env:
+        GOTIFY_SERVER_PORT: '8080'
+        GOTIFY_DATABASE_DIALECT: sqlite3
+        GOTIFY_DATABASE_CONNECTION: /data/gotify.db
+        GOTIFY_DEFAULTUSER_NAME: admin
+        GOTIFY_DEFAULTUSER_PASS: password
+        GOTIFY_PASSSTRENGTH: '16'
+        GOTIFY_UPLOADEDIMAGESDIR: /data/images
+        GOTIFY_PLUGINSDIR: /data/plugins
+        GOTIFY_SERVER_RESPONSEHEADERS: "Access-Control-Allow-Origin: \"*\"\nAccess-Control-Allow-Methods: \"GET,POST\""
+      label:
+        io.containers.autoupdate: registry
+        traefik.enable: "true"
+        traefik.http.services.gotify.loadbalancer.server.port: "8080"
+        traefik.http.routers.gotify.entrypoints: "websecure"
+
   tasks:
-    - name: set variables for gotify
-      ansible.builtin.set_fact:
-        gotify:
-          volume:
-            - /srv/gotify/data:/data
-      when: gotify is not defined
-
-    - name: create folders for gotify
-      ansible.builtin.file:
-        path: "{{ item | split(':') | first }}"
-        owner: nobody
-        state: directory
-        recurse: true
-      loop: "{{ gotify.volume }}"
-
-    - name: download and set up gotify
-      containers.podman.podman_container:
-        image: docker.io/gotify/server:2.1
-        name: gotify
-        network: dmz
-        expose:
-          - 8080
-        user: nobody
-        volume: "{{ gotify.volume | default(omit) }}"
-        generate_systemd: "{{ generate_systemd }}"
-        env:
-          GOTIFY_SERVER_PORT: '8080'
-          GOTIFY_DATABASE_DIALECT: sqlite3
-          GOTIFY_DATABASE_CONNECTION: /data/gotify.db
-          GOTIFY_DEFAULTUSER_NAME: admin
-          GOTIFY_DEFAULTUSER_PASS: password
-          GOTIFY_PASSSTRENGTH: '16'
-          GOTIFY_UPLOADEDIMAGESDIR: /data/images
-          GOTIFY_PLUGINSDIR: /data/plugins
-          GOTIFY_SERVER_RESPONSEHEADERS: "Access-Control-Allow-Origin: \"*\"\nAccess-Control-Allow-Methods: \"GET,POST\""
-        label:
-          io.containers.autoupdate: registry
-          traefik.enable: "true"
-          traefik.http.services.gotify.loadbalancer.server.port: "8080"
-          traefik.http.routers.gotify.entrypoints: "websecure"
+    - name: download and run container
+      ansible.builtin.import_tasks:
+        file: podman-run.yml
