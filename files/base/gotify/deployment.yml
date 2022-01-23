@@ -59,10 +59,10 @@ spec:
               value: "Access-Control-Allow-Origin: \"*\"\nAccess-Control-Allow-Methods: \"GET,POST\""
           securityContext:
             allowPrivilegeEscalation: false
-            #readOnlyRootFilesystem: true
-            #capabilities:
-            #  drop: [ "all" ]
-            #  add: [ "chown" ]
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
           ports:
             - name: web
               containerPort: 80

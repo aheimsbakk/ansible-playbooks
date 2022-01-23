@@ -11,8 +11,7 @@
         success_msg: "Will search ~{{ USER|default('') }}/.ssh for public SSH keys on localhost"
 
     - name: find public keys on localhost
-      local_action:
-        module: find
+      find:
         paths: '~{{ USER }}/.ssh'
         file_type: file
         use_regex: true
@@ -21,10 +20,10 @@
       become: '{{ USER }}'
       register: found_keys
       run_once: true
+      delegate_to: localhost
 
     - name: slurp public keys
-      local_action:
-        module: slurp
+      slurp:
         src: '{{ item.path }}'
       become: '{{ USER }}'
       loop: '{{ found_keys.files }}'
@@ -32,6 +31,7 @@
         label: '{{ item.path }}'
       register: ssh_public_keys
       run_once: true
+      delegate_to: localhost
 
     - name: add keys to raspberry pi, user ubuntu
       authorized_key:

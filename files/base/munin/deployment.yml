@@ -50,10 +50,10 @@ spec:
               value: UTC
           securityContext:
             allowPrivilegeEscalation: false
-            #readOnlyRootFilesystem: true
-            #capabilities:
-            #  drop: [ "all" ]
-            #  add: [ "chown" ]
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
           ports:
             - name: web
               containerPort: 80

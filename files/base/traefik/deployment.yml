@@ -77,10 +77,10 @@ spec:
             - --entrypoints.registrysecure.http.middlewares=default-https-headers@file
           securityContext:
             allowPrivilegeEscalation: false
-            #readOnlyRootFilesystem: true
-            #capabilities:
-            #  drop: [ "all" ]
-            #  add: [ "chown" ]
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
           ports:
             - name: web
               containerPort: 80

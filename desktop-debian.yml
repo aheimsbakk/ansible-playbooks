@@ -15,18 +15,18 @@
     - name: install packages
       apt:
         name:
-            # - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
-            # - bijiben           # Note taking
-            # - duply             # Vrapper for Duplicity backup
-            # - gthumb            # Photo manager that works with remote folders
-            # - iucode-tool       # Intel microcode tool
-            # - libdvdcss         # Play your old DVDs on Linux
-            # - libgnome-keyring  # Save passwords in Nextcloud, missing dep.
-            # - libmp4v2          # Need it, realy need it
-            # - marker            # A good GTK markdown editor
-            # - rkhunter          # Root kit hunter, just the basics
-            # - syncthing         # To sync stuff
-            # - vim-syntastic     # <3
+          # - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
+          # - bijiben           # Note taking
+          # - duply             # Vrapper for Duplicity backup
+          # - gthumb            # Photo manager that works with remote folders
+          # - iucode-tool       # Intel microcode tool
+          # - libdvdcss         # Play your old DVDs on Linux
+          # - libgnome-keyring  # Save passwords in Nextcloud, missing dep.
+          # - libmp4v2          # Need it, realy need it
+          # - marker            # A good GTK markdown editor
+          # - rkhunter          # Root kit hunter, just the basics
+          # - syncthing         # To sync stuff
+          # - vim-syntastic     # <3
           - ansible               # Automate everything
           - ansible-lint          # Lint everything
           - btrfs-compsize        # Check the compression ratio on btrfs
@@ -230,14 +230,14 @@
       tags:
         - tlp
 
-          # - name: zstd zram swap
-          #   ini_file:
-          #     path: /etc/systemd/zram-generator.conf
-          #     section: zram0
-          #     option: compression-algorithm
-          #     value: zstd
-          #     create: true
-          #     mode: 0644
+        # - name: zstd zram swap
+        #   ini_file:
+        #     path: /etc/systemd/zram-generator.conf
+        #     section: zram0
+        #     option: compression-algorithm
+        #     value: zstd
+        #     create: true
+        #     mode: 0644
 
     - name: disable the unsecure firewire-dma
       copy:
@@ -261,17 +261,17 @@
       command: systemd-hwdb update
       when: hwdb_update is changed
 
-        # - name: pam yubikey
-        #   lineinfile:
-        #     path: '{{ item }}'
-        #     insertafter: pam_faildelay.so
-        #     firstmatch: true
-        #     line: auth sufficient pam_u2f.so cue
-        #   loop:
-        #     # - /etc/pam.d/password-auth
-        #     - /etc/pam.d/system-auth
-        #   tags:
-        #     - pam
+      # - name: pam yubikey
+      #   lineinfile:
+      #     path: '{{ item }}'
+      #     insertafter: pam_faildelay.so
+      #     firstmatch: true
+      #     line: auth sufficient pam_u2f.so cue
+      #   loop:
+      #     # - /etc/pam.d/password-auth
+      #     - /etc/pam.d/system-auth
+      #   tags:
+      #     - pam
 
     - name: enable services
       service:
