@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
         - name: prometheus
-          image: docker.io/prom/prometheus:v2.28.1
+          image: docker.io/prom/prometheus:v2.32.1
           imagePullPolicy: Always
           args:
             - --config.file=/etc/prometheus/prometheus.yml
@@ -42,7 +42,7 @@ spec:
             - --web.console.libraries=/usr/share/prometheus/console_libraries
             - --web.console.templates=/usr/share/prometheus/consoles
           securityContext:
-            allowPrivilegeEscalation: false
+            allowPrivilegeEscalation: true
           ports:
             - name: web
               containerPort: 9090
@@ -53,8 +53,9 @@ spec:
               mountPath: /etc/prometheus
       volumes:
         - name: prometheus
-          persistentVolumeClaim:
-            claimName: prometheus
+          hostPath:
+            type: DirectoryOrCreate
+            path: "/srv/k3s/prometheus/data"
         - name: prometheus-config
           configMap:
             name: prometheus-config

@@ -21,7 +21,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: nfs-client
+  storageClassName: local-path
   resources:
     requests:
       storage: 1Gi
@@ -83,12 +83,6 @@ spec:
                   key: VIRTUAL_HOST
             - name: DNSMASQ_USER
               value: pihole
-          securityContext:
-            allowPrivilegeEscalation: false
-            #readOnlyRootFilesystem: true
-            #capabilities:
-            #  drop: [ "all" ]
-            #  add: [ "chown" ]
           ports:
             - name: web
               containerPort: 80

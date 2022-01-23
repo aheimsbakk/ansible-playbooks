@@ -42,4 +42,4 @@ spec:
             - name: nextcloud-backup
               hostPath:
                 type: DirectoryOrCreate
-                path: "/srv/nextcloud/mysql-backup"
+                path: "/srv/k3s/nextcloud/backup"

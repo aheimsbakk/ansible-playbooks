@@ -11,19 +11,6 @@ stringData:
   SNMP_NODES: ""
 
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: munin-data
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: nfs-client
-  resources:
-    requests:
-      storage: 1Gi
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -83,10 +70,11 @@ spec:
         - name: munin
           hostPath:
             type: DirectoryOrCreate
-            path: /srv/munin
+            path: /srv/k3s/munin/config
         - name: munin-data
-          persistentVolumeClaim:
-            claimName: munin-data
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/k3s/munin/data
 
 ---
 apiVersion: v1

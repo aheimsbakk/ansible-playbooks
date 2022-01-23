@@ -11,21 +11,6 @@ stringData:
   GOTIFY_DEFAULTUSER_PASS: password
 
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: gotify
-  labels:
-    app: gotify
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: nfs-client
-  resources:
-    requests:
-      storage: 250Mi
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -86,8 +71,9 @@ spec:
               mountPath: /data
       volumes:
         - name: gotify
-          persistentVolumeClaim:
-            claimName: gotify
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/k3s/gotify/data
 
 ---
 apiVersion: v1

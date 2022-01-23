@@ -124,8 +124,8 @@
 
     - name: get k3s install script from stable branch
       get_url:
-        url: https://raw.githubusercontent.com/k3s-io/k3s/release-1.21/install.sh
-        checksum: sha256:3a053a6acb6d348b8dc15c4c3d0eb78ff05e77021dbf30a537c7dd6574f2e84c
+        url: https://raw.githubusercontent.com/k3s-io/k3s/v1.23.1%2Bk3s2/install.sh
+        checksum: sha256:f1e16f2a7763cbf323d497cee961e4577f88e8dc613eba89c926a53bfff3124e
         dest: /root/install.sh
         mode: 0755
 
@@ -189,7 +189,7 @@
       mount:
         path: /srv
         src: '{{ nfs_ip | default( node_ip ) }}:/srv'
-        opts: tcp
+        opts: tcp,async
         state: mounted
         fstype: nfs4
 
