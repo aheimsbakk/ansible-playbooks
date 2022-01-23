@@ -31,6 +31,16 @@ spec:
       labels:
         app: prometheus
     spec:
+      initContainers:
+        - name: prometheus-init
+          image: docker.io/alpine:latest
+          command:
+            - chmod
+            - a+rwt
+            - /prometheus
+          volumeMounts:
+            - name: prometheus
+              mountPath: /prometheus
       containers:
         - name: prometheus
           image: docker.io/prom/prometheus:v2.32.1

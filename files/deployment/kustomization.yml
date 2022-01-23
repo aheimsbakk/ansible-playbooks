@@ -1,6 +1,6 @@
 ---
 bases:
-  - kube-system
+#  - kube-system
   - traefik
 #  - build
   - default
