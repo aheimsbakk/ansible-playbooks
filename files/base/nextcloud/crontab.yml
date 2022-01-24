@@ -23,7 +23,7 @@ spec:
                 - /bin/sh
               args:
                 - -c
-                - kubectl exec deployment.apps/nextcloud-mysql -- sh -c "exec mysqldump --add-drop-table --user=$(MYSQL_USER) --password='$(MYSQL_PASSWORD)' nextcloud" | gzip > /mnt/nextcloud-$(date -Is).sql.gz; find /mnt/ -type f -mtime +30 -exec rm {} +
+                - kubectl exec deployment.apps/nextcloud-mysql -- sh -c "exec mysqldump --add-drop-table --user=$(MYSQL_USER) --password='$(MYSQL_PASSWORD)' nextcloud" | gzip > /mnt/nextcloud-$(date -Is).sql.gz; find /mnt/ -type f -mtime +30 -exec rm {} +; sleep 60
               env:
                 - name: MYSQL_USER
                   valueFrom:
