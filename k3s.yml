@@ -10,8 +10,8 @@
       set_fact:
         k3s_master: '{{ groups["k3s_master"] | map("extract", hostvars, "node_ip") | list }}'
         k3s_agents: '{{ groups["k3s_agents"] | map("extract", hostvars, "node_ip") | list }}'
-        k3s_version: '{{ k3s_version | default("v1.21.4+k3s1") }}'
-        k9s_version: '{{ k9s_version | default("v0.24.15") }}'
+        k3s_version: '{{ k3s_version | default("v1.23.1+k3s2") }}'
+        k9s_version: '{{ k9s_version | default("v0.25.18") }}'
 
     - name: install python-apt
       apt:
@@ -161,14 +161,13 @@
         state: directory
         mode: a=rwxt
       loop:
-        - automatic-pvcs
-        - srv
+        - k3s
       when: nfs_ip is not defined
 
     - name: share /nfs4 to the kubernetes cluster, so other nodes can start containers
       lineinfile:
         path: /etc/exports
-        line: /nfs4 {{ item }}(rw,fsid=0,async,no_subtree_check,no_auth_nlm,insecure,no_root_squash)
+        line: /nfs4/k3s {{ item }}(rw,async,no_subtree_check,no_auth_nlm,insecure,no_root_squash)
         mode: 0644
         create: true
       loop: '{{ k3s_master + k3s_agents }}'
@@ -188,7 +187,7 @@
     - name: mount nfs shared volume on srv
       mount:
         path: /srv
-        src: '{{ nfs_ip | default( node_ip ) }}:/srv'
+        src: '{{ nfs_ip | default( node_ip ) }}:/nfs4/k3s'
         opts: tcp,async
         state: mounted
         fstype: nfs4
@@ -255,7 +254,7 @@
     - name: mount nfs shared volume on srv
       mount:
         path: /srv
-        src: '{{ nfs_ip | default( hostvars[groups["k3s_master"][0]]["node_ip"] ) }}:/srv'
+        src: '{{ nfs_ip | default( hostvars[groups["k3s_master"][0]]["node_ip"] ) }}:/nfs4/k3s'
         opts: tcp
         state: mounted
         fstype: nfs4
