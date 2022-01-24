@@ -70,11 +70,11 @@ spec:
         - name: munin
           hostPath:
             type: DirectoryOrCreate
-            path: /srv/k3s/munin/config
+            path: /srv/munin/config
         - name: munin-data
           hostPath:
             type: DirectoryOrCreate
-            path: /srv/k3s/munin/data
+            path: /srv/munin/data
 
 ---
 apiVersion: v1

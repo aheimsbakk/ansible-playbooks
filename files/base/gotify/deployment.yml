@@ -73,7 +73,7 @@ spec:
         - name: gotify
           hostPath:
             type: DirectoryOrCreate
-            path: /srv/k3s/gotify/data
+            path: /srv/gotify/data
 
 ---
 apiVersion: v1

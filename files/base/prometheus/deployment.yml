@@ -50,7 +50,7 @@ spec:
         - name: prometheus
           hostPath:
             type: DirectoryOrCreate
-            path: "/srv/k3s/prometheus/data"
+            path: "/srv/prometheus/data"
         - name: prometheus-config
           configMap:
             name: prometheus-config

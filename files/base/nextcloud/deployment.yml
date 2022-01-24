@@ -78,7 +78,7 @@ spec:
       volumes:
         - name: mysql-data
           hostPath:
-            path: /srv/k3s/nextcloud/mysql
+            path: /srv/nextcloud/mysql
             type: DirectoryOrCreate
 
 ---
@@ -146,7 +146,7 @@ spec:
       volumes:
         - name: nextcloud-redis
           hostPath:
-            path: /srv/k3s/nextcloud/redis
+            path: /srv/nextcloud/redis
             type: DirectoryOrCreate
 
 ---
@@ -299,15 +299,15 @@ spec:
         - name: nextcloud-config
           hostPath:
             type: DirectoryOrCreate
-            path: /srv/k3s/nextcloud/config
+            path: /srv/nextcloud/config
         - name: nextcloud-data
           hostPath:
             type: DirectoryOrCreate
-            path: /srv/k3s/nextcloud/data
+            path: /srv/nextcloud/data
         - name: nextcloud-custom-apps
           hostPath:
             type: DirectoryOrCreate
-            path: /srv/k3s/nextcloud/custom-apps
+            path: /srv/nextcloud/custom-apps
         - name: nextcloud-apache-config
           configMap:
             name: nextcloud-apache-config

@@ -46,7 +46,7 @@ spec:
         - name: grafana-data
           hostPath:
             type: DirectoryOrCreate
-            path: /srv/k3s/grafana/data
+            path: /srv/grafana/data
         - name: grafana-config
           configMap:
             name: grafana-config

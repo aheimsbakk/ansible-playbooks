@@ -44,11 +44,11 @@ spec:
         - name: smokeping
           hostPath:
             type: DirectoryOrCreate
-            path: /srv/k3s/smokeping/config
+            path: /srv/smokeping/config
         - name: smokeping-data
           hostPath:
             type: DirectoryOrCreate
-            path: /srv/k3s/smokeping/data
+            path: /srv/smokeping/data
 
 ---
 apiVersion: v1
