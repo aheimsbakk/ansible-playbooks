@@ -23,9 +23,8 @@ spec:
           image: docker.io/aheimsbakk/smokeping:latest
           imagePullPolicy: Always
           volumeMounts:
-            - name: smokeping
+            - name: smokeping-config
               mountPath: /etc/smokeping
-              subPath: config
             - name: smokeping-data
               mountPath: /var/lib/smokeping
           env:
@@ -36,12 +35,8 @@ spec:
               containerPort: 80
               # securityContext:
               #   allowPrivilegeEscalation: false
-              #   readOnlyRootFilesystem: true
-              #   capabilities:
-              #     drop: [ "all" ]
-              #     add: [ "chown" ]
       volumes:
-        - name: smokeping
+        - name: smokeping-config
           hostPath:
             type: DirectoryOrCreate
             path: /srv/smokeping/config

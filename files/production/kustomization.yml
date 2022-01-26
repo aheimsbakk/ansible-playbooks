@@ -4,7 +4,6 @@ bases:
 patchesStrategicMerge:
   # - diun.yml
   # - gitlab.yml
-  - nfs-provisioner.yml
   - gotify.yml
   - munin.yml
   - nextcloud.yml
