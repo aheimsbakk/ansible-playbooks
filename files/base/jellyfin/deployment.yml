@@ -1,16 +1,4 @@
 ---
-apiVersion: v1
-kind: Secret
-metadata:
-  name: jellyfin
-  labels:
-    app: jellyfin
-type: Opaque
-stringData:
-  NODES: ""
-  SNMP_NODES: ""
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -33,31 +21,14 @@ spec:
     spec:
       containers:
         - name: jellyfin
-          image: docker.io/aheimsbakk/jellyfin-alpine:latest
+          image: docker.io/jellyfin/jellyfin:latest
           imagePullPolicy: Always
-          env:
-            - name: NODES
-              valueFrom:
-                secretKeyRef:
-                  name: jellyfin
-                  key: NODES
-            - name: SNMP_NODES
-              valueFrom:
-                secretKeyRef:
-                  name: jellyfin
-                  key: SNMP_NODES
-            - name: TZ
-              value: UTC
           securityContext:
             allowPrivilegeEscalation: false
             runAsUser: 65534
-            # readOnlyRootFilesystem: true
-            # capabilities:
-            #   drop: [ "all" ]
-            #   add: [ "chown" ]
           ports:
             - name: web
-              containerPort: 80
+              containerPort: 8096
           volumeMounts:
             - name: jellyfin-config
               mountPath: /config
@@ -90,7 +61,7 @@ spec:
   ports:
     - protocol: TCP
       name: web
-      port: 80
+      port: 8096
 
 ---
 kind: Ingress
@@ -99,7 +70,7 @@ metadata:
   name: jellyfin
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.middlewares: jellyfin-redirect@file,private-ip-ranges@file
+    traefik.ingress.kubernetes.io/router.middlewares: private-ip-ranges@file
   labels:
     app: jellyfin
 spec:
@@ -113,4 +84,4 @@ spec:
               service:
                 name: jellyfin
                 port:
-                  number: 80
+                  number: 8096

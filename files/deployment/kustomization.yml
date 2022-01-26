@@ -35,3 +35,5 @@ images:
     newTag: v2.28.1
   - name: docker.io/grafana/grafana
     newTag: 8.0.2
+  - name: docker.io/jellyfin/jellyfin
+    newTag: latest
