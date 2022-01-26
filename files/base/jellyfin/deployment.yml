@@ -19,6 +19,20 @@ spec:
       labels:
         app: jellyfin
     spec:
+      initContainers:
+        - name: grafana-init
+          image: docker.io/alpine:latest
+          command:
+            - chown
+            - -R
+            - "65534"
+            - /config
+            - /cache
+          volumeMounts:
+            - name: jellyfin-config
+              mountPath: /config
+            - name: jellyfin-cache
+              mountPath: /cache
       containers:
         - name: jellyfin
           image: docker.io/jellyfin/jellyfin:latest
