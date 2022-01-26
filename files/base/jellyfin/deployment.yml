@@ -1,0 +1,116 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jellyfin
+  labels:
+    app: jellyfin
+type: Opaque
+stringData:
+  NODES: ""
+  SNMP_NODES: ""
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+  labels:
+    app: jellyfin
+    auto-update-hour: '00'
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jellyfin
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+    spec:
+      containers:
+        - name: jellyfin
+          image: docker.io/aheimsbakk/jellyfin-alpine:latest
+          imagePullPolicy: Always
+          env:
+            - name: NODES
+              valueFrom:
+                secretKeyRef:
+                  name: jellyfin
+                  key: NODES
+            - name: SNMP_NODES
+              valueFrom:
+                secretKeyRef:
+                  name: jellyfin
+                  key: SNMP_NODES
+            - name: TZ
+              value: UTC
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 65534
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
+          ports:
+            - name: web
+              containerPort: 80
+          volumeMounts:
+            - name: jellyfin-config
+              mountPath: /config
+            - name: jellyfin-cache
+              mountPath: /cache
+            - name: jellyfin-media
+              mountPath: /media
+      volumes:
+        - name: jellyfin-config
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/jellyfin/config
+        - name: jellyfin-cache
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/jellyfin/cache
+        - name: jellyfin-media
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/jellyfin/media
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jellyfin
+spec:
+  selector:
+    app: jellyfin
+  ports:
+    - protocol: TCP
+      name: web
+      port: 80
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: jellyfin
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: jellyfin-redirect@file,private-ip-ranges@file
+  labels:
+    app: jellyfin
+spec:
+  rules:
+    - host: jellyfin.10.20.30.11.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jellyfin
+                port:
+                  number: 80
