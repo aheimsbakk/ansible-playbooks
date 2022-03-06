@@ -213,13 +213,17 @@
         - com.github.phase1geo.minder
         - com.github.tchx84.Flatseal
         - com.nextcloud.desktopclient.nextcloud
+        - fr.handbrake.ghb
         - io.github.quodlibet.ExFalso
         - org.chromium.Chromium
+        - org.gabmus.whatip
         - org.gimp.GIMP
         - org.gnome.Dictionary
         - org.gnome.Evolution
         - org.gnome.Extensions
         - org.gnome.Shotwell
+        - org.mozilla.Thunderbird
+        - org.mozilla.firefox
         - org.remmina.Remmina
         - org.videolan.VLC
 
