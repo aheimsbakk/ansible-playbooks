@@ -219,7 +219,7 @@
         - org.gabmus.whatip
         - org.gimp.GIMP
         - org.gnome.Dictionary
-        - org.gnome.Evolution
+        # - org.gnome.Evolution
         - org.gnome.Extensions
         - org.gnome.Shotwell
         - org.mozilla.Thunderbird
