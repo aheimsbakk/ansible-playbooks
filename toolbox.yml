@@ -26,7 +26,7 @@
     - name: install packages
       dnf:
         name:
-          - ansible           # Automate everything
+          - ansible-core      # Automate everything
           - ansible-lint      # Lint everything
           - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
           - catimg            # Display images in terminal
