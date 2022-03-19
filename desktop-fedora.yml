@@ -38,6 +38,7 @@
           - duperemove        # Dedup btrfs
           - etckeeper         # Watch what happens in /etc
           - ffmpeg            # Transcode audio and video
+          - file              # What file is this?
           - flac              # Lossless audio
           - git               # Version control <3
           - gnome-tweaks      # Customize Gnome
