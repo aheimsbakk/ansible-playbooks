@@ -209,6 +209,7 @@
         name: '{{ item }}'
         remote: flathub
       loop:
+        - com.belmoussaoui.Decoder
         - com.calibre_ebook.calibre
         - com.github.micahflee.torbrowser-launcher
         - com.github.phase1geo.minder
@@ -231,6 +232,7 @@
         - org.gnome.Shotwell
         - org.gnome.TextEditor
         - org.gnome.Todo
+        - org.gnome.gitlab.somas.Apostrophe
         - org.mozilla.Thunderbird
         - org.mozilla.firefox
         - org.remmina.Remmina
