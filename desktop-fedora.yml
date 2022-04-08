@@ -53,6 +53,7 @@
           - libdvdcss         # Play your old DVDs on Linux
           - libmp4v2          # Need it, realy need it
           - ltrace            # Trace library calls
+          - mediainfo         # Used by AAX
           - ncdu              # Interactive du
           - nmap              # Scan network ports
           - offlineimap       # Make local backup of IMAP
