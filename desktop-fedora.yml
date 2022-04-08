@@ -239,6 +239,7 @@
         - org.mozilla.Thunderbird
         - org.mozilla.firefox
         - org.remmina.Remmina
+        - org.signal.Signal
         - org.supertuxproject.SuperTux
         - org.videolan.VLC
 
