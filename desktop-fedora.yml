@@ -31,6 +31,8 @@
           - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
           - btrfs-heatmap     # Visualize how data is stored on disk
           - catimg            # Display images in terminal
+          - clevis-dracut     # Decrypt Luks during boot with TPM
+          - clevis-udisks2    # Decrypt Luks with TPM when inserting disk
           - compsize          # Check the compression ratio on btrfs
           - davfs2            # DavFS for mounting Nextcloud, no need to sync everything
           - dconf-editor      # Change configuration under the hood of Gnome
