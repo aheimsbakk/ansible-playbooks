@@ -149,17 +149,17 @@
           blacklist firewire-core
           blacklist thunderbolt
 
-#    - name: pam yubikey
-#      lineinfile:
-#        path: '{{ item }}'
-#        insertafter: pam_faildelay.so
-#        firstmatch: true
-#        line: auth sufficient pam_u2f.so cue
-#      loop:
-#        # - /etc/pam.d/password-auth
-#        - /etc/pam.d/system-auth
-#      tags:
-#        - pam
+    - name: pam yubikey
+      lineinfile:
+        path: '{{ item }}'
+        insertafter: pam_faildelay.so
+        firstmatch: true
+        line: auth sufficient pam_u2f.so cue
+      loop:
+        # - /etc/pam.d/password-auth
+        - /etc/pam.d/system-auth
+      tags:
+        - pam
 
     - name: disable firewalld
       systemd:
