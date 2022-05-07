@@ -152,13 +152,14 @@
     - name: pam yubikey
       lineinfile:
         path: '{{ item }}'
-        insertafter: pam_rootok.so
+        insertafter: PAM
         firstmatch: true
         line: auth sufficient pam_u2f.so cue
       loop:
         # - /etc/pam.d/password-auth
         # - /etc/pam.d/system-auth
-        - /etc/pam.d/su
+        - /etc/pam.d/sudo
+        - /etc/pam.d/sudo-i
       tags:
         - pam
 
