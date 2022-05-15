@@ -3,37 +3,23 @@
 # How to run this playbook:
 # $ ansible-playbook -K dekstop.yml
 ---
-- name: configure fedora desktop
+- name: configure ubuntu desktop
   hosts: localhost
   become: true
 
   tasks:
-    - name: run only on fedora
+    - name: run only on ubuntu
       assert:
-        that: ansible_distribution == "Fedora"
-
-    - name: rpmfusion repositories
-      dnf:
-        name:
-          - "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
-          - "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm"
-        disable_gpg_check: true
-
-    - name: add tainted repo (libdvdcss)
-      dnf:
-        name: rpmfusion-free-release-tainted
+        that: ansible_distribution == "Ubuntu"
 
     - name: install packages
-      dnf:
+      apt:
         name:
-          - ansible-core      # Automate everything, with new Ansible 2.10+
-          - ansible-lint      # Lint everything
-          - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
+          - btrfs-compsize    # Check the compression ratio on btrfs
           - btrfs-heatmap     # Visualize how data is stored on disk
           - catimg            # Display images in terminal
           - clevis-dracut     # Decrypt Luks during boot with TPM
           - clevis-udisks2    # Decrypt Luks with TPM when inserting disk
-          - compsize          # Check the compression ratio on btrfs
           - davfs2            # DavFS for mounting Nextcloud, no need to sync everything
           - dconf-editor      # Change configuration under the hood of Gnome
           - dstat             # Stat system values in colors
@@ -42,28 +28,26 @@
           - ffmpeg            # Transcode audio and video
           - file              # What file is this?
           - flac              # Lossless audio
+          - flatpak           # Here be GUI software, don't use snap
           - git               # Version control <3
           - gnome-tweaks      # Customize Gnome
-          - gnupg-pkcs11-scd  # Smart card functionality for SSH keys on Yubikey
-          - haveged           # More random data from CPU flutter
           - hugo              # Static blog generator
-          - keepassxc         # KeePass
           - lame              # Encode mp3
           - lftp              # FTP isn't dead
-          - libdvdcss         # Play your old DVDs on Linux
-          - libmp4v2          # Need it, realy need it
+          - libpam-u2f        # U2F token 2 factor in PAM
           - ltrace            # Trace library calls
           - mediainfo         # Used by AAX
           - ncdu              # Interactive du
           - nmap              # Scan network ports
           - offlineimap       # Make local backup of IMAP
-          - pam-u2f           # U2F token 2 factor in PAM
           - pamu2fcfg         # Set up U2F token
-          - pcsc-lite         # Smart card daemon
+          - pcscd             # Windows SCard interface
           - pv                # How fast do we transfer
           - python3-pygments  # Syntax highlighting in Hugo
           - python3-qrcode    # Generate QR-codes in terminal with qr
+          - python3-venv      # Use python virtual environmens
           - rsync             # Syncing files, syncing life
+          - scdaemon          # Smart card daemon
           - strace            # String trace processes
           - syncthing         # To sync stuff
           - tlp               # Save battery power on laptops
@@ -80,14 +64,32 @@
           - yubikey-personalization-gui  # Yubico configuration
           - yubioath-desktop  # The Yubico Authenticator
           - zmap              # Map internet
-          - zram              # Zram swap
+          - zram-tools        # Zram swap
 
     - name: increase user watches
       sysctl:
         name: fs.inotify.max_user_watches
         value: "2097152"
 
-    # In grub intel_pstate=disable
+    - name: disable pstate and bling
+      ini_file:
+        path: /etc/default/grub
+        no_extra_spaces: true
+        section: null
+        option: "{{ item.o }}"
+        value: "{{ item.v }}"
+        create: true
+        mode: 0644
+      loop:
+        - o: GRUB_CMDLINE_LINUX_DEFAULT
+          v: "splash intel_pstate=disable"
+        - o: GRUB_TIMEOUT
+          v: 3
+      register: grub_conf
+
+    - name: update grub
+      command: update-grub
+      when: grub_conf is changed
 
     - name: configure tlp
       ini_file:
@@ -134,12 +136,19 @@
 
     - name: zstd zram swap
       ini_file:
-        path: /etc/systemd/zram-generator.conf
-        section: zram0
-        option: compression-algorithm
-        value: zstd
+        path: /etc/default/zramswap
+        no_extra_spaces: true
+        section: null
+        option: "{{ item.o }}"
+        value: "{{ item.v }}"
         create: true
         mode: 0644
+      loop:
+        - o: ALGO
+          v: lz4
+        - o: PERCENT
+          v: 50
+
 
     - name: disable the unsecure firewire-dma
       copy:
@@ -149,25 +158,17 @@
           blacklist firewire-core
           blacklist thunderbolt
 
-    - name: pam yubikey
-      lineinfile:
-        path: '{{ item }}'
-        insertafter: PAM
-        firstmatch: true
-        line: auth sufficient pam_u2f.so cue
-      loop:
-        # - /etc/pam.d/password-auth
-        # - /etc/pam.d/system-auth
-        - /etc/pam.d/sudo
-        - /etc/pam.d/sudo-i
-      tags:
-        - pam
-
-    - name: disable firewalld
-      systemd:
-        name: firewalld
-        state: stopped
-        enabled: false
+#    - name: pam yubikey
+#      lineinfile:
+#        path: '{{ item }}'
+#        insertafter: pam_faildelay.so
+#        firstmatch: true
+#        line: auth sufficient pam_u2f.so cue
+#      loop:
+#        # - /etc/pam.d/password-auth
+#        - /etc/pam.d/system-auth
+#      tags:
+#        - pam
 
     - name: enable services
       service:
@@ -175,9 +176,19 @@
         enabled: true
         state: started
       loop:
-        - pcscd               # Smart card daemon
+        - pcscd.service       # Smart card daemon
         - ufw                 # Simpler firewall, Ubuntus default
         - tlp                 # Enable powersavings on battery
+        - zramswap            # Enable zram swap
+
+    - name: disable services
+      service:
+        name: '{{ item }}'
+        enabled: false
+        masked: true
+        state: stopped
+      loop:
+        - power-profiles-daemon # gnome integrated power profiles daemon
 
     - name: deny incomming, and don't bother to log
       ufw:
@@ -220,6 +231,7 @@
         - com.github.micahflee.torbrowser-launcher
         - com.github.phase1geo.minder
         - com.github.tchx84.Flatseal
+        - com.mattjakeman.ExtensionManager
         - com.nextcloud.desktopclient.nextcloud
         - fr.handbrake.ghb
         - io.github.quodlibet.ExFalso
@@ -229,7 +241,7 @@
         - org.duckstation.DuckStation
         - org.gabmus.whatip
         - org.gimp.GIMP
-        - org.gnome.Dictionary
+        - org.gnome.Calendar
         - org.gnome.Epiphany
         - org.gnome.Evince
         - org.gnome.Extensions
@@ -238,6 +250,8 @@
         - org.gnome.Shotwell
         - org.gnome.TextEditor
         - org.gnome.Todo
+        - org.gnome.Weather
+        - org.gnome.clocks
         - org.gnome.gitlab.somas.Apostrophe
         - org.mozilla.Thunderbird
         - org.mozilla.firefox
@@ -251,3 +265,4 @@
     #     name: '{{ item }}'
     #     remote: fedora
     #   loop:
+
