@@ -29,8 +29,8 @@ images:
   - name: docker.io/traefik
     newTag: v2.6
   - name: docker.io/prom/prometheus
-    newTag: v2.28.1
+    newTag: v2.35.0
   - name: docker.io/grafana/grafana
-    newTag: 8.0.2
+    newTag: 8.5.2
   - name: docker.io/jellyfin/jellyfin
     newTag: latest
