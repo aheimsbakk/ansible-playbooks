@@ -61,18 +61,23 @@
       flatpak_remote:
         name: flathub
         state: present
+        method: user
         flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+      become: false
 
     - name: flatpak remote fedora
       flatpak_remote:
         name: fedora
         state: present
+        method: user
         flatpakrepo_url: oci+https://registry.fedoraproject.org
+      become: false
 
     - name: install flatpaks from flathub
       flatpak:
         name: '{{ item }}'
         remote: flathub
+      become: false
       loop: []
         # - com.belmoussaoui.Decoder
         # - com.calibre_ebook.calibre
@@ -109,5 +114,6 @@
       flatpak:
         name: '{{ item }}'
         remote: fedora
+      become: false
       loop: []
 
