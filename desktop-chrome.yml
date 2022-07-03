@@ -39,6 +39,7 @@
           - ffmpeg            # Transcode audio and video
           - file              # What file is this?
           - flac              # Lossless audio
+          - flatpak           # Get software from flathub
           - git               # Version control <3
           - hugo              # Static blog generator
           - lame              # Encode mp3
