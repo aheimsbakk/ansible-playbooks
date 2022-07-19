@@ -1,5 +1,15 @@
 # vim: ai et ts=2 st=2 sw=2 :
 ---
-- name: homeserver configuration
-  hosts: base
+- name: prepare the restic destination
+  hosts: restic_destination
   become: true
+
+  tasks:
+    - name: install rclone
+      package:
+        name: rclone
+
+    - name: create destination user
+      user:
+        name: restic
+
