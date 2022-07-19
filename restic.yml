@@ -1,21 +1,26 @@
 # vim: ai et ts=2 st=2 sw=2 :
 ---
-- name: prepare the restic destination
-  hosts: restic_destination
+- name: configure restic for all restic sources
+  hosts: restic
   become: true
 
   tasks:
     - name: set variable default values
       ansible.builtin.set_fact:
         restic_user: '{{ restic_user | default("rbackup") }}'
+      run_once: true
 
     - name: install rclone
       ansible.builtin.package:
         name: rclone
+      run_once: true
+      delegate_to: '{{ restic_destination }}'
 
     - name: create destination user
       ansible.builtin.user:
         name: '{{ restic_user }}'
+      run_once: true
+      delegate_to: '{{ restic_destination }}'
 
     - name: create rclone config folder
       ansible.builtin.file:
@@ -24,6 +29,8 @@
         recurse: true
         owner: '{{ restic_user }}'
         mode: 0700
+      run_once: true
+      delegate_to: '{{ restic_destination }}'
 
     - name: create .ssh folder for restic_user
       ansible.builtin.file:
@@ -32,6 +39,8 @@
         recurse: true
         owner: '{{ restic_user }}'
         mode: 0700
+      run_once: true
+      delegate_to: '{{ restic_destination }}'
 
     - name: create rclone configuration
       community.general.ini_file:
@@ -41,8 +50,26 @@
         value: local
         owner: '{{ restic_user }}'
         mode: 0600
+      run_once: true
+      delegate_to: '{{ restic_destination }}'
 
-- name: prepare the restic destination
-  hosts: restic_source
-  become: true
+    - name: create ssh key for the root user if it's missing
+      ansible.builtin.user:
+        name: root
+        generate_ssh_key: yes
+        ssh_key_type: ed25519
+        force: no
+
+    - name: read public key into variable
+      ansible.builtin.slurp:
+        src: /root/.ssh/id_ed25519.pub
+      register: ssh_pub_key
+
+    - name: write public key to restic_destination
+      ansible.posix.authorized_key:
+        user: '{{ restic_user }}'
+        key: '{{ ssh_pub_key.content | b64decode }}'
+        comment: '{{ ansible_hostname }}'
+        key_options: restrict,command="rclone serve restic --stdio --append-only --transfers 2 restic:/misc/backup/restic"
+      delegate_to: '{{ restic_destination }}'
 
