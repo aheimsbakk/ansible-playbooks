@@ -24,3 +24,6 @@ futhark-ng ansible_host=192.168.1.20 node_ip=192.168.1.20 env=production nfs_ip=
 [base]
 futhark-ng
 nuc.lan
+
+[restic_destination]
+wg ansible_user=ubuntu

@@ -5,11 +5,44 @@
   become: true
 
   tasks:
+    - name: set variable default values
+      ansible.builtin.set_fact:
+        restic_user: '{{ restic_user | default("rbackup") }}'
+
     - name: install rclone
-      package:
+      ansible.builtin.package:
         name: rclone
 
     - name: create destination user
-      user:
-        name: restic
+      ansible.builtin.user:
+        name: '{{ restic_user }}'
+
+    - name: create rclone config folder
+      ansible.builtin.file:
+        path: '/home/{{ restic_user }}/.config/rclone'
+        state: directory
+        recurse: true
+        owner: '{{ restic_user }}'
+        mode: 0700
+
+    - name: create .ssh folder for restic_user
+      ansible.builtin.file:
+        path: '/home/{{ restic_user }}/.ssh'
+        state: directory
+        recurse: true
+        owner: '{{ restic_user }}'
+        mode: 0700
+
+    - name: create rclone configuration
+      community.general.ini_file:
+        path: '/home/{{ restic_user }}/.config/rclone/rclone.conf'
+        section: restic
+        option: type
+        value: local
+        owner: '{{ restic_user }}'
+        mode: 0600
+
+- name: prepare the restic destination
+  hosts: restic_source
+  become: true
 
