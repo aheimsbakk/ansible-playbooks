@@ -26,10 +26,10 @@ futhark-ng
 nuc.lan
 
 [restic]
-wg ansible_user=ubuntu
+wg.lan ansible_user=ubuntu
 
 [restic:vars]
-restic_destination=wg
+restic_destination=wg.lan
 restic_destination_user=rbackup
 restic_destination_dir=/tmp/restic
 restic_backup=/etc

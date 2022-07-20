@@ -129,11 +129,7 @@
           [Service]
           Type=oneshot
           Environment='RESTIC_PASSWORD_FILE=/var/lib/misc/restic-service-passwd'
-          ExecStart=restic \
-                    -o rclone.program="ssh -l {{ restic_destination_user }} {{ restic_destination }}" \
-                    # "
-                    -r rclone: \
-                    backup \
+          ExecStart=restic -o rclone.program='ssh -l {{ restic_destination_user }} {{ restic_destination }}' -r rclone: backup \
                     {{ restic_options }} \
                     --exclude-if-present .restic-ignore \
                     -H {{ ansible_hostname }} \
