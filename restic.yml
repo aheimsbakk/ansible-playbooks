@@ -114,10 +114,11 @@
       ansible.posix.authorized_key:
         user: '{{ restic_destination_user }}'
         key: '{{ ssh_pub_key.content | b64decode }}'
-        comment: '{{ ansible_hostname }}'
+        comment: '{{ ansible_fqdn }}'
         key_options: restrict,command="rclone serve restic --stdio --append-only --transfers 2 restic:{{ restic_destination_dir }}"
         # "
       delegate_to: '{{ restic_destination }}'
+      throttle: 1
 
     - name: add systemd service for running rclone
       ansible.builtin.copy:
@@ -136,7 +137,8 @@
                     --exclude-if-present .restic-ignore \
                     -H {{ ansible_hostname }} \
                     {{ restic_backup }}
-      register: systemd_service
+
+      # '
 
     - name: add systemd timer for running restic
       ansible.builtin.copy:
@@ -154,17 +156,11 @@
 
           [Install]
           WantedBy=timers.target
-      register: systemd_timer
-
-    - name: reload systemd daemon
-      ansible.builtin.systemd:
-        daemon_reload: true
-      when: systemd_service is changed or
-            systemd_timer is changed
 
     - name: enable the systemd timer of restic
       ansible.builtin.systemd:
         name: restic.timer
+        daemon_reload: true
         state: started
         enabled: true
       ignore_errors: true

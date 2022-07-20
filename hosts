@@ -28,6 +28,7 @@ nuc.lan
 [restic]
 wg.lan ansible_user=ubuntu
 leno.lan ansible_user=root
+yoga.lan ansible_user=root
 
 #[restic:vars]
 #restic_destination=backup.foo.bar
