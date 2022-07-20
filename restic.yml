@@ -1,4 +1,6 @@
 # vim: ai et ts=2 st=2 sw=2 :
+#
+# Convert this to a role...
 ---
 - name: configure restic for all restic sources
   hosts: restic
