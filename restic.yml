@@ -5,10 +5,17 @@
   become: true
 
   tasks:
-    - name: set variables default values
-      ansible.builtin.set_fact:
-        restic_user: '{{ restic_user | default("rbackup") }}'
-      run_once: true
+    - name: check that variables is set before we start
+      ansible.builtin.assert:
+        that:
+          - restic_user is defined
+          - restic_destination is defined
+
+    #
+    # Prepare the restic destination with a uniqe user.
+    # Prepare the .ssh folder and add our rclone config.
+    # Rclone config have one profile "restic".
+    #
 
     - name: restic_destination - create destination user
       ansible.builtin.user:
@@ -16,9 +23,9 @@
       run_once: true
       delegate_to: '{{ restic_destination }}'
 
-    - name: restic_destination - create rclone config folder
+    - name: restic_destination - create .ssh folder for restic_user
       ansible.builtin.file:
-        path: '/home/{{ restic_user }}/.config/rclone'
+        path: '/home/{{ restic_user }}/.ssh'
         state: directory
         recurse: true
         owner: '{{ restic_user }}'
@@ -26,9 +33,9 @@
       run_once: true
       delegate_to: '{{ restic_destination }}'
 
-    - name: restic_destination - create .ssh folder for restic_user
+    - name: restic_destination - create rclone config folder
       ansible.builtin.file:
-        path: '/home/{{ restic_user }}/.ssh'
+        path: '/home/{{ restic_user }}/.config/rclone'
         state: directory
         recurse: true
         owner: '{{ restic_user }}'
@@ -46,6 +53,10 @@
         mode: 0600
       run_once: true
       delegate_to: '{{ restic_destination }}'
+
+    #
+    # Start orcestration of configuring restic backup on multiple hosts
+    #
 
     - name: install rclone and restic
       ansible.builtin.package:
@@ -86,12 +97,20 @@
         content: |
           [Unit]
           Description=Run backup with Restic
-          After=Network.target
+          After=network.target
 
           [Service]
           Type=oneshot
           ExecStartPre=
-          ExecStart=restic -q -o rclone.program='ssh -l restic wg.lan' -p /root/.restic -r rclone: backup --exclude tmp  --exclude Nedlastinger --exclude Downloads --exclude-if-present .restic-ignore -H $(hostname -s) /etc /home /root
+          ExecStart=restic \
+                    -o rclone.program="ssh -l {{ restic_user }} {{ restic_destination }}" \
+                    # "
+                    -p /root/.restic \
+                    -r rclone: backup \
+                    --exclude tmp  --exclude Nedlastinger --exclude Downloads \
+                    --exclude-if-present .restic-ignore \
+                    -H {{ ansible_hostname }} \
+                    /etc /home /root
 
     - name: add systemd timer for running rclone
       ansible.builtin.copy:
