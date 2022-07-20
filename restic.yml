@@ -8,8 +8,12 @@
     - name: check that variables is set before we start
       ansible.builtin.assert:
         that:
-          - restic_user is defined
+          - restic_backup is defined
           - restic_destination is defined
+          - restic_destination_dir is defined
+          - restic_destination_user is defined
+          - restic_options is defined
+          - restic_passwd is defined
 
     #
     # Prepare the restic destination with a uniqe user.
@@ -19,38 +23,40 @@
 
     - name: restic_destination - create destination user
       ansible.builtin.user:
-        name: '{{ restic_user }}'
+        name: '{{ restic_destination_user }}'
+        shell: /bin/bash
       run_once: true
       delegate_to: '{{ restic_destination }}'
 
     - name: restic_destination - create .ssh folder for restic_user
       ansible.builtin.file:
-        path: '/home/{{ restic_user }}/.ssh'
+        path: '/home/{{ restic_destination_user }}/.ssh'
         state: directory
-        recurse: true
-        owner: '{{ restic_user }}'
-        mode: 0700
+        owner: '{{ restic_destination_user }}'
+        mode: '0700'
       run_once: true
       delegate_to: '{{ restic_destination }}'
 
     - name: restic_destination - create rclone config folder
       ansible.builtin.file:
-        path: '/home/{{ restic_user }}/.config/rclone'
+        path: '/home/{{ restic_destination_user }}/{{ item }}'
         state: directory
-        recurse: true
-        owner: '{{ restic_user }}'
-        mode: 0700
+        owner: '{{ restic_destination_user }}'
+        mode: '0700'
       run_once: true
       delegate_to: '{{ restic_destination }}'
+      loop:
+        - .config
+        - .config/rclone
 
     - name: restic_destination - create rclone configuration
       community.general.ini_file:
-        path: '/home/{{ restic_user }}/.config/rclone/rclone.conf'
+        path: '/home/{{ restic_destination_user }}/.config/rclone/rclone.conf'
         section: restic
         option: type
         value: local
-        owner: '{{ restic_user }}'
-        mode: 0600
+        owner: '{{ restic_destination_user }}'
+        mode: '0600'
       run_once: true
       delegate_to: '{{ restic_destination }}'
 
@@ -63,6 +69,26 @@
         name:
           - rclone
           - restic
+
+    - name: store restic password to /var/lib/misc
+      ansible.builtin.copy:
+        dest: /var/lib/misc/restic-service-passwd
+        # owner: root
+        owner: "{{ restic_destination_user if inventory_hostname == restic_destination else 'root' }}"
+        mode: 0400
+        content: '{{ restic_passwd }}'
+
+    - name: init repo if it does not exists
+      ansible.builtin.command:
+        argv:
+          - restic
+          - -r
+          - '{{ restic_destination_dir }}'
+          - init
+        creates: '{{ restic_destination_dir }}/config'
+      environment:
+        RESTIC_PASSWORD_FILE: /var/lib/misc/restic-service-passwd
+      become_user: '{{ restic_destination_user }}'
 
     - name: create ssh-key for the root user if it's missing
       ansible.builtin.user:
@@ -84,10 +110,11 @@
 
     - name: write public key to restic_destination
       ansible.posix.authorized_key:
-        user: '{{ restic_user }}'
+        user: '{{ restic_destination_user }}'
         key: '{{ ssh_pub_key.content | b64decode }}'
         comment: '{{ ansible_hostname }}'
-        key_options: restrict,command="rclone serve restic --stdio --append-only --transfers 2 restic:/misc/backup/restic"
+        key_options: restrict,command="rclone serve restic --stdio --append-only --transfers 2 restic:{{ restic_destination_dir }}"
+        # "
       delegate_to: '{{ restic_destination }}'
 
     - name: add systemd service for running rclone
@@ -101,18 +128,19 @@
 
           [Service]
           Type=oneshot
-          ExecStartPre=
+          Environment='RESTIC_PASSWORD_FILE=/var/lib/misc/restic-service-passwd'
           ExecStart=restic \
-                    -o rclone.program="ssh -l {{ restic_user }} {{ restic_destination }}" \
+                    -o rclone.program="ssh -l {{ restic_destination_user }} {{ restic_destination }}" \
                     # "
-                    -p /root/.restic \
-                    -r rclone: backup \
-                    --exclude tmp  --exclude Nedlastinger --exclude Downloads \
+                    -r rclone: \
+                    backup \
+                    {{ restic_options }} \
                     --exclude-if-present .restic-ignore \
                     -H {{ ansible_hostname }} \
-                    /etc /home /root
+                    {{ restic_backup }}
+      register: systemd_service
 
-    - name: add systemd timer for running rclone
+    - name: add systemd timer for running restic
       ansible.builtin.copy:
         dest: /etc/systemd/system/restic.timer
         mode: 0644
@@ -123,8 +151,22 @@
           [Timer]
           OnCalendar=daily
           AccuracySec=12h
-          OnBootSec=1h
+          #OnBootSec=1h
           Persistent=true
 
           [Install]
           WantedBy=timers.target
+      register: systemd_timer
+
+    - name: reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: true
+      when: systemd_service is changed or
+            systemd_timer is changed
+
+    - name: enable the systemd timer of restic
+      ansible.builtin.systemd:
+        name: restic.timer
+        state: started
+        enabled: true
+      ignore_errors: true
