@@ -27,12 +27,12 @@ nuc.lan
 
 [restic]
 wg.lan ansible_user=ubuntu
+leno.lan ansible_user=root
 
-[restic:vars]
-restic_destination=wg.lan
-restic_destination_user=rbackup
-restic_destination_dir=/tmp/restic
-restic_backup=/etc
-restic_options=-e tmp -e Nedlastinger -e Downloads
-restic_passwd=password
-
+#[restic:vars]
+#restic_destination=backup.foo.bar
+#restic_destination_user=rbackup
+#restic_destination_dir=/mnt/backup
+#restic_backup=/etc /home /root
+#restic_options=-e tmp -e Trash
+#restic_passwd=superstrongpassword

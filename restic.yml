@@ -88,6 +88,8 @@
         creates: '{{ restic_destination_dir }}/config'
       environment:
         RESTIC_PASSWORD_FILE: /var/lib/misc/restic-service-passwd
+      run_once: true
+      delegate_to: '{{ restic_destination }}'
       become_user: '{{ restic_destination_user }}'
 
     - name: create ssh-key for the root user if it's missing
