@@ -118,7 +118,6 @@
         key: '{{ ssh_pub_key.content | b64decode }}'
         comment: '{{ ansible_fqdn }}'
         key_options: restrict,command="rclone serve restic --stdio --append-only --transfers 2 restic:{{ restic_destination_dir }}"
-        # "
       delegate_to: '{{ restic_destination }}'
       throttle: 1
 
@@ -140,8 +139,6 @@
                     -H {{ ansible_hostname }} \
                     {{ restic_backup }}
 
-      # '
-
     - name: add systemd timer for running restic
       ansible.builtin.copy:
         dest: /etc/systemd/system/restic.timer
@@ -153,7 +150,8 @@
           [Timer]
           OnCalendar=daily
           AccuracySec=12h
-          #OnBootSec=1h
+          RandomizedDelaySec=6h
+          FixedRandomDelay=false
           Persistent=true
 
           [Install]
