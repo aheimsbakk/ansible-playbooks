@@ -79,6 +79,7 @@
         owner: "{{ restic_destination_user if inventory_hostname == restic_destination else 'root' }}"
         mode: 0400
         content: '{{ restic_passwd }}'
+      no_log: true
 
     - name: init repo if it does not exists
       ansible.builtin.command:
@@ -93,6 +94,7 @@
       run_once: true
       delegate_to: '{{ restic_destination }}'
       become_user: '{{ restic_destination_user }}'
+      ignore_errors: true
 
     - name: create ssh-key for the root user if it's missing
       ansible.builtin.user:
@@ -120,6 +122,7 @@
         key_options: restrict,command="rclone serve restic --stdio --append-only --transfers 2 restic:{{ restic_destination_dir }}"
       delegate_to: '{{ restic_destination }}'
       throttle: 1
+      ignore_errors: true
 
     - name: add systemd service for running rclone
       ansible.builtin.copy:
