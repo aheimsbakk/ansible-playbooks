@@ -35,6 +35,7 @@
           - bind9-dnsutils    # Get the dig command
           - bind9-host        # Host command
           - btrfs-heatmap     # Visualize how data is stored on disk
+          - btrfs-progs       # Btrfs progs to be able to compress files
           - catimg            # Display images in terminal
           - davfs2            # DavFS for mounting Nextcloud, no need to sync everything
           - dstat             # Stat system values in colors
