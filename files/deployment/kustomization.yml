@@ -14,7 +14,7 @@ images:
   - name: docker.io/gitlab/gitlab-ce
     newTag: latest
   - name: docker.io/gotify/server
-    newTag: "2.0"
+    newTag: "2"
   - name: docker.io/aheimsbakk/munin-alpine
     newTag: latest
   - name: docker.io/mariadb
@@ -27,10 +27,10 @@ images:
   - name: docker.io/aheimsbakk/smokeping
     newTag: latest
   - name: docker.io/traefik
-    newTag: v2.6
+    newTag: v2.8
   - name: docker.io/prom/prometheus
-    newTag: v2.35.0
+    newTag: v2.38.0
   - name: docker.io/grafana/grafana
-    newTag: 8.5.2
+    newTag: 8.5.10
   - name: docker.io/jellyfin/jellyfin
     newTag: latest

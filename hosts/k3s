@@ -3,7 +3,7 @@ k3s_master
 k3s_agents
 
 [k3s_master]
-futhark-ng ansible_host=192.168.1.20 node_ip=192.168.1.20 env=production nfs_ip=192.168.1.10 ansible_user=ubuntu
+kube1 ansible_host=192.168.1.30 node_ip=192.168.1.30 env=production nfs_ip=192.168.1.10 ansible_user=root
 
 [k3s_agents]
 
