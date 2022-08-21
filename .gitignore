@@ -12,3 +12,7 @@ console.out
 
 # Ansible vault
 vault-*
+
+# Roles
+!roles/requirements.yml
+roles/*
