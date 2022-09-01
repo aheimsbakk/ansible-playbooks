@@ -47,10 +47,10 @@ spec:
             - name: mysql-data
               mountPath: /var/lib/mysql
           env:
+            - name: MARIADB_AUTO_UPGRADE
+              value: "1"
             - name: MYSQL_DATABASE
               value: nextcloud
-            - name: MYSQL_HOST
-              value: nc_db
             - name: MYSQL_USER
               valueFrom:
                 secretKeyRef:
