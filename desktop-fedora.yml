@@ -3,28 +3,31 @@
 # How to run this playbook:
 # $ ansible-playbook -K dekstop.yml
 ---
-- name: configure fedora desktop
+- name: Configure fedora desktop
   hosts: localhost
-  become: true
 
   tasks:
-    - name: run only on fedora
-      assert:
+    - name: Run only on fedora
+      become: true
+      ansible.builtin.assert:
         that: ansible_distribution == "Fedora"
 
-    - name: rpmfusion repositories
-      dnf:
+    - name: RPMFusion repositories
+      become: true
+      ansible.builtin.dnf:
         name:
           - "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
           - "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm"
         disable_gpg_check: true
 
-    - name: add tainted repo (libdvdcss)
-      dnf:
+    - name: Add tainted repo (libdvdcss)
+      become: true
+      ansible.builtin.dnf:
         name: rpmfusion-free-release-tainted
 
-    - name: install packages
-      dnf:
+    - name: Install packages
+      become: true
+      ansible.builtin.dnf:
         name:
           - ansible-core      # Automate everything, with new Ansible 2.10+
           - ansible-lint      # Lint everything
@@ -82,19 +85,21 @@
           - zmap              # Map internet
           - zram              # Zram swap
 
-    - name: increase user watches
-      sysctl:
+    - name: Increase user watches
+      become: true
+      ansible.builtin.sysctl:
         name: fs.inotify.max_user_watches
         value: "2097152"
 
     # In grub intel_pstate=disable
 
-    - name: configure tlp
-      ini_file:
+    - name: Configure TLP
+      become: true
+      community.general.ini_file:
         path: /etc/tlp.d/99-custom.conf
         section: null
         option: '{{ item.o }}'
-        value: '{{ item.v  }}'
+        value: '{{ item.v }}'
         no_extra_spaces: true
         mode: 0644
       loop:
@@ -132,8 +137,9 @@
       tags:
         - tlp
 
-    - name: zstd zram swap
-      ini_file:
+    - name: Zstd zram swap
+      become: true
+      community.general.ini_file:
         path: /etc/systemd/zram-generator.conf
         section: zram0
         option: compression-algorithm
@@ -141,16 +147,18 @@
         create: true
         mode: 0644
 
-    - name: disable the unsecure firewire-dma
-      copy:
+    - name: Disable the unsecure firewire-dma
+      become: true
+      ansible.builtin.copy:
         dest: /etc/modprobe.d/blacklist-dma.conf
         mode: 0644
         content: |
           blacklist firewire-core
           blacklist thunderbolt
 
-    - name: pam yubikey
-      lineinfile:
+    - name: PAM YubiKey
+      become: true
+      ansible.builtin.lineinfile:
         path: '{{ item }}'
         insertafter: PAM
         firstmatch: true
@@ -163,14 +171,23 @@
       tags:
         - pam
 
-    - name: disable firewalld
-      systemd:
+    - name: Disable firewalld
+      become: true
+      ansible.builtin.systemd:
         name: firewalld
         state: stopped
         enabled: false
 
-    - name: enable services
-      service:
+    - name: Disable power-profile-daemon in favor of tlp
+      become: true
+      ansible.builtin.systemd:
+        name: power-profiles-daemon
+        state: stopped
+        masked: true
+
+    - name: Enable services
+      become: true
+      ansible.builtin.systemd:
         name: '{{ item }}'
         enabled: true
         state: started
@@ -179,15 +196,17 @@
         - ufw                 # Simpler firewall, Ubuntus default
         - tlp                 # Enable powersavings on battery
 
-    - name: deny incomming, and don't bother to log
-      ufw:
+    - name: Deny incomming, and don't bother to log
+      become: true
+      community.general.ufw:
         policy: deny
         direction: incoming
         log: false
         state: enabled
 
-    - name: fix for slow wifi
-      copy:
+    - name: Fix for slow wifi
+      become: true
+      ansible.builtin.copy:
         dest: /etc/systemd/network/10-intel-wifi.link
         mode: 0644
         content: |
@@ -198,22 +217,25 @@
           TCPSegmentationOffload=false
           NamePolicy=keep kernel database onboard slot path
 
-    - name: flatpak remote flathub
-      flatpak_remote:
+    - name: Flatpak remote flathub
+      community.general.flatpak_remote:
         name: flathub
         state: present
+        method: user
         flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
 
-    - name: flatpak remote fedora
-      flatpak_remote:
+    - name: Flatpak remote fedora
+      community.general.flatpak_remote:
         name: fedora
         state: present
+        method: user
         flatpakrepo_url: oci+https://registry.fedoraproject.org
 
-    - name: install flatpaks from flathub
-      flatpak:
+    - name: Install flatpaks from flathub
+      community.general.flatpak:
         name: '{{ item }}'
         remote: flathub
+        method: user
       loop:
         - com.belmoussaoui.Decoder
         - com.calibre_ebook.calibre
@@ -246,9 +268,9 @@
         - org.supertuxproject.SuperTux
         - org.videolan.VLC
 
-    # - name: install flatpaks from fedora
-    #   flatpak:
-    #     name: '{{ item }}'
-    #     remote: fedora
-    #   loop:
-
+#   - name: Install flatpaks from fedora
+#     community.general.flatpak:
+#       name: '{{ item }}'
+#       remote: fedora
+#       method: user
+#     loop:
