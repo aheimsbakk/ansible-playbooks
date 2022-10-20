@@ -3,37 +3,51 @@
 # How to run this playbook:
 # $ ansible-playbook -K dekstop.yml
 ---
-- name: configure debian desktop
+- name: Configure debian desktop
   hosts: localhost
   become: true
 
   tasks:
-    - name: run only on debain distros
-      assert:
+    - name: Run only on debain distros
+      ansible.builtin.assert:
         that: ansible_os_family == "Debian"
 
-    - name: remove packages that's installed as flatpaks
-      apt:
+    - name: Remove packages that's installed as flatpaks
+      ansible.builtin.apt:
         state: absent
         name:
           - shotwell              # Remove the the Photo organizer
 
-    - name: install packages
-      apt:
+    - name: Add unstable (sid) repository for newer packages, if needed
+      ansible.builtin.apt_repository:
+        repo: deb http://ftp.no.debian.org/debian/ unstable main non-free contrib
+        state: present
+        filename: unstable
+
+    - name: Don't automatic install from unstable (sid)
+      ansible.builtin.copy:
+        dest: /etc/apt/preferences.d/unstable
+        mode: 0664
+        content: |
+          Package: *
+          Pin: release unstable
+          Pin-Priority: 100
+
+    - name: Install packages
+      ansible.builtin.apt:
         name:
-            # - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
-            # - duply             # Vrapper for Duplicity backup
-            # - iucode-tool       # Intel microcode tool
-            # - libdvdcss         # Play your old DVDs on Linux
-            # - libgnome-keyring  # Save passwords in Nextcloud, missing dep.
-            # - libmp4v2          # Need it, realy need it
-            # - marker            # A good GTK markdown editor
-            # - network-manager-openvpn-gnome  # Connect to OpenVPN server
-            # - rkhunter          # Root kit hunter, just the basics
-          - syncthing         # To sync stuff
-            # - vim-syntastic     # <3
-            # - yubikey-personalization-gui  # Yubico configuration
-            # - yubioath-desktop      # The Yubico Authenticator
+          # - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
+          # - duply             # Vrapper for Duplicity backup
+          # - iucode-tool       # Intel microcode tool
+          # - libdvdcss         # Play your old DVDs on Linux
+          # - libgnome-keyring  # Save passwords in Nextcloud, missing dep.
+          # - libmp4v2          # Need it, realy need it
+          # - marker            # A good GTK markdown editor
+          # - network-manager-openvpn-gnome  # Connect to OpenVPN server
+          # - rkhunter          # Root kit hunter, just the basics
+          # - vim-syntastic     # <3
+          # - yubikey-personalization-gui  # Yubico configuration
+          # - yubioath-desktop      # The Yubico Authenticator
           - ansible-core          # Automate everything
           - ansible-lint          # Lint everything
           - btrfs-compsize        # Check the compression ratio on btrfs
@@ -66,11 +80,13 @@
           - ltrace                # Trace library calls
           - menulibre             # Edit Gnome menu items
           - mtr                   # Better traceroute
+          - ncdu                  # Visual terminal 'du -h'
           - nmap                  # Scan network ports
           - npm                   # Needed by vim-lsp
           - offlineimap           # Make local backup of IMAP
           - pamu2fcfg             # Set up U2F token
           - pcscd                 # Smart card daemon
+          - podman                # Yep! Containers, containers...
           - pv                    # How fast do we transfer
           - python3-pip           # Yes, need to install python packages
           - python3-pygments      # Syntax highlighting in Hugo
@@ -79,6 +95,7 @@
           - rsync                 # Syncing files, syncing life
           - screenfetch           # Screenshot information tool
           - strace                # String trace processes
+          - syncthing         # To sync stuff
           - sysfsutils            # Control /sys
           - tlp                   # Save battery power on laptops
           - tmux                  # <3
@@ -93,13 +110,13 @@
           - zmap                  # Map internet
           - zram-tools            # Zram swap
 
-    - name: increase user watches
-      sysctl:
+    - name: Increase user watches
+      ansible.builtin.sysctl:
         name: fs.inotify.max_user_watches
         value: "2097152"
 
-    - name: configure 50% of mem to zramswap with zstd compression
-      ini_file:
+    - name: Configure 50% of mem to zramswap with zstd compression
+      ansible.builtin.ini_file:
         path: /etc/default/zramswap
         section: null
         option: '{{ item.o }}'
@@ -112,8 +129,8 @@
         - o: PERCENT
           v: 50
 
-    - name: configure tlp
-      ini_file:
+    - name: Configure tlp
+      ansible.builtin.ini_file:
         path: /etc/tlp.d/99-custom.conf
         section: null
         option: '{{ item.o }}'
@@ -155,60 +172,56 @@
       tags:
         - tlp
 
-    - name: disable the unsecure firewire-dma
-      copy:
+    - name: Disable the unsecure firewire-dma
+      ansible.builtin.copy:
         dest: /etc/modprobe.d/blacklist-dma.conf
         mode: 0644
         content: |
           blacklist firewire-core
           blacklist thunderbolt
 
-    - name: fix rotation on ideapad d330
-      copy:
+    - name: Fix rotation on ideapad d330
+      ansible.builtin.copy:
         dest: /etc/udev/hwdb.d/61-sensor-local.hwdb
         mode: 0644
         content: |
           # IdeaPad D330
           sensor:modalias:acpi:BOSC0200*:dmi:*:svnLENOVO:*:pvrLenovoideapadD330*
               ACCEL_MOUNT_MATRIX=0, 1, 0; -1, 0, 0; 0, 0, 1
-      register: hwdb_update
+      notify: handler_hwdb_update
 
-    - name: update hwdb
-      command: systemd-hwdb update
-      when: hwdb_update is changed
 
-        # - name: pam yubikey
-        #   lineinfile:
-        #     path: '{{ item }}'
-        #     insertafter: pam_faildelay.so
-        #     firstmatch: true
-        #     line: auth sufficient pam_u2f.so cue
-        #   loop:
-        #     # - /etc/pam.d/password-auth
-        #     - /etc/pam.d/system-auth
-        #   tags:
-        #     - pam
+      # - name: pam yubikey
+      #   lineinfile:
+      #     path: '{{ item }}'
+      #     insertafter: pam_faildelay.so
+      #     firstmatch: true
+      #     line: auth sufficient pam_u2f.so cue
+      #   loop:
+      #     # - /etc/pam.d/password-auth
+      #     - /etc/pam.d/system-auth
+      #   tags:
+      #     - pam
 
-    - name: enable services
-      service:
+    - name: Enable services
+      ansible.builtin.service:
         name: '{{ item }}'
         enabled: true
         state: started
       loop:
-        - pcscd               # Smart card daemon
         - ufw                 # Simpler firewall, Ubuntus default
         - zramswap            # Use only ram based swap
         - tlp                 # Enable powersavings on battery
 
-    - name: deny incomming, and don't bother to log
-      ufw:
+    - name: Deny incomming, and don't bother to log
+      ansible.builtin.ufw:
         policy: deny
         direction: incoming
         log: false
         state: enabled
 
-    - name: fix for slow wifi
-      copy:
+    - name: Fix for slow wifi
+      ansible.builtin.copy:
         dest: /etc/systemd/network/10-intel-wifi.link
         mode: 0644
         content: |
@@ -219,19 +232,19 @@
           TCPSegmentationOffload=false
           NamePolicy=keep kernel database onboard slot path
 
-    - name: flatpak remote flathub
+    - name: Flatpak remote flathub
       community.general.flatpak_remote:
         name: flathub
         state: present
         flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
 
-    - name: flatpak remote fedora
+    - name: Flatpak remote fedora
       community.general.flatpak_remote:
         name: fedora
         state: present
         flatpakrepo_url: oci+https://registry.fedoraproject.org
 
-    - name: install flatpaks from flathub
+    - name: Install flatpaks from flathub
       community.general.flatpak:
         name: '{{ item }}'
         remote: flathub
@@ -268,9 +281,13 @@
         - org.supertuxproject.SuperTux
         - org.videolan.VLC
 
-    - name: install flatpaks from fedora
+    - name: Install flatpaks from fedora
       community.general.flatpak:
         name: '{{ item }}'
         remote: fedora
-      loop: []
+      loop: [ ]
 
+  handlers:
+    - name: Update hwdb
+      ansible.builtin.command: systemd-hwdb update
+      listen: handler_hwdb_update
