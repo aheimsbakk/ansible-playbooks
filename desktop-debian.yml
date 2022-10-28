@@ -17,6 +17,7 @@
         state: absent
         name:
           - shotwell              # Remove the the Photo organizer
+          - evolution             # The sam with Evolution
 
     - name: Add unstable (sid) repository for newer packages, if needed
       ansible.builtin.apt_repository:
@@ -261,12 +262,12 @@
         - net.supertuxkart.SuperTuxKart
         - org.audacityteam.Audacity
         - org.chromium.Chromium
-        - org.duckstation.DuckStation
         - org.gabmus.whatip
         - org.gimp.GIMP
         - org.gnome.Dictionary
         - org.gnome.Epiphany
         - org.gnome.Evince
+        - org.gnome.Evolution
         - org.gnome.Extensions
         - org.gnome.FileRoller
         - org.gnome.Maps
