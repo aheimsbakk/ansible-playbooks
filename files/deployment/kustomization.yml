@@ -27,7 +27,7 @@ images:
   - name: docker.io/aheimsbakk/smokeping
     newTag: latest
   - name: docker.io/traefik
-    newTag: v2.8
+    newTag: v2.9
   - name: docker.io/prom/prometheus
     newTag: v2.38.0
   - name: docker.io/grafana/grafana
