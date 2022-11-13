@@ -28,7 +28,7 @@ Add custom IPv6 address by setting the `pihole_server_ipv6` variable, else defau
 
 ## Testing
 
-To spin up all services, start Vagrant. Services spun up in Vagrant use self signed certificate and named with [nip.io](https://nip.io). Default private IP for the VM is `10.20.30.11`.
+To spin up all services, start Vagrant. Services spun up in Vagrant use self signed certificate and named with [nip.io](https://nip.io). Default private IP for the VM is `192.168.56.11`.
 
 ```bash
 vagrant up
@@ -38,17 +38,17 @@ vagrant up
 
 Public available services.
 
-* [Gitlab](https://gitlab.10.20.30.11.nip.io), with backup cronjob.
-* [Gitlab registry](https://registry.10.20.30.11.nip.io:5487/v2), with cleanup cronjob.
-* Gitlab SSH on `10.20.30.11:2222`
-* [Gotify](https://gotify.10.20.30.11.nip.io), default username `admin` and password `password`
-* [Nextcloud](https://nextcloud.10.20.30.11.nip.io) with backup cronjob, default username `admin` and password `password`
+* [Gitlab](https://gitlab.192.168.56.11.nip.io), with backup cronjob.
+* [Gitlab registry](https://registry.192.168.56.11.nip.io:5487/v2), with cleanup cronjob.
+* Gitlab SSH on `192.168.56.11:2222`
+* [Gotify](https://gotify.192.168.56.11.nip.io), default username `admin` and password `password`
+* [Nextcloud](https://nextcloud.192.168.56.11.nip.io) with backup cronjob, default username `admin` and password `password`
 
 Services restricted with username and password. Defaults to `admin:password`.
 
-* [Munin](https://munin.10.20.30.11.nip.io)
-* [Smokeping](https://smokeping.10.20.30.11.nip.io)
-* [Traefik](https://traefik.10.20.30.11.nip.io)
+* [Munin](https://munin.192.168.56.11.nip.io)
+* [Smokeping](https://smokeping.192.168.56.11.nip.io)
+* [Traefik](https://traefik.192.168.56.11.nip.io)
 
 Other services running.
 

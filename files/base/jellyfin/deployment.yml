@@ -89,7 +89,7 @@ metadata:
     app: jellyfin
 spec:
   rules:
-    - host: jellyfin.10.20.30.11.nip.io
+    - host: jellyfin.192.168.56.11.nip.io
       http:
         paths:
           - path: /

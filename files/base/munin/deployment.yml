@@ -101,7 +101,7 @@ metadata:
     app: munin
 spec:
   rules:
-    - host: munin.10.20.30.11.nip.io
+    - host: munin.192.168.56.11.nip.io
       http:
         paths:
           - path: /

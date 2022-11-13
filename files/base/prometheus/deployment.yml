@@ -82,7 +82,7 @@ metadata:
     app: prometheus
 spec:
   rules:
-    - host: prometheus.10.20.30.11.nip.io
+    - host: prometheus.192.168.56.11.nip.io
       http:
         paths:
           - path: /

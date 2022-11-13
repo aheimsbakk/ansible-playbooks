@@ -220,7 +220,7 @@ spec:
             - name: NEXTCLOUD_TABLE_PREFIX
               value: oc_
             - name: NEXTCLOUD_TRUSTED_DOMAINS
-              value: nextcloud.10.20.30.11.nip.io
+              value: nextcloud.192.168.56.11.nip.io
             - name: TRUSTED_PROXIES
               value: 10.0.0.0/8
             - name: REDIS_HOST
@@ -339,7 +339,7 @@ metadata:
     app: nextcloud
 spec:
   rules:
-    - host: nextcloud.10.20.30.11.nip.io
+    - host: nextcloud.192.168.56.11.nip.io
       http:
         paths:
           - path: /
