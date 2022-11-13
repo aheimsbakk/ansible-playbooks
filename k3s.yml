@@ -195,7 +195,7 @@
     - name: install / upgrade k3s on master
       ansible.builtin.command: /root/install.sh
       environment:
-        INSTALL_K3S_EXEC: 'server --node-external-ip {{ node_ip }} --disable traefik --write-kubeconfig-mode 600 --write-kubeconfig /root/.kube/config --kubelet-arg image-gc-low-threshold=70 --kubelet-arg image-gc-high-threshold=75 --flannel-backend wireguard-native --flannel-external-ip'
+        INSTALL_K3S_EXEC: 'server --node-ip {{ node_ip }} --node-external-ip {{ node_ip }} --disable traefik --write-kubeconfig-mode 600 --write-kubeconfig /root/.kube/config --kubelet-arg image-gc-low-threshold=70 --kubelet-arg image-gc-high-threshold=75 --flannel-backend wireguard-native --flannel-external-ip'
         # INSTALL_K3S_EXEC: '--node-ip {{ node_ip }} --disable traefik --node-taint "k3s-controlplane=true:NoSchedule" --write-kubeconfig-mode 600 --write-kubeconfig /root/.kube/config --kubelet-arg image-gc-low-threshold=70 --kubelet-arg image-gc-high-threshold=75 --flannel-backend wireguard'
         INSTALL_K3S_VERSION: '{{ k3s_version }}'
       register: k3s_server
@@ -273,7 +273,7 @@
     - name: install / upgrade k3s on agent
       ansible.builtin.command: /root/install.sh
       environment:
-        INSTALL_K3S_EXEC: '--node-external-ip {{ node_ip }} --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75'
+        INSTALL_K3S_EXEC: '--node-ip {{ node_ip }} --node-external-ip {{ node_ip }} --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75'
         INSTALL_K3S_VERSION: '{{ k3s_version }}'
         K3S_URL: 'https://{{ k3s_url }}:6443'
         K3S_TOKEN: '{{ k3s_token }}'

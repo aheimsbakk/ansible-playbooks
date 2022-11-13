@@ -38,9 +38,11 @@ vagrant up
 
 Public available services.
 
+<!---
 * [Gitlab](https://gitlab.192.168.56.11.nip.io), with backup cronjob.
 * [Gitlab registry](https://registry.192.168.56.11.nip.io:5487/v2), with cleanup cronjob.
 * Gitlab SSH on `192.168.56.11:2222`
+-->
 * [Gotify](https://gotify.192.168.56.11.nip.io), default username `admin` and password `password`
 * [Nextcloud](https://nextcloud.192.168.56.11.nip.io) with backup cronjob, default username `admin` and password `password`
 
