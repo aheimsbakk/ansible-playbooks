@@ -46,9 +46,11 @@ Public available services.
 * [Gotify](https://gotify.192.168.56.11.nip.io), default username `admin` and password `password`
 * [Nextcloud](https://nextcloud.192.168.56.11.nip.io) with backup cronjob, default username `admin` and password `password`
 
-Services restricted with username and password. Defaults to `admin:password`.
+Services restricted to source IP range. Defaults to `192.168.0.0/16`, `172.16.0.0/12` and `10.0.0.0/8`.
 
+* [Grafana](https://grafana.192.168.56.11.nip.io)
 * [Munin](https://munin.192.168.56.11.nip.io)
+* [Prometheus](https://traefik.192.168.56.11.nip.io)
 * [Smokeping](https://smokeping.192.168.56.11.nip.io)
 * [Traefik](https://traefik.192.168.56.11.nip.io)
 
