@@ -8,7 +8,7 @@
 
   tasks:
     - name: copy out deployment
-      copy:
+      ansible.builtin.copy:
         src: "{{ item }}/"
         dest: "{{ deployment_path }}/{{ item }}/"
         mode: 0600
@@ -19,5 +19,5 @@
         - '{{ env }}'
 
     - name: "apply depolyments env '{{ env }}'"
-      command: "kubectl apply -k {{ deployment_path }}/{{ env }}"
+      ansible.builtin.command: "kubectl apply -k {{ deployment_path }}/{{ env }}"
       changed_when: true
