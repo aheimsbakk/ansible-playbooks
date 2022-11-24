@@ -1,11 +1,7 @@
 ---
 bases:
-  - kube-system
   - traefik
-#  - build
   - default
-#patchesStrategicMerge:
-#  - storageclass_patch.yml
 images:
   - name: k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner
     newTag: v4.0.2
@@ -18,21 +14,23 @@ images:
   - name: docker.io/gitlab/gitlab-ce
     newTag: latest
   - name: docker.io/gotify/server
-    newTag: "2.0"
+    newTag: "2"
   - name: docker.io/aheimsbakk/munin-alpine
     newTag: latest
   - name: docker.io/mariadb
-    newTag: "10.5"
+    newTag: "10.9"
   - name: docker.io/redis
     newTag: latest
   - name: docker.io/nextcloud
     newName: docker.io/aheimsbakk/nextcloud
-    newTag: 23-apache-ffmpeg
+    newTag: 25-apache-ffmpeg
   - name: docker.io/aheimsbakk/smokeping
     newTag: latest
   - name: docker.io/traefik
-    newTag: v2.5
+    newTag: v2.9
   - name: docker.io/prom/prometheus
-    newTag: v2.28.1
+    newTag: v2.38.0
   - name: docker.io/grafana/grafana
-    newTag: 8.0.2
+    newTag: 8.5.10
+  - name: docker.io/jellyfin/jellyfin
+    newTag: latest

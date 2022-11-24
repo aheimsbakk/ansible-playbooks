@@ -1,5 +1,5 @@
 ---
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: gitlab-backup
@@ -26,7 +26,7 @@ spec:
                 - kubectl exec deployment.apps/gitlab -- gitlab-rake gitlab:backup:create SKIP=registry
 
 ---
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: gitlab-registry-garbage-collect

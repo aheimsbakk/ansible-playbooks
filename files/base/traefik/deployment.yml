@@ -9,7 +9,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: nfs-client
+  storageClassName: local-path
   resources:
     requests:
       storage: 250Mi
@@ -77,23 +77,19 @@ spec:
             - --entrypoints.registrysecure.http.middlewares=default-https-headers@file
           securityContext:
             allowPrivilegeEscalation: false
-            #readOnlyRootFilesystem: true
-            #capabilities:
-            #  drop: [ "all" ]
-            #  add: [ "chown" ]
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
           ports:
             - name: web
               containerPort: 80
               hostPort: 80
               protocol: TCP
-            - name: websecure
+            - name: websecure-tcp
               containerPort: 443
               hostPort: 443
               protocol: TCP
-            - name: websecure-udp
-              containerPort: 443
-              hostPort: 443
-              protocol: UDP
             - name: registry
               containerPort: 5487
               hostPort: 5487

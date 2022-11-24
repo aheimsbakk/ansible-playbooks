@@ -1,19 +1,4 @@
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: smokeping-data
-  labels:
-    app: smokeping
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: nfs-client
-  resources:
-    requests:
-      storage: 1Gi
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -38,9 +23,8 @@ spec:
           image: docker.io/aheimsbakk/smokeping:latest
           imagePullPolicy: Always
           volumeMounts:
-            - name: smokeping
+            - name: smokeping-config
               mountPath: /etc/smokeping
-              subPath: config
             - name: smokeping-data
               mountPath: /var/lib/smokeping
           env:
@@ -49,20 +33,17 @@ spec:
           ports:
             - name: web
               containerPort: 80
-          # securityContext:
-          #   allowPrivilegeEscalation: false
-          #   readOnlyRootFilesystem: true
-          #   capabilities:
-          #    drop: [ "all" ]
-          #    add: [ "chown" ]
+              # securityContext:
+              #   allowPrivilegeEscalation: false
       volumes:
-        - name: smokeping
+        - name: smokeping-config
           hostPath:
             type: DirectoryOrCreate
-            path: /srv/smokeping
+            path: /srv/smokeping/config
         - name: smokeping-data
-          persistentVolumeClaim:
-            claimName: smokeping-data
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/smokeping/data
 
 ---
 apiVersion: v1
@@ -89,7 +70,7 @@ metadata:
     app: smokeping
 spec:
   rules:
-    - host: smokeping.10.20.30.11.nip.io
+    - host: smokeping.192.168.56.11.nip.io
       http:
         paths:
           - path: /

@@ -11,21 +11,6 @@ stringData:
   GOTIFY_DEFAULTUSER_PASS: password
 
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: gotify
-  labels:
-    app: gotify
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: nfs-client
-  resources:
-    requests:
-      storage: 250Mi
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -74,10 +59,10 @@ spec:
               value: "Access-Control-Allow-Origin: \"*\"\nAccess-Control-Allow-Methods: \"GET,POST\""
           securityContext:
             allowPrivilegeEscalation: false
-            #readOnlyRootFilesystem: true
-            #capabilities:
-            #  drop: [ "all" ]
-            #  add: [ "chown" ]
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
           ports:
             - name: web
               containerPort: 80
@@ -86,8 +71,9 @@ spec:
               mountPath: /data
       volumes:
         - name: gotify
-          persistentVolumeClaim:
-            claimName: gotify
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/gotify/data
 
 ---
 apiVersion: v1
@@ -115,7 +101,7 @@ metadata:
     app: gotify
 spec:
   rules:
-    - host: gotify.10.20.30.11.nip.io
+    - host: gotify.192.168.56.11.nip.io
       http:
         paths:
           - path: /

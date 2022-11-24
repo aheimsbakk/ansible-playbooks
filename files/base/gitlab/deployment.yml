@@ -40,17 +40,17 @@ spec:
           env:
             - name: GITLAB_OMNIBUS_CONFIG
               value: |
-                external_url "https://gitlab.10.20.30.11.nip.io"
-                registry_external_url "http://registry.10.20.30.11.nip.io:5487"
+                external_url "https://gitlab.192.168.56.11.nip.io"
+                registry_external_url "http://registry.192.168.56.11.nip.io:5487"
                 nginx['listen_https'] = false
                 nginx['listen_port'] = 80
                 nginx['real_ip_trusted_addresses'] = [ '10.0.0.0/8' ]
                 nginx['real_ip_header'] = 'X-Forwarded-For'
                 nginx['real_ip_recursive'] = 'on'
                 gitlab_rails['time_zone'] = "UTC"
-                gitlab_rails['gitlab_ssh_host'] = "gitlab.10.20.30.11.nip.io:2222"
+                gitlab_rails['gitlab_ssh_host'] = "gitlab.192.168.56.11.nip.io:2222"
                 gitlab_rails['registry_enabled'] = true
-                gitlab_rails['registry_host'] = "registry.10.20.30.11.nip.io"
+                gitlab_rails['registry_host'] = "registry.192.168.56.11.nip.io"
                 gitlab_rails['registry_port'] = "5487"
                 gitlab_rails['registry_path'] = "/var/opt/gitlab/gitlab-rails/shared/registry"
                 gitlab_rails['backup_keep_time'] = 2592000
@@ -127,7 +127,7 @@ spec:
       port: 2222
       targetPort: ssh
   externalIPs:
-    - 10.20.30.11
+    - 192.168.56.11
 
 ---
 kind: Ingress
@@ -138,7 +138,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   rules:
-    - host: gitlab.10.20.30.11.nip.io
+    - host: gitlab.192.168.56.11.nip.io
       http:
         paths:
           - path: /
@@ -158,7 +158,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: registrysecure
 spec:
   rules:
-    - host: registry.10.20.30.11.nip.io
+    - host: registry.192.168.56.11.nip.io
       http:
         paths:
           - path: /
