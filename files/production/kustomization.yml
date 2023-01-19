@@ -11,4 +11,5 @@ patchesStrategicMerge:
   - traefik.yml
   - prometheus.yml
   - grafana.yml
+  - vaultwarden.yml
   # - jellyfin.yml
