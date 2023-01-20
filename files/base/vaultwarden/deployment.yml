@@ -1,0 +1,162 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: vaultwarden
+  labels:
+    app: vaultwarden
+type: Opaque
+stringData:
+  ADMIN_TOKEN: Vy2VyYTTsKPv8W5aEOWUbB/Bt3DEKePbHmI4m9VcemUMS2rEviDowNAFqYi1xjmp
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vaultwarden
+  labels:
+    app: vaultwarden
+    auto-update-hour: '00'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vaultwarden
+  template:
+    metadata:
+      labels:
+        app: vaultwarden
+    spec:
+      containers:
+        - name: vaultwarden
+          image: docker.io/vaultwarden/server:latest
+          imagePullPolicy: Always
+          resources:
+            limits:
+              memory: 1Gi
+          env:
+            - name: ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden
+                  key: ADMIN_TOKEN
+            - name: LOG_LEVEL
+              value: debug
+            - name: WEBSOCKET_ENABLED
+              value: 'true'
+            - name: WEBSOCKET_ADDRESS
+              value: '0.0.0.0'
+            - name: WEBSOCKET_PORT
+              value: '3012'
+            - name: EVENTS_DAYS_RETAIN
+              value: '30'
+            - name: ORG_CREATION_USERS
+              value: none
+            - name: ORG_ATTACHMENT_LIMIT
+              value: '1048576'
+            - name: USER_ATTACHMENT_LIMIT
+              value: '1048576'
+            - name: TRASH_AUTO_DELETE_DAYS
+              value: '30'
+            - name: PASSWORD_ITERATIONS
+              value: '2000000'
+            - name: DOMAIN
+              value: 'https://vaultwarden.192.168.56.11.nip.io'
+            - name: LOGIN_RATELIMIT_SECONDS
+              value: '120'
+            - name: LOGIN_RATELIMIT_MAX_BURST
+              value: '4'
+            - name: ADMIN_RATELIMIT_SECONDS
+              value: '900'
+            - name: ADMIN_RATELIMIT_MAX_BURST
+              value: '2'
+            - name: AUTHENTICATOR_DISABLE_TIME_DRIFT
+              value: 'true'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ "all" ]
+          ports:
+            - name: vw-web
+              containerPort: 80
+            - name: vw-socket
+              containerPort: 3012
+          volumeMounts:
+            - name: vaultwarden-data
+              mountPath: /data
+      volumes:
+        - name: vaultwarden-data
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/vaultwarden/data
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vaultwarden
+  labels:
+    app: vaultwarden
+spec:
+  selector:
+    app: vaultwarden
+  ports:
+    - protocol: TCP
+      name: vw-web
+      port: 80
+    - protocol: TCP
+      name: vw-socket
+      port: 3012
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: vaultwarden
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  labels:
+    app: vaultwarden
+spec:
+  rules:
+    - host: vaultwarden.192.168.56.11.nip.io
+      http:
+        paths:
+          - path: /notifications/hub
+            pathType: Prefix
+            backend:
+              service:
+                name: vaultwarden
+                port:
+                  number: 3012
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vaultwarden
+                port:
+                  number: 80
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: vaultwarden-admin
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: private-ip-ranges@file
+  labels:
+    app: vaultwarden
+spec:
+  rules:
+    - host: vaultwarden.192.168.56.11.nip.io
+      http:
+        paths:
+          - path: /admin
+            pathType: Prefix
+            backend:
+              service:
+                name: vaultwarden
+                port:
+                  number: 80

@@ -34,3 +34,5 @@ images:
     newTag: 8.5.10
   - name: docker.io/jellyfin/jellyfin
     newTag: latest
+  - name: docker.io/vaultwarden/server
+    newTag: latest
