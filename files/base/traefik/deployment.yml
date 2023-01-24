@@ -67,14 +67,12 @@ spec:
             - --entrypoints.websecure.http.tls.options=mintls12@file
             # - --entrypoints.websecure.http.tls.certresolver=letsencrypt
             - --entrypoints.websecure.http.middlewares=default-https-headers@file
-            # Listen to port 5487 with SSL
-            - --entrypoints.registrysecure.address=:5487
-            - --entrypoints.registrysecure.proxyprotocol=true
-            - --entrypoints.registrysecure.proxyprotocol.trustedips=10.0.0.0/8
-            - --entrypoints.registrysecure.http.tls=true
-            - --entrypoints.registrysecure.http.tls.options=mintls12@file
-            # - --entrypoints.registrysecure.http.tls.certresolver=letsencrypt
-            - --entrypoints.registrysecure.http.middlewares=default-https-headers@file
+            # Metrics
+            - --metrics.prometheus.addServicesLabels=true
+            - --metrics.prometheus.addrouterslabels=true
+            - --metrics.prometheus.addEntryPointsLabels=true
+            - --metrics.prometheus.manualrouting=true
+            - --entryPoints.metrics.address=:8082
           securityContext:
             allowPrivilegeEscalation: false
             # readOnlyRootFilesystem: true
@@ -91,8 +89,8 @@ spec:
               hostPort: 443
               protocol: TCP
             - name: registry
-              containerPort: 5487
-              hostPort: 5487
+              containerPort: 8082
+              hostPort: 8082
               protocol: TCP
           volumeMounts:
             - name: letsencrypt
