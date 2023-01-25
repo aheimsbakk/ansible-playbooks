@@ -12,6 +12,7 @@ configMapGenerator:
       - config/middleware-nextcloud-redirect.yaml
       - config/middleware-auth-private-service.yaml
       - config/router-traefik.yaml
+      - config/router-metrics.yaml
     name: traefik-config
 resources:
   - ns.yml
