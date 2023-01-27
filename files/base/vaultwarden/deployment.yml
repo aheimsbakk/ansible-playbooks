@@ -116,6 +116,7 @@ metadata:
   name: vaultwarden
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: rate200in1m@file
   labels:
     app: vaultwarden
 spec:
