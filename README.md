@@ -30,9 +30,9 @@ Variables is configurable in `group_vars`. See `group_vars/k3s.yml` for availabl
 Public available services.
 
 * [Gotify](https://gotify.192.168.56.11.nip.io), default username `admin` and password `password`  
-    After installing playbooks, go into the Gotify and add an application. Take the applications token and update the `gotify_token`. Voila, you get a notification every time someone logs into i`homeserver`.  
-* [Nextcloud](https://nextcloud.192.168.56.11.nip.io) with backup cronjob, default username `admin` and password `password`
-* [Vaultwarden](https://nextcloud.192.168.56.11.nip.io), configured to signup. Change in admin GUI.
+    After installing playbooks, go into the Gotify and add an application. Take the applications token and update the `gotify_token`. Voila, you get a notification every time someone logs into `homeserver`.
+* [Nextcloud](https://nextcloud.192.168.56.11.nip.io) with database backup cronjob. Default username `admin` and password `password`
+* [Vaultwarden](https://nextcloud.192.168.56.11.nip.io) with database backup cronjob. Configured with signup. Change in admin GUI.
 
 Services restricted to source IP range. Defaults to `192.168.0.0/16`, `172.16.0.0/12` and `10.0.0.0/8`.
 
