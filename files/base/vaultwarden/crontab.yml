@@ -1,0 +1,43 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: vaultwarden-backup
+  labels:
+    app: vaultwarden
+spec:
+  schedule: "3 13 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 3600
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          serviceAccountName: cron-vaultwarden
+          restartPolicy: Never
+          containers:
+            - name: vaultwarden-backup
+              image: docker.io/alpine:latest
+              command:
+                - /bin/sh
+              args:
+                - -c
+                - |
+                  apk --no-cache add sqlite ;
+                  cd /data ;
+                  echo == BACKUP ;
+                  sqlite3 db.sqlite3 ".backup backup-$(date -Is | tr : -).sqlite3" ;
+                  ls backup* ;
+                  echo == DELETE OLDER THAN 30 DAYS ;
+                  find . -type f -mtime +30 -name 'backup*' -delete ;
+                  ls backup*
+              volumeMounts:
+                - name: vaultwarden-data
+                  mountPath: /data
+          volumes:
+            - name: vaultwarden-data
+              hostPath:
+                type: DirectoryOrCreate
+                path: /srv/vaultwarden/data
+
