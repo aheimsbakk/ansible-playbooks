@@ -13,6 +13,7 @@ configMapGenerator:
       - config/middleware-auth-private-service.yaml
       - config/router-traefik.yaml
       - config/router-metrics.yaml
+      - config/middleware-rate200in1min.yaml
     name: traefik-config
 resources:
   - ns.yml
