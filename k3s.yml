@@ -138,7 +138,7 @@
     architecture_map:
       aarch64: arm64
       armv7l: arm
-      x86_64: x86_64
+      x86_64: amd64
 
   tasks:
     - name: ufw allow nfs
