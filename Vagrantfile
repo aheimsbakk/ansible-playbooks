@@ -38,7 +38,8 @@ Vagrant.configure("2") do |config|
           a.host_vars = host_vars
           a.groups = {
             "k3s_master" => k3s_master,
-            "k3s_agents" => k3s_agents
+            "k3s_agents" => k3s_agents,
+            "k3s" => k3s_master + k3s_agents
           }
           a.limit = "all"
           a.playbook = "k3s.yml"
