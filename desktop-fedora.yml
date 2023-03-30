@@ -16,8 +16,8 @@
       become: true
       ansible.builtin.dnf:
         name:
-          - "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
-          - "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+          - "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+          - "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm"
         disable_gpg_check: true
 
     - name: Add tainted repo (libdvdcss)
@@ -81,7 +81,7 @@
           - wireguard-tools   # Wireguard VPN
           - yamllint          # YAML files need to be linted too
           - yubikey-personalization-gui  # Yubico configuration
-          - yubioath-desktop  # The Yubico Authenticator
+          # - yubioath-desktop  # The Yubico Authenticator
           - zmap              # Map internet
           - zram              # Zram swap
 
@@ -194,7 +194,7 @@
       loop:
         - pcscd               # Smart card daemon
         - ufw                 # Simpler firewall, Ubuntus default
-        - tlp                 # Enable powersavings on battery
+        # - tlp                 # Enable powersavings on battery
 
     - name: Deny incomming, and don't bother to log
       become: true
