@@ -121,7 +121,8 @@ spec:
           args:
             - -c
             - |
-              tr -dc a-f0-9 < /dev/urandom | head -c 64 > /data/SESSIONKEY.txt
+              tr -dc a-f0-9 < /dev/urandom | head -c 64 > /data/SESSIONKEY.txt ;
+              tr -dc a-f0-9 < /dev/urandom | head -c 64 > /data/APIKEY.txt
           volumeMounts:
             - name: etherpad-data
               mountPath: /data
@@ -169,6 +170,8 @@ spec:
               mountPath: /opt/etherpad-lite/var
             - name: etherpad-session
               mountPath: /opt/etherpad-lite/SESSIONKEY.txt
+            - name: etherpad-api
+              mountPath: /opt/etherpad-lite/APIKEY.txt
       volumes:
         - name: etherpad-data
           hostPath:
@@ -176,8 +179,12 @@ spec:
             path: /srv/etherpad/data
         - name: etherpad-session
           hostPath:
-            type: File
+            type: FileOrCreate
             path: /srv/etherpad/data/SESSIONKEY.txt
+        - name: etherpad-api
+          hostPath:
+            type: FileOrCreate
+            path: /srv/etherpad/data/APIKEY.txt
 
 ---
 apiVersion: v1
