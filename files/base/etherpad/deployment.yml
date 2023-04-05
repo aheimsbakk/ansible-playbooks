@@ -1,0 +1,120 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: etherpad
+  labels:
+    app: etherpad
+type: Opaque
+stringData:
+  ADMIN_PASSWORD: ryotCecpaHytcib0
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: etherpad
+  labels:
+    app: etherpad
+    auto-update-hour: '00'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: etherpad
+  template:
+    metadata:
+      labels:
+        app: etherpad
+    spec:
+      containers:
+        - name: etherpad
+          image: docker.io/etherpad/etherpad:latest
+          imagePullPolicy: Always
+          resources:
+            limits:
+              memory: 1Gi
+          env:
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: etherpad
+                  key: ADMIN_PASSWORD
+            - name: DB_TYPE
+              value: 'sqlite'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ "all" ]
+          ports:
+            - name: web
+              containerPort: 9001
+          volumeMounts:
+            - name: etherpad-data
+              mountPath: /opt/etherpad-lite/var
+      volumes:
+        - name: etherpad-data
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/etherpad/data
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: etherpad
+  labels:
+    app: etherpad
+spec:
+  selector:
+    app: etherpad
+  ports:
+    - protocol: TCP
+      name: web
+      port: 9001
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: etherpad
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  labels:
+    app: etherpad
+spec:
+  rules:
+    - host: etherpad.192.168.56.11.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: etherpad
+                port:
+                  number: 9001
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: etherpad-admin
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: private-ip-ranges@file
+  labels:
+    app: etherpad
+spec:
+  rules:
+    - host: etherpad.192.168.56.11.nip.io
+      http:
+        paths:
+          - path: /admin
+            pathType: Prefix
+            backend:
+              service:
+                name: etherpad
+                port:
+                  number: 9001
