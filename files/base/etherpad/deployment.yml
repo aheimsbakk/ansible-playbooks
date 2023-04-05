@@ -7,7 +7,93 @@ metadata:
     app: etherpad
 type: Opaque
 stringData:
-  ADMIN_PASSWORD: ryotCecpaHytcib0
+  ADMIN_PASSWORD: password
+  MYSQL_USER: etherpad
+  MYSQL_PASSWORD: password
+  MYSQL_ROOT_PASSWORD: password
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: etherpad-mysql
+  labels:
+    app: etherpad-mysql
+    auto-update-hour: '00'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: etherpad-mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: etherpad-mysql
+    spec:
+      containers:
+        - name: etherpad-mysql
+          image: docker.io/mariadb:10
+          imagePullPolicy: Always
+          args:
+            - --transaction-isolation=READ-COMMITTED
+            - --binlog-format=ROW
+            - --innodb-file-per-table=1
+            - --log-bin
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+          env:
+            - name: MARIADB_AUTO_UPGRADE
+              value: "1"
+            - name: MYSQL_DATABASE
+              value: etherpad
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: etherpad
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: etherpad
+                  key: MYSQL_PASSWORD
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: etherpad
+                  key: MYSQL_ROOT_PASSWORD
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
+          ports:
+            - name: etherpad-mysql
+              containerPort: 3306
+      volumes:
+        - name: mysql-data
+          hostPath:
+            path: /srv/etherpad/mysql
+            type: DirectoryOrCreate
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: etherpad-mysql
+  labels:
+    app: etherpad-mysql
+spec:
+  selector:
+    app: etherpad-mysql
+  ports:
+    - protocol: TCP
+      name: mysql
+      port: 3306
 
 ---
 apiVersion: apps/v1
@@ -27,6 +113,18 @@ spec:
       labels:
         app: etherpad
     spec:
+      initContainers:
+        - name: etherpad-init
+          image: docker.io/alpine:latest
+          command:
+            - /bin/sh
+          args:
+            - -c
+            - |
+              tr -dc a-f0-9 < /dev/urandom | head -c 64 > /data/SESSIONKEY.txt
+          volumeMounts:
+            - name: etherpad-data
+              mountPath: /data
       containers:
         - name: etherpad
           image: docker.io/etherpad/etherpad:latest
@@ -41,7 +139,23 @@ spec:
                   name: etherpad
                   key: ADMIN_PASSWORD
             - name: DB_TYPE
-              value: 'sqlite'
+              value: 'mysql'
+            - name: DB_HOST
+              value: etherpad-mysql
+            - name: DB_PORT
+              value: '3306'
+            - name: DB_NAME
+              value: etherpad
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: etherpad
+                  key: MYSQL_USER
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: etherpad
+                  key: MYSQL_PASSWORD
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -53,11 +167,17 @@ spec:
           volumeMounts:
             - name: etherpad-data
               mountPath: /opt/etherpad-lite/var
+            - name: etherpad-session
+              mountPath: /opt/etherpad-lite/SESSIONKEY.txt
       volumes:
         - name: etherpad-data
           hostPath:
             type: DirectoryOrCreate
             path: /srv/etherpad/data
+        - name: etherpad-session
+          hostPath:
+            type: File
+            path: /srv/etherpad/data/SESSIONKEY.txt
 
 ---
 apiVersion: v1

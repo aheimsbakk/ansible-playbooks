@@ -36,3 +36,5 @@ images:
     newTag: latest
   - name: docker.io/vaultwarden/server
     newTag: latest
+  - name: docker.io/etherpad/etherpad
+    newTag: latest
