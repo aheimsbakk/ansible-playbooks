@@ -121,6 +121,7 @@ spec:
           args:
             - -c
             - |
+              chmod a+rwt /data ;
               tr -dc a-f0-9 < /dev/urandom | head -c 64 > /data/SESSIONKEY.txt ;
               tr -dc a-f0-9 < /dev/urandom | head -c 64 > /data/APIKEY.txt
           volumeMounts:
