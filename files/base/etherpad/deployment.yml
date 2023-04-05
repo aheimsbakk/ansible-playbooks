@@ -121,9 +121,7 @@ spec:
           args:
             - -c
             - |
-              chmod a+rwt /data ;
-              tr -dc a-f0-9 < /dev/urandom | head -c 64 > /data/SESSIONKEY.txt ;
-              tr -dc a-f0-9 < /dev/urandom | head -c 64 > /data/APIKEY.txt
+              chmod a+rwt /data
           volumeMounts:
             - name: etherpad-data
               mountPath: /data
@@ -160,7 +158,7 @@ spec:
                   key: MYSQL_PASSWORD
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
+            readOnlyRootFilesystem: false
             capabilities:
               drop: [ "all" ]
           ports:
@@ -169,23 +167,11 @@ spec:
           volumeMounts:
             - name: etherpad-data
               mountPath: /opt/etherpad-lite/var
-            - name: etherpad-session
-              mountPath: /opt/etherpad-lite/SESSIONKEY.txt
-            - name: etherpad-api
-              mountPath: /opt/etherpad-lite/APIKEY.txt
       volumes:
         - name: etherpad-data
           hostPath:
             type: DirectoryOrCreate
             path: /srv/etherpad/data
-        - name: etherpad-session
-          hostPath:
-            type: FileOrCreate
-            path: /srv/etherpad/data/SESSIONKEY.txt
-        - name: etherpad-api
-          hostPath:
-            type: FileOrCreate
-            path: /srv/etherpad/data/APIKEY.txt
 
 ---
 apiVersion: v1
