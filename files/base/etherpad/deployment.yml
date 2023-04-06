@@ -129,9 +129,9 @@ spec:
         - name: etherpad
           image: docker.io/etherpad/etherpad:latest
           imagePullPolicy: Always
-            #resources:
-            #  limits:
-            #    memory: 1Gi
+          resources:
+            limits:
+              memory: 1Gi
           env:
             - name: ADMIN_PASSWORD
               valueFrom:
@@ -156,10 +156,10 @@ spec:
                 secretKeyRef:
                   name: etherpad
                   key: MYSQL_PASSWORD
-                    #- name: ETHERPAD_PLUGINS
-                    #  value: "ep_author_neat ep_align ep_headings2 ep_font_color ep_adminpads2"
             - name: SKIN_VARIANTS
-              value: "dark-toolbar super-light-editor dark-background"
+              value: 'dark-toolbar super-light-editor dark-background'
+            - name: PAD_OPTIONS_USE_MONOSPACE_FONT
+              value: 'true'
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
