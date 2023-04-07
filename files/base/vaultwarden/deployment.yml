@@ -72,6 +72,8 @@ spec:
               value: '2'
             - name: AUTHENTICATOR_DISABLE_TIME_DRIFT
               value: 'true'
+            - name: ICON_SERVICE
+              value: duckduckgo
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
