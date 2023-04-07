@@ -26,6 +26,8 @@ spec:
                 - |
                   apk --no-cache add sqlite ;
                   cd /data ;
+                  echo == VACUUM ;
+                  sqlite3 db.sqlite3 "VACUUM;" ;
                   echo == BACKUP ;
                   sqlite3 db.sqlite3 ".backup backup-$(date -Is | tr : -).sqlite3" ;
                   ls backup* ;
