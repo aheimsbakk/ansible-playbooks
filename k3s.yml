@@ -124,8 +124,8 @@
 
     - name: get k3s install script from stable branch
       ansible.builtin.get_url:
-        url: https://raw.githubusercontent.com/k3s-io/k3s/v1.25.3%2Bk3s1/install.sh
-        checksum: sha256:704f918bc8bc56329dce985ee7964cceff3f53d3580beff99ee85d8e7da94638
+        url: https://raw.githubusercontent.com/k3s-io/k3s/v1.27.1%2Bk3s1/install.sh
+        checksum: sha256:1fa0365382d25b67b67c4891af418ad4dfa8bfc27a817d188054c88f8d910e9d
         dest: /root/install.sh
         mode: 0755
 
