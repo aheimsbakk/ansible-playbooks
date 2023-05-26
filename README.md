@@ -49,7 +49,6 @@ Services restricted to source IP range. Defaults to `192.168.0.0/16`, `172.16.0.
 * [Traefik](https://traefik.192.168.56.11.nip.io)
 * [Vaultwarden Admin](https://traefik.192.168.56.11.nip.io/admin) - Vaultwarden administration UI
 Other services running.
-
 * `pod-updater` cronjob running in each namespace, which updates deployments regularly to fetch newer version of container images.
 
 ### Caveats
