@@ -1,3 +1,4 @@
+# https://sdk.collaboraonline.com/docs/installation/CODE_Docker_image.html?highlight=admin%20console
 ---
 apiVersion: v1
 kind: Secret
