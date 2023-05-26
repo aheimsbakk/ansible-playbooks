@@ -11,4 +11,4 @@ bases:
   - ../../base/prometheus
   - ../../base/grafana
   - ../../base/vaultwarden
-    # - ../../base/jellyfin
+  - ../../base/collabora

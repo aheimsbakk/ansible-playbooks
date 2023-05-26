@@ -12,4 +12,4 @@ patchesStrategicMerge:
   - prometheus.yml
   - grafana.yml
   - vaultwarden.yml
-  # - jellyfin.yml
+  - collabora.yml
