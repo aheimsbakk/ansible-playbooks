@@ -31,21 +31,27 @@ Public available services.
 
 * [Gotify](https://gotify.192.168.56.11.nip.io), default username `admin` and password `password`  
     After installing playbooks, go into the Gotify and add an application. Take the applications token and update the `gotify_token`. Voila, you get a notification every time someone logs into `homeserver`.
-* [Nextcloud](https://nextcloud.192.168.56.11.nip.io) with database backup cronjob. Default username `admin` and password `password`
-* [Vaultwarden](https://nextcloud.192.168.56.11.nip.io) with database backup cronjob. Configured with signup. Change in admin GUI.
+* [Nextcloud](https://nextcloud.192.168.56.11.nip.io) with database backup cronjob - default username `admin` and password `password`  
+    For Collabora office install the app `Nextcloud Office` and go to admin interface and find `Office`
+    * Use your own server, in `URL (and Port) of Collabora Online-server` add `https://collabora.192.168.56.11.nip.io/`.
+    * Check `Disable certificate verification`.
+    * Allow list for WOPI requests should contain `192.168.56.0/24`.
+* [Vaultwarden](https://nextcloud.192.168.56.11.nip.io) with database backup cronjob  
+    Configured with signup. Change in admin GUI.
 
 Services restricted to source IP range. Defaults to `192.168.0.0/16`, `172.16.0.0/12` and `10.0.0.0/8`.
 
+* [Collabora CODE Admin](https://collabora.192.168.56.11.nip.io/browser/dist/admin/admin.html), default username `admin` and password `password`
 * [Grafana](https://grafana.192.168.56.11.nip.io)
 * [Munin](https://munin.192.168.56.11.nip.io)
 * [Prometheus](https://traefik.192.168.56.11.nip.io)
 * [Smokeping](https://smokeping.192.168.56.11.nip.io)
 * [Traefik](https://traefik.192.168.56.11.nip.io)
-* [Vaultwarden Admin](https://traefik.192.168.56.11.nip.io/admin) - Vaultwarden administration UI
+* [Vaultwarden Admin](https://traefik.192.168.56.11.nip.io/admin), Vaultwarden administration UI
 
 Other services running.
 
-* `pod-updater` cronjob running in each namespace, which updates deployments regularly to fetch newer version of container images.
+* `pod-updater` cronjob running in each namespace, which updates deployments regularly to fetch newer version of container images
 
 ### Caveats
 

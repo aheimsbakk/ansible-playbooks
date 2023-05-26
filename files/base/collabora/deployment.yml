@@ -1,0 +1,151 @@
+# https://sdk.collaboraonline.com/docs/installation/CODE_Docker_image.html?highlight=admin%20console
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: collabora
+  labels:
+    app: collabora
+type: Opaque
+stringData:
+  password: password
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: collabora
+  labels:
+    app: collabora
+    auto-update-hour: '00'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: collabora
+  template:
+    metadata:
+      labels:
+        app: collabora
+    spec:
+      containers:
+        - name: collabora
+          image: docker.io/collabora/code:latest
+          imagePullPolicy: Always
+          env:
+            - name: username
+              value: admin
+            - name: password
+              valueFrom:
+                secretKeyRef:
+                  name: collabora
+                  key: password
+            - name: dictionaries
+              value: 'nn_NO nb_NO de_DE en_GB en_US'
+            - name: aliasgroup1
+              value: 'https://nextcloud.192.168.56.11.nip.io:443'
+            - name: extra_params
+              value: '--o:ssl.enable=false --o:ssl.termination=true --o:fetch_update_check=120'
+          securityContext:
+            allowPrivilegeEscalation: true
+            readOnlyRootFilesystem: false
+            capabilities:
+              add: [ "mknod" ]
+          ports:
+            - name: web
+              containerPort: 9980
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: collabora
+  labels:
+    app: collabora
+spec:
+  selector:
+    app: collabora
+  ports:
+    - protocol: TCP
+      name: web
+      port: 9980
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: collabora
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  labels:
+    app: collabora
+spec:
+  rules:
+    - host: collabora.192.168.56.11.nip.io
+      http:
+        paths:
+          - path: /browser
+            pathType: Prefix
+            backend:
+              service:
+                name: collabora
+                port:
+                  number: 9980
+          - path: /hosting/discovery
+            pathType: Prefix
+            backend:
+              service:
+                name: collabora
+                port:
+                  number: 9980
+          - path: /hosting/capabilities
+            pathType: Prefix
+            backend:
+              service:
+                name: collabora
+                port:
+                  number: 9980
+          - path: /cool
+            pathType: Prefix
+            backend:
+              service:
+                name: collabora
+                port:
+                  number: 9980
+          - path: /lool
+            pathType: Prefix
+            backend:
+              service:
+                name: collabora
+                port:
+                  number: 9980
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: collabora-admin
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: private-ip-ranges@file
+  labels:
+    app: collabora
+spec:
+  rules:
+    - host: collabora.192.168.56.11.nip.io
+      http:
+        paths:
+          - path: /browser/dist/admin
+            pathType: Prefix
+            backend:
+              service:
+                name: collabora
+                port:
+                  number: 9980
+          - path: /cool/adminws
+            pathType: Prefix
+            backend:
+              service:
+                name: collabora
+                port:
+                  number: 9980
