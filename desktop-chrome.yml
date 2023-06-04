@@ -9,37 +9,30 @@
 
   tasks:
     - name: run only on fedora
-      assert:
+      ansible.builtin.assert:
         that: ansible_distribution == "Debian"
 
+    - name: add repo key media repo
+      ansible.builtin.apt_key:
+        id: A401FF99368FA1F98152DE755C808C2B65558117
+        keyserver: keyring.debian.org
+        keyring: /etc/apt/trusted.gpg.d/ansible.gpg
+
+    - name: add media repo
+      ansible.builtin.apt_repository:
+        repo: deb http://www.deb-multimedia.org bullseye main
+        filename: ansible
+        state: present
+
+
     - name: install packages
-      apt:
+      ansible.builtin.apt:
         name:
-          # - compsize          # Check the compression ratio on btrfs
-          # - etckeeper         # Watch what happens in /etc
-          # - gnome-tweaks      # Customize Gnome
-          # - gnupg-pkcs11-scd  # Smart card functionality for SSH keys on Yubikey
-          # - keepassxc         # KeePass
-          # - ltrace            # Trace library calls
-          # - pam-u2f           # U2F token 2 factor in PAM
-          # - pamu2fcfg         # Set up U2F token
-          # - pcsc-lite         # Smart card daemon
-          # - syncthing         # To sync stuff
-          # - u2f-host          # Commandline U2F operations
-          # - virt-manager      # Graphical interface to Libvirt
-          # - whois             # A must
-          # - wireguard-tools   # Wireguard VPN
-          # - yamllint          # YAML files need to be linted too
-          # - yubikey-personalization-gui  # Yubico configuration
-          # - yubioath-desktop  # The Yubico Authenticator
-          - bind9-dnsutils    # Get the dig command
-          - bind9-host        # Host command
-          - btrfs-heatmap     # Visualize how data is stored on disk
-          - btrfs-progs       # Btrfs progs to be able to compress files
-          - catimg            # Display images in terminal
           - davfs2            # DavFS for mounting Nextcloud, no need to sync everything
           - dstat             # Stat system values in colors
           - duperemove        # Dedup btrfs
+          - eb-multimedia-keyring # Keyring for debian media packages
+          - etckeeper         # Watch what happens in /etc
           - ffmpeg            # Transcode audio and video
           - file              # What file is this?
           - flac              # Lossless audio
@@ -48,7 +41,9 @@
           - hugo              # Static blog generator
           - lame              # Encode mp3
           - lftp              # FTP isn't dead
+          - mediainfo         # Manipulate mediainfo on mediafiles
           - mediainfo         # Used by AAX
+          - mp4v2-utils       # For working with mp4 files
           - ncdu              # Interactive du
           - nmap              # Scan network ports
           - offlineimap       # Make local backup of IMAP
@@ -62,7 +57,7 @@
           - zmap              # Map internet
 
     - name: flatpak remote flathub
-      flatpak_remote:
+      community.general.flatpak_remote:
         name: flathub
         state: present
         method: user
@@ -70,7 +65,7 @@
       become: false
 
     - name: flatpak remote fedora
-      flatpak_remote:
+      community.general.flatpak_remote:
         name: fedora
         state: present
         method: user
@@ -78,46 +73,17 @@
       become: false
 
     - name: install flatpaks from flathub
-      flatpak:
+      community.general.flatpak:
         name: '{{ item }}'
         remote: flathub
         method: user
       become: false
       loop:
-        - io.github.quodlibet.ExFalso
+        - com.calibre_ebook.calibre
         - org.gnome.TextEditor
-        # - com.belmoussaoui.Decoder
-        # - com.calibre_ebook.calibre
-        # - com.github.micahflee.torbrowser-launcher
-        # - com.github.phase1geo.minder
-        # - com.github.tchx84.Flatseal
-        # - com.nextcloud.desktopclient.nextcloud
-        # - fr.handbrake.ghb
-        # - net.supertuxkart.SuperTuxKart
-        # - org.audacityteam.Audacity
-        # - org.chromium.Chromium
-        # - org.duckstation.DuckStation
-        # - org.gabmus.whatip
-        # - org.gimp.GIMP
-        # - org.gnome.Dictionary
-        # - org.gnome.Epiphany
-        # - org.gnome.Evince
-        # - org.gnome.Extensions
-        # - org.gnome.FileRoller
-        # - org.gnome.Maps
-        # - org.gnome.Shotwell
-        # - org.gnome.TextEditor
-        # - org.gnome.Todo
-        # - org.gnome.gitlab.somas.Apostrophe
-        # - org.mozilla.Thunderbird
-        # - org.mozilla.firefox
-        # - org.remmina.Remmina
-        # - org.signal.Signal
-        # - org.supertuxproject.SuperTux
-        # - org.videolan.VLC
 
     - name: install flatpaks from fedora
-      flatpak:
+      community.general.flatpak:
         name: '{{ item }}'
         remote: fedora
         method: user
