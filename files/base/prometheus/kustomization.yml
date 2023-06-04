@@ -5,5 +5,7 @@ configMapGenerator:
   - files:
       - config/prometheus.yml
     name: prometheus-config
+patchesStrategicMerge:
+  - targets-traefik.yml
 resources:
   - deployment.yml

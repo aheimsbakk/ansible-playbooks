@@ -3,31 +3,31 @@
 # How to run this playbook:
 # $ ansible-playbook -K dekstop.yml
 ---
-- name: configure debian desktop
+- name: Configure debian desktop
   hosts: localhost
-  become: true
 
   tasks:
-    - name: run only on debain distros
-      assert:
+    - name: Run only on debain distros
+      ansible.builtin.assert:
         that: ansible_os_family == "Debian"
 
-    - name: install packages
-      apt:
+    - name: Install packages
+      become: true
+      ansible.builtin.apt:
         name:
-            # - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
-            # - bijiben           # Note taking
-            # - duply             # Vrapper for Duplicity backup
-            # - gthumb            # Photo manager that works with remote folders
-            # - iucode-tool       # Intel microcode tool
-            # - libdvdcss         # Play your old DVDs on Linux
-            # - libgnome-keyring  # Save passwords in Nextcloud, missing dep.
-            # - libmp4v2          # Need it, realy need it
-            # - marker            # A good GTK markdown editor
-            # - rkhunter          # Root kit hunter, just the basics
-            # - syncthing         # To sync stuff
-            # - vim-syntastic     # <3
-          - ansible               # Automate everything
+          # - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
+          # - duply             # Vrapper for Duplicity backup
+          # - iucode-tool       # Intel microcode tool
+          # - libdvdcss         # Play your old DVDs on Linux
+          # - libgnome-keyring  # Save passwords in Nextcloud, missing dep.
+          # - libmp4v2          # Need it, realy need it
+          # - marker            # A good GTK markdown editor
+          # - network-manager-openvpn-gnome  # Connect to OpenVPN server
+          # - rkhunter          # Root kit hunter, just the basics
+          # - vim-syntastic     # <3
+          # - yubikey-personalization-gui  # Yubico configuration
+          # - yubioath-desktop      # The Yubico Authenticator
+          - ansible-core          # Automate everything
           - ansible-lint          # Lint everything
           - btrfs-compsize        # Check the compression ratio on btrfs
           - btrfs-heatmap         # Visualize how data is stored on disk
@@ -43,9 +43,7 @@
           - flatpak               # Flatpak for extra graphical programs
           - gedit-plugins         # Extra plugins for gedit
           - git                   # Version control <3
-          - gnome-backgrounds     # More backgrounds
           - gnome-software-plugin-flatpak  # Integrate flatpak with gnome-software
-          - gnome-tweaks          # Customize Gnome
           - gnupg-pkcs11-scd      # Smart card functionality for SSH keys on Yubikey
           - haveged               # More random data from CPU flutter
           - hugo                  # Static blog generator
@@ -55,12 +53,13 @@
           - ltrace                # Trace library calls
           - menulibre             # Edit Gnome menu items
           - mtr                   # Better traceroute
-          - network-manager-openvpn-gnome  # Connect to OpenVPN server
+          - ncdu                  # Visual terminal 'du -h'
           - nmap                  # Scan network ports
           - npm                   # Needed by vim-lsp
           - offlineimap           # Make local backup of IMAP
           - pamu2fcfg             # Set up U2F token
           - pcscd                 # Smart card daemon
+          - podman                # Yep! Containers, containers...
           - pv                    # How fast do we transfer
           - python3-pip           # Yes, need to install python packages
           - python3-pygments      # Syntax highlighting in Hugo
@@ -80,219 +79,111 @@
           - whois                 # A must
           - wireguard-tools       # Wireguard VPN
           - yamllint              # YAML files need to be linted too
-          - yubikey-personalization-gui  # Yubico configuration
-          - yubioath-desktop      # The Yubico Authenticator
           - zmap                  # Map internet
           - zram-tools            # Zram swap
 
-    - name: pin gnome-shell from unstable
-      copy:
-        dest: /etc/apt/preferences.d/gnome
-        mode: 0664
-        content: |
-          Package: *
-          Pin: release a=unstable
-          Pin-Priority: 50
-
-          Package: gnome-session
-          Pin: release a=unstable
-          Pin-Priority: 1000
-
-          Package: gnome-backgrounds
-          Pin: release a=unstable
-          Pin-Priority: 1000
-
-          Package: gnome-applets
-          Pin: release a=unstable
-          Pin-Priority: 1000
-
-          Package: gnome-control-center
-          Pin: release a=unstable
-          Pin-Priority: 1000
-
-          Package: mutter
-          Pin: release a=unstable
-          Pin-Priority: 1000
-
-          Package: gjs
-          Pin: release a=unstable
-          Pin-Priority: 1000
-
-          Package: gnome-tweaks
-          Pin: release a=unstable
-          Pin-Priority: 1000
-
-    - name: add debian unstable repository
-      apt_repository:
-        repo: '{{ item }}'
-        filename: unstable
-      loop:
-        - deb http://deb.debian.org/debian unstable main contrib non-free
-        - deb-src http://deb.debian.org/debian unstable main contrib non-free
-
-    - name: install gnome-shell from unstable
-      apt:
-        default_release: unstable
-        name:
-          - gjs
-          - gnome-applets
-          - gnome-backgrounds
-          - gnome-control-center
-          - gnome-session
-          - gnome-shell
-          - gnome-tweaks
-          - mutter
-
-    - name: pin extra software
-      copy:
-        dest: /etc/apt/preferences.d/software
-        mode: 0664
-        content: |
-          Package: vagrant
-          Pin: origin download.virtualbox.org
-          Pin-Priority: 1000
-
-    - name: add extra software reposity keys
-      apt_key:
-        id: '{{ item.id }}'
-        url: '{{ item.url }}'
-      loop:
-        - id: B9F8D658297AF3EFC18D5CDFA2F683C52980AECF
-          url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
-        - id: E8A032E094D8EB4EA189D270DA418C88A3219F7B
-          url: https://apt.releases.hashicorp.com/gpg
-        - id: 37C84554E7E0A261E4F76E1ED26E6ED000654A3E
-          url: https://syncthing.net/release-key.gpg
-
-    - name: add extra software repository
-      apt_repository:
-        repo: '{{ item }}'
-        filename: software
-      loop:
-        - deb [arch=amd64] https://download.virtualbox.org/virtualbox/debian {{ ansible_distribution_release }} contrib
-        - deb [arch=amd64] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main
-        - deb https://apt.syncthing.net/ syncthing stable
-
-    - name: install extra software
-      apt:
-        name:
-          - vagrant               # Declarative VMs for testing
-          - virtualbox-6.1        # Virtualization for use with vagrant
-          - syncthing             # Sync stuff between machines/mobiles fast
-
-    - name: increase user watches
-      sysctl:
+    - name: Increase user watches
+      become: true
+      ansible.builtin.sysctl:
         name: fs.inotify.max_user_watches
         value: "2097152"
 
-    # Removed: grub intel_pstate=disable
+#    - name: Configure tlp
+#      ansible.builtin.ini_file:
+#        path: /etc/tlp.d/99-custom.conf
+#        section: null
+#        option: '{{ item.o }}'
+#        value: '{{ item.v  }}'
+#        no_extra_spaces: true
+#        mode: 0644
+#      loop:
+#        - o: CPU_ENERGY_PERF_POLICY_ON_AC
+#          v: balance_performance
+#        - o: CPU_ENERGY_PERF_POLICY_ON_BAT
+#          v: balance_power
+#        - o: CPU_BOOST_ON_AC
+#          v: '1'
+#        - o: CPU_BOOST_ON_BAT
+#          v: '0'
+#        - o: CPU_HWP_DYN_BOOST_ON_AC
+#          v: '1'
+#        - o: CPU_HWP_DYN_BOOST_ON_BAT
+#          v: '0'
+#        - o: CPU_SCALING_GOVERNOR_ON_AC
+#          v: schedutil
+#        - o: CPU_SCALING_GOVERNOR_ON_BAT
+#          v: schedutil
+#        - o: RADEON_DPM_STATE_ON_AC
+#          v: performance
+#        - o: RADEON_DPM_STATE_ON_BAT
+#          v: battery
+#        - o: RADEON_POWER_PROFILE_ON_AC
+#          v: auto
+#        - o: RADEON_POWER_PROFILE_ON_BAT
+#          v: low
+#        - o: RADEON_DPM_PERF_LEVEL_ON_AC
+#          v: auto
+#        - o: RADEON_DPM_PERF_LEVEL_ON_BAT
+#          v: low
+#        - o: STOP_CHARGE_THRESH_BAT0
+#          v: '1'
+#      register: tlp_config
+#      tags:
+#        - tlp
 
-    - name: configure tlp
-      ini_file:
-        path: /etc/tlp.d/99-custom.conf
-        section: null
-        option: '{{ item.o }}'
-        value: '{{ item.v  }}'
-        no_extra_spaces: true
-        mode: 0644
-      loop:
-        - o: CPU_ENERGY_PERF_POLICY_ON_AC
-          v: balance_performance
-        - o: CPU_ENERGY_PERF_POLICY_ON_BAT
-          v: balance_power
-        - o: CPU_BOOST_ON_AC
-          v: '1'
-        - o: CPU_BOOST_ON_BAT
-          v: '0'
-        - o: CPU_HWP_DYN_BOOST_ON_AC
-          v: '1'
-        - o: CPU_HWP_DYN_BOOST_ON_BAT
-          v: '0'
-        - o: CPU_SCALING_GOVERNOR_ON_AC
-          v: schedutil
-        - o: CPU_SCALING_GOVERNOR_ON_BAT
-          v: schedutil
-        - o: RADEON_DPM_STATE_ON_AC
-          v: performance
-        - o: RADEON_DPM_STATE_ON_BAT
-          v: battery
-        - o: RADEON_POWER_PROFILE_ON_AC
-          v: auto
-        - o: RADEON_POWER_PROFILE_ON_BAT
-          v: low
-        - o: RADEON_DPM_PERF_LEVEL_ON_AC
-          v: auto
-        - o: RADEON_DPM_PERF_LEVEL_ON_BAT
-          v: low
-        - o: STOP_CHARGE_THRESH_BAT0
-          v: '1'
-      register: tlp_config
-      tags:
-        - tlp
-
-          # - name: zstd zram swap
-          #   ini_file:
-          #     path: /etc/systemd/zram-generator.conf
-          #     section: zram0
-          #     option: compression-algorithm
-          #     value: zstd
-          #     create: true
-          #     mode: 0644
-
-    - name: disable the unsecure firewire-dma
-      copy:
+    - name: Disable the unsecure firewire-dma
+      become: true
+      ansible.builtin.copy:
         dest: /etc/modprobe.d/blacklist-dma.conf
         mode: 0644
         content: |
           blacklist firewire-core
           blacklist thunderbolt
 
-    - name: fix rotation on ideapad d330
-      copy:
+    - name: Fix rotation on ideapad d330
+      become: true
+      ansible.builtin.copy:
         dest: /etc/udev/hwdb.d/61-sensor-local.hwdb
         mode: 0644
         content: |
           # IdeaPad D330
           sensor:modalias:acpi:BOSC0200*:dmi:*:svnLENOVO:*:pvrLenovoideapadD330*
               ACCEL_MOUNT_MATRIX=0, 1, 0; -1, 0, 0; 0, 0, 1
-      register: hwdb_update
+      notify: handler_hwdb_update
 
-    - name: update hwdb
-      command: systemd-hwdb update
-      when: hwdb_update is changed
 
-        # - name: pam yubikey
-        #   lineinfile:
-        #     path: '{{ item }}'
-        #     insertafter: pam_faildelay.so
-        #     firstmatch: true
-        #     line: auth sufficient pam_u2f.so cue
-        #   loop:
-        #     # - /etc/pam.d/password-auth
-        #     - /etc/pam.d/system-auth
-        #   tags:
-        #     - pam
+      # - name: pam yubikey
+      #   lineinfile:
+      #     path: '{{ item }}'
+      #     insertafter: pam_faildelay.so
+      #     firstmatch: true
+      #     line: auth sufficient pam_u2f.so cue
+      #   loop:
+      #     # - /etc/pam.d/password-auth
+      #     - /etc/pam.d/system-auth
+      #   tags:
+      #     - pam
 
-    - name: enable services
-      service:
+    - name: Enable services
+      become: true
+      ansible.builtin.service:
         name: '{{ item }}'
         enabled: true
         state: started
       loop:
-        - pcscd               # Smart card daemon
         - ufw                 # Simpler firewall, Ubuntus default
-        - zramswap            # Use only ram based swap
-        - tlp                 # Enable powersavings on battery
 
-    - name: deny incomming, and don't bother to log
-      ufw:
+    - name: Deny incomming, and don't bother to log
+      become: true
+      ansible.builtin.ufw:
         policy: deny
         direction: incoming
         log: false
         state: enabled
 
-    - name: fix for slow wifi
-      copy:
+    - name: Fix for slow wifi
+      become: true
+      ansible.builtin.copy:
         dest: /etc/systemd/network/10-intel-wifi.link
         mode: 0644
         content: |
@@ -303,48 +194,67 @@
           TCPSegmentationOffload=false
           NamePolicy=keep kernel database onboard slot path
 
-    - name: flatpak remote flathub
+    - name: Flatpak remote flathub
       community.general.flatpak_remote:
         name: flathub
         state: present
+        method: user
         flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
 
-    - name: flatpak remote fedora
+    - name: Flatpak remote fedora
       community.general.flatpak_remote:
         name: fedora
         state: present
+        method: user
         flatpakrepo_url: oci+https://registry.fedoraproject.org
 
-    - name: install flatpaks from flathub
+    - name: Install flatpaks from flathub
       community.general.flatpak:
         name: '{{ item }}'
         remote: flathub
+        method: user
       loop:
-        - com.calibre_ebook.calibre
+        - com.github.micahflee.torbrowser-launcher
         - com.github.tchx84.Flatseal
-        - com.nextcloud.desktopclient.nextcloud
-        - io.github.quodlibet.ExFalso
-        - org.chromium.Chromium
-        - org.gimp.GIMP
-        - org.gnome.Calendar
-        - org.gnome.Cheese
-        - org.gnome.Dictionary
-        - org.gnome.Evolution
-        - org.gnome.Extensions
-        - org.gnome.Maps
-        - org.gnome.Shotwell
-        - org.gnome.Totem
-        - org.gnome.Weather
-        - org.gnome.baobab
-        - org.gnome.clocks
-        - org.keepassxc.KeePassXC
+        - com.mattjakeman.ExtensionManager
         - org.mozilla.firefox
-        - org.remmina.Remmina
-        - org.videolan.VLC
+#        - com.belmoussaoui.Decoder
+#        - com.calibre_ebook.calibre
+#        - com.github.phase1geo.minder
+#        - com.nextcloud.desktopclient.nextcloud
+#        - fr.handbrake.ghb
+#        - io.github.quodlibet.ExFalso
+#        - net.supertuxkart.SuperTuxKart
+#        - org.audacityteam.Audacity
+#        - org.chromium.Chromium
+#        - org.gabmus.whatip
+#        - org.gimp.GIMP
+#        - org.gnome.Dictionary
+#        - org.gnome.Epiphany
+#        - org.gnome.Evince
+#        - org.gnome.Evolution
+#        - org.gnome.Extensions
+#        - org.gnome.FileRoller
+#        - org.gnome.Maps
+#        - org.gnome.Shotwell
+#        - org.gnome.TextEditor
+#        - org.gnome.Todo
+#        - org.gnome.gitlab.somas.Apostrophe
+#        - org.mozilla.Thunderbird
+#        - org.remmina.Remmina
+#        - org.signal.Signal
+#        - org.supertuxproject.SuperTux
+#        - org.videolan.VLC
 
-    - name: install flatpaks from fedora
+    - name: Install flatpaks from fedora
       community.general.flatpak:
         name: '{{ item }}'
         remote: fedora
-      loop:
-        - org.audacityteam.Audacity
+        method: user
+      loop: [ ]
+
+  handlers:
+    - name: Update hwdb
+      ansible.builtin.command: systemd-hwdb update
+      listen: handler_hwdb_update
+      become: true

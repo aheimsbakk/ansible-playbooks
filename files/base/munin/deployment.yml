@@ -11,19 +11,6 @@ stringData:
   SNMP_NODES: ""
 
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: munin-data
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: nfs-client
-  resources:
-    requests:
-      storage: 1Gi
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -63,10 +50,10 @@ spec:
               value: UTC
           securityContext:
             allowPrivilegeEscalation: false
-            #readOnlyRootFilesystem: true
-            #capabilities:
-            #  drop: [ "all" ]
-            #  add: [ "chown" ]
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
           ports:
             - name: web
               containerPort: 80
@@ -83,10 +70,11 @@ spec:
         - name: munin
           hostPath:
             type: DirectoryOrCreate
-            path: /srv/munin
+            path: /srv/munin/config
         - name: munin-data
-          persistentVolumeClaim:
-            claimName: munin-data
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/munin/data
 
 ---
 apiVersion: v1
@@ -113,7 +101,7 @@ metadata:
     app: munin
 spec:
   rules:
-    - host: munin.10.20.30.11.nip.io
+    - host: munin.192.168.56.11.nip.io
       http:
         paths:
           - path: /

@@ -10,3 +10,5 @@ bases:
   - ../../base/pod-updater
   - ../../base/prometheus
   - ../../base/grafana
+  - ../../base/vaultwarden
+  - ../../base/collabora

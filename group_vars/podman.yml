@@ -4,4 +4,3 @@ generate_systemd:
   names: true
   time: 60
   path: /tmp
-

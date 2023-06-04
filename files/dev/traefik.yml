@@ -14,13 +14,3 @@ spec:
           operator: Exists
         - effect: NoSchedule
           operator: Exists
-
-#apiVersion: v1
-#kind: Service
-#namespace: traefik
-#metadata:
-#  name: traefik
-#spec:
-#  externalIPs:
-#  # - 192.168.1.20
-#

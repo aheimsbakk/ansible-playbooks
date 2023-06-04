@@ -9,7 +9,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: nfs-client
+  storageClassName: local-path
   resources:
     requests:
       storage: 250Mi
@@ -47,6 +47,7 @@ spec:
             - --api=true
             - --log.level=WARN
             - --accesslog
+            - --experimental.http3=true
             # Don't verfy tls on dockers
             - --serverstransport.insecureskipverify=true
             # File provider
@@ -67,36 +68,31 @@ spec:
             - --entrypoints.websecure.http.tls.options=mintls12@file
             # - --entrypoints.websecure.http.tls.certresolver=letsencrypt
             - --entrypoints.websecure.http.middlewares=default-https-headers@file
-            # Listen to port 5487 with SSL
-            - --entrypoints.registrysecure.address=:5487
-            - --entrypoints.registrysecure.proxyprotocol=true
-            - --entrypoints.registrysecure.proxyprotocol.trustedips=10.0.0.0/8
-            - --entrypoints.registrysecure.http.tls=true
-            - --entrypoints.registrysecure.http.tls.options=mintls12@file
-            # - --entrypoints.registrysecure.http.tls.certresolver=letsencrypt
-            - --entrypoints.registrysecure.http.middlewares=default-https-headers@file
+            - --entrypoints.websecure.http3
+            # Metrics
+            - --metrics.prometheus.addServicesLabels=true
+            - --metrics.prometheus.addrouterslabels=true
+            - --metrics.prometheus.addEntryPointsLabels=true
+            - --metrics.prometheus.manualrouting=true
+            - --entryPoints.metrics.address=:8082
           securityContext:
             allowPrivilegeEscalation: false
-            #readOnlyRootFilesystem: true
-            #capabilities:
-            #  drop: [ "all" ]
-            #  add: [ "chown" ]
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
           ports:
             - name: web
               containerPort: 80
               hostPort: 80
               protocol: TCP
-            - name: websecure
+            - name: websecure-tcp
               containerPort: 443
               hostPort: 443
               protocol: TCP
-            - name: websecure-udp
-              containerPort: 443
-              hostPort: 443
-              protocol: UDP
-            - name: registry
-              containerPort: 5487
-              hostPort: 5487
+            - name: metrics
+              containerPort: 8082
+              hostPort: 8082
               protocol: TCP
           volumeMounts:
             - name: letsencrypt

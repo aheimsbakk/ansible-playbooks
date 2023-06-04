@@ -5,7 +5,7 @@ http:
       headers:
         customFrameOptionsValue: SAMEORIGIN
         frameDeny: true
-        sslRedirect: true
+        # sslRedirect: true
         stsIncludeSubdomains: true
         stsPreload: true
         stsSeconds: 15552000

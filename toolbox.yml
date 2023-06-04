@@ -51,4 +51,3 @@
           - whois             # A must
           - yamllint          # YAML files need to be linted too
           - zmap              # Map internet
-

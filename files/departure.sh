@@ -61,7 +61,7 @@ function get_overview() {
   local updated_json updated_time cols now
   updated_json="$(cat "$UPDATED_JSON_FILE")"
   updated_time="$(cat "$UPDATED_TIME_FILE")"
-  cols=$(tput cols - 1)
+  cols=$(($(tput cols) - 1))
   now=$(date +%s)
 
   # check if we need update

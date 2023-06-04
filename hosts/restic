@@ -1,0 +1,10 @@
+[restic]
+
+[restic:vars]
+#restic_destination=backup.foo.bar
+#restic_destination_user=rbackup
+#restic_destination_dir=/mnt/backup
+#restic_backup=/etc /home /root
+#restic_options=-e tmp -e Trash
+#restic_passwd=superstrongpassword
+

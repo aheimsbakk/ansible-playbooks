@@ -41,14 +41,16 @@ spec:
           args:
             - --transaction-isolation=READ-COMMITTED
             - --binlog-format=ROW
+            - --innodb-file-per-table=1
+            - --log-bin
           volumeMounts:
             - name: mysql-data
               mountPath: /var/lib/mysql
           env:
+            - name: MARIADB_AUTO_UPGRADE
+              value: "1"
             - name: MYSQL_DATABASE
               value: nextcloud
-            - name: MYSQL_HOST
-              value: nc_db
             - name: MYSQL_USER
               valueFrom:
                 secretKeyRef:
@@ -93,21 +95,6 @@ spec:
     - protocol: TCP
       name: mysql
       port: 3306
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: nextcloud-redis
-  labels:
-    app: nextcloud-redis
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: nfs-client
-  resources:
-    requests:
-      storage: 250Mi
 
 ---
 apiVersion: apps/v1
@@ -158,8 +145,9 @@ spec:
               mountPath: /data
       volumes:
         - name: nextcloud-redis
-          persistentVolumeClaim:
-            claimName: nextcloud-redis
+          hostPath:
+            path: /srv/nextcloud/redis
+            type: DirectoryOrCreate
 
 ---
 apiVersion: v1
@@ -186,7 +174,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: nfs-client
+  storageClassName: local-path
   resources:
     requests:
       storage: 1Gi
@@ -232,7 +220,7 @@ spec:
             - name: NEXTCLOUD_TABLE_PREFIX
               value: oc_
             - name: NEXTCLOUD_TRUSTED_DOMAINS
-              value: nextcloud.10.20.30.11.nip.io
+              value: nextcloud.192.168.56.11.nip.io
             - name: TRUSTED_PROXIES
               value: 10.0.0.0/8
             - name: REDIS_HOST
@@ -351,7 +339,7 @@ metadata:
     app: nextcloud
 spec:
   rules:
-    - host: nextcloud.10.20.30.11.nip.io
+    - host: nextcloud.192.168.56.11.nip.io
       http:
         paths:
           - path: /

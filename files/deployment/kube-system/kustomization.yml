@@ -1,4 +1,0 @@
----
-namespace: kube-system
-bases:
-  - ../../base/nfs-provisioner

@@ -1,0 +1,10 @@
+# vim: ai et ts=2 st=2 sw=2 :
+#
+# Convert this to a role...
+---
+- name: configure restic for all restic sources
+  hosts: restic
+  become: true
+
+  roles:
+    - role: aheimsbakk.restic_backup
