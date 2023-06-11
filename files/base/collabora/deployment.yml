@@ -17,7 +17,7 @@ metadata:
   name: collabora
   labels:
     app: collabora
-    auto-update-hour: '00'
+    auto-update-hour: '01'
 spec:
   replicas: 1
   selector:
