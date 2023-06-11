@@ -31,7 +31,6 @@
           - davfs2            # DavFS for mounting Nextcloud, no need to sync everything
           - dstat             # Stat system values in colors
           - duperemove        # Dedup btrfs
-          - eb-multimedia-keyring # Keyring for debian media packages
           - etckeeper         # Watch what happens in /etc
           - ffmpeg            # Transcode audio and video
           - file              # What file is this?
