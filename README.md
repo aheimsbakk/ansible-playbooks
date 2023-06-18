@@ -36,6 +36,8 @@ Public available services.
     * Use your own server, in `URL (and Port) of Collabora Online-server` add `https://collabora.192.168.56.11.nip.io/`.
     * Check `Disable certificate verification`.
     * Allow list for WOPI requests should contain `192.168.56.0/24`.
+    * Go to the admin interface for Collabora and accept the certificate.
+    * Now you can edit Office documents.
 * [Vaultwarden](https://nextcloud.192.168.56.11.nip.io) with database backup cronjob  
     Configured with signup. Change in admin GUI.
 
