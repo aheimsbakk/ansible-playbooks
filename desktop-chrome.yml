@@ -24,7 +24,6 @@
         filename: ansible
         state: present
 
-
     - name: install packages
       ansible.builtin.apt:
         name:
@@ -32,11 +31,13 @@
           - dstat             # Stat system values in colors
           - duperemove        # Dedup btrfs
           - etckeeper         # Watch what happens in /etc
+          - exfalso           # Edit MP3/MP4 metadata
           - ffmpeg            # Transcode audio and video
           - file              # What file is this?
           - flac              # Lossless audio
           - flatpak           # Get software from flathub
           - git               # Version control <3
+          - gnome-terminal    # Proper fast terminal than handles fonts better
           - hugo              # Static blog generator
           - lame              # Encode mp3
           - lftp              # FTP isn't dead
@@ -51,6 +52,7 @@
           - python3-qrcode    # Generate QR-codes in terminal with qr
           - rsync             # Syncing files, syncing life
           - strace            # String trace processes
+          - thunderbird       # Mail on chromebook in a sensible way
           - tmux              # <3
           - vim               # <3
           - zmap              # Map internet
@@ -79,7 +81,6 @@
       become: false
       loop:
         - com.calibre_ebook.calibre
-        - org.gnome.TextEditor
 
     - name: install flatpaks from fedora
       community.general.flatpak:
@@ -87,6 +88,5 @@
         remote: fedora
         method: user
       become: false
-      loop:
-        - org.mozilla.Thunderbird
+      loop: []
 
