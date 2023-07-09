@@ -177,19 +177,22 @@
         remote: flathub
         method: user
       loop:
+        - com.calibre_ebook.calibre
         - com.github.micahflee.torbrowser-launcher
+        - com.github.phase1geo.minder
         - com.github.tchx84.Flatseal
         - com.mattjakeman.ExtensionManager
+        - fr.handbrake.ghb
+        - io.github.quodlibet.ExFalso
+        - net.supertuxkart.SuperTuxKart
+        - org.audacityteam.Audacity
+        - org.chromium.Chromium
+        - org.mozilla.Thunderbird
         - org.mozilla.firefox
+        - org.signal.Signal
+        - org.supertuxproject.SuperTux
 #        - com.belmoussaoui.Decoder
-        - com.calibre_ebook.calibre
-#        - com.github.phase1geo.minder
 #        - com.nextcloud.desktopclient.nextcloud
-#        - fr.handbrake.ghb
-#        - io.github.quodlibet.ExFalso
-#        - net.supertuxkart.SuperTuxKart
-#        - org.audacityteam.Audacity
-#        - org.chromium.Chromium
 #        - org.gabmus.whatip
 #        - org.gimp.GIMP
 #        - org.gnome.Dictionary
@@ -203,10 +206,7 @@
 #        - org.gnome.TextEditor
 #        - org.gnome.Todo
 #        - org.gnome.gitlab.somas.Apostrophe
-#        - org.mozilla.Thunderbird
 #        - org.remmina.Remmina
-#        - org.signal.Signal
-#        - org.supertuxproject.SuperTux
 #        - org.videolan.VLC
 
     - name: Install flatpaks from fedora
