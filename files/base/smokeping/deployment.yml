@@ -33,7 +33,11 @@ spec:
           ports:
             - name: web
               containerPort: 80
-              # securityContext:
+          securityContext:
+            capabilities:
+              add:
+                - net_admin
+                - net_raw
               #   allowPrivilegeEscalation: false
       volumes:
         - name: smokeping-config
