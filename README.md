@@ -18,11 +18,21 @@ These playbooks, except of the `desktop.yml` playbook, can be tested on Vagrant.
 
 ## Testing
 
-To spin up all services, start Vagrant. Services spun up in Vagrant use self signed certificate and named with [nip.io](https://nip.io). Default private IP for the VM is `192.168.56.11`.
+To spin up all services, start Vagrant with the [libvirt](https://github.com/vagrant-libvirt/vagrant-libvirt) provider. Services spun up in Vagrant use self signed certificate and named with [nip.io](https://nip.io). Default private IP for the VM is `192.168.56.11`.
+
+On Debian Bookworm install Vagrant and add your user to the libvirt group. After this step, log out and in to the desktop again to activate the new group.
+
+```bash
+apt -y install vagrant vagrant-mutate vagrant-sshfs virt-manager
+groupmod -a -U $USER libvirt
+```
+
+Start environment.
 
 ```bash
 vagrant up
 ```
+
 Variables is configurable in `group_vars`. See `group_vars/k3s.yml` for available parameters and default for the Vagrant development configuration.
 
 ### Services
