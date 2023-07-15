@@ -15,13 +15,13 @@ Vagrant.configure("2") do |config|
     config.vm.define "#{node}", primary: node == nodes.first do |config|
       config.vm.hostname = "#{node}"
       config.vm.network "private_network", autostart: true, ip: "192.168.56.#{octet+=1}"
-      config.vm.box = "debian/bullseye64"
+      config.vm.box = "debian/bookworm64"
       config.vm.synced_folder "./", "/vagrant", type: :sshfs, disabled: true
 
-      config.vm.provider "virtualbox" do |v|
+      config.vm.provider "libvirt" do |v|
         v.cpus = 2
         v.memory = "2500"
-        v.linked_clone = true
+        #v.linked_clone = true
       end
 
       if node == nodes.last
