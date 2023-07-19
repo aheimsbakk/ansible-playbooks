@@ -1,5 +1,5 @@
 ---
 namespace: build
-bases:
+resources:
   - ../../base/gitlab-runner
   - ../../base/pod-updater

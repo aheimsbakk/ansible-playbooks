@@ -129,6 +129,13 @@
         dest: /root/install.sh
         mode: 0755
 
+    - name: allow ping from containers which has net_admin + net_raw
+      ansible.builtin.sysctl:
+        name: net.ipv4.ping_group_range
+        value: "0 2147483647"
+        sysctl_set: true
+        reload: true
+
 ###############################################################################
 
 - name: configure k3s master nodes
