@@ -38,7 +38,7 @@ spec:
               add:
                 - net_admin
                 - net_raw
-              #   allowPrivilegeEscalation: false
+            # allowPrivilegeEscalation: false
       volumes:
         - name: smokeping-config
           hostPath:

@@ -1,5 +1,5 @@
 ---
-bases:
+resources:
   - ../deployment
 patchesStrategicMerge:
   - traefik.yml

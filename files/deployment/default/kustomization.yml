@@ -1,6 +1,6 @@
 ---
 namespace: default
-bases:
+resources:
   # - ../../base/diun
   # - ../../base/gitlab
   - ../../base/gotify

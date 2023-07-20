@@ -22,6 +22,7 @@
     - name: install packages
       ansible.builtin.apt:
         name:
+          - curl                    # needed by k3s installation script
           - unattended-upgrades     # auto-upgrade packages
           - wireguard               # wireguard for communication between k3s nodes
         update_cache: true
@@ -124,10 +125,17 @@
 
     - name: get k3s install script from stable branch
       ansible.builtin.get_url:
-        url: https://raw.githubusercontent.com/k3s-io/k3s/v1.27.1%2Bk3s1/install.sh
-        checksum: sha256:1fa0365382d25b67b67c4891af418ad4dfa8bfc27a817d188054c88f8d910e9d
+        url: https://raw.githubusercontent.com/k3s-io/k3s/v1.27.3%2Bk3s1/install.sh
+        checksum: sha256:fbcfd9f516127878984a81f1f25b085f5913933171977bfdf5189e95df3f4fc1
         dest: /root/install.sh
         mode: 0755
+
+    - name: allow ping from containers which has net_admin + net_raw
+      ansible.builtin.sysctl:
+        name: net.ipv4.ping_group_range
+        value: "0 2147483647"
+        sysctl_set: true
+        reload: true
 
 ###############################################################################
 
