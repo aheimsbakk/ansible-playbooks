@@ -2,7 +2,6 @@
 
 My playbooks for home use. The Kubernetes cluster can be tested with Vagrant running `vagrant up`. Traefik TLS configuration gives A+ on [SSL Labs](https://www.ssllabs.com/ssltest/).
 
-
 These playbooks, except of the `desktop.yml` playbook, can be tested on Vagrant. All playbooks is designed to run individually or as a part of a whole. `homeserver` playbooks is tested on Ubuntu Focal.
 
 
@@ -18,16 +17,7 @@ These playbooks, except of the `desktop.yml` playbook, can be tested on Vagrant.
 
 ## Testing
 
-To spin up all services, start Vagrant with the [libvirt](https://github.com/vagrant-libvirt/vagrant-libvirt) provider. Services spun up in Vagrant use self signed certificate and named with [nip.io](https://nip.io). Default private IP for the VM is `192.168.56.11`.
-
-On Debian Bookworm install Vagrant and add your user to the libvirt group. After this step, log out and in to the desktop again to activate the new group.
-
-```bash
-apt -y install vagrant vagrant-mutate vagrant-sshfs virt-manager
-groupmod -a -U $USER libvirt
-```
-
-Start environment.
+Install [Vagrant](https://www.vagrantup.com/) and [VirtualBox](https://www.virtualbox.org/) for your distro. Start the environment.
 
 ```bash
 vagrant up
