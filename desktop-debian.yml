@@ -11,6 +11,20 @@
       ansible.builtin.assert:
         that: ansible_os_family == "Debian"
 
+    - name: add repo key media repo
+      become: true
+      ansible.builtin.apt_key:
+        id: A401FF99368FA1F98152DE755C808C2B65558117
+        keyserver: keyring.debian.org
+        keyring: /etc/apt/trusted.gpg.d/ansible.gpg
+
+    - name: add media repo
+      become: true
+      ansible.builtin.apt_repository:
+        repo: deb http://www.deb-multimedia.org bookworm main
+        filename: ansible
+        state: present
+
     - name: Install packages
       become: true
       ansible.builtin.apt:
@@ -86,6 +100,8 @@
           - wireguard-tools       # Wireguard VPN
           - yamllint              # YAML files need to be linted too
           - zmap                  # Map internet
+          - mp4v2-utils
+          - mediainfo
 
 
     - name: Increase user watches
