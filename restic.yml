@@ -8,3 +8,5 @@
 
   roles:
     - role: aheimsbakk.restic_backup
+      restic_backup_restic_version: 0.15.2
+      restic_backup_rclone_version: v1.63.1
