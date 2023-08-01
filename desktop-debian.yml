@@ -59,6 +59,9 @@
           - flatpak               # Flatpak for extra graphical programs
           - gedit-plugins         # Extra plugins for gedit
           - git                   # Version control <3
+          - gnome-shell-extension-appindicator  # Legacy app indicator
+          - gnome-shell-extension-bluetooth-quick-connect  #  Connect to pared bluetooth devices
+          - gnome-shell-extension-caffeine  # Don't sleep on fullscreen
           - gnome-software-plugin-flatpak  # Integrate flatpak with gnome-software
           - gnupg-pkcs11-scd      # Smart card functionality for SSH keys on Yubikey
           - haveged               # More random data from CPU flutter
@@ -68,11 +71,13 @@
           - libpam-u2f            # U2F token 2 factor in PAM
           - libreoffice-l10n-nb
           - ltrace                # Trace library calls
+          - mediainfo
           - menulibre             # Edit Gnome menu items
+          - mp4v2-utils
           - mtr                   # Better traceroute
-          - nautilus-nextcloud
+          - nautilus-nextcloud    # Nextcloud integration into nautilus
           - ncdu                  # Visual terminal 'du -h'
-          - nextcloud-desktop
+          - nextcloud-desktop     # Client Nextcloud application
           - nmap                  # Scan network ports
           - npm                   # Needed by vim-lsp
           - offlineimap           # Make local backup of IMAP
@@ -100,9 +105,6 @@
           - wireguard-tools       # Wireguard VPN
           - yamllint              # YAML files need to be linted too
           - zmap                  # Map internet
-          - mp4v2-utils
-          - mediainfo
-
 
     - name: Increase user watches
       become: true
