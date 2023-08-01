@@ -1,7 +1,7 @@
 ---
 roles:
   - name: aheimsbakk.restic_backup
-    version: '1.2.0'
+    version: '1.2.1'
 
 collections:
   - name: containers.podman
