@@ -1,3 +1,5 @@
 ---
 k9s_version: v0.27.4
-k3s_version: v1.27.3+k3s1
+k3s_version: v1.27.5+k3s1
+
+
