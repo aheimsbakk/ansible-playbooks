@@ -230,7 +230,7 @@
     - name: download k9s on master
       ansible.builtin.get_url:
         url: 'https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/k9s_Linux_{{ architecture_map[ansible_architecture] }}.tar.gz'
-        checksum: 'sha256:https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/checksums.txt'
+        checksum: 'sha256:https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/checksums.sha256'
         dest: /tmp/k9s.tar.gz
       register: k9s_download
 
