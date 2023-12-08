@@ -18,7 +18,7 @@ images:
   - name: docker.io/aheimsbakk/munin-alpine
     newTag: latest
   - name: docker.io/mariadb
-    newTag: "10.11"
+    newTag: "11"
   - name: docker.io/redis
     newTag: latest
   - name: docker.io/nextcloud
@@ -29,9 +29,9 @@ images:
   - name: docker.io/traefik
     newTag: v2.10
   - name: docker.io/prom/prometheus
-    newTag: v2.43.0
+    newTag: v2.48.0
   - name: docker.io/grafana/grafana
-    newTag: 9.5.1
+    newTag: 10.2.2
   - name: docker.io/jellyfin/jellyfin
     newTag: latest
   - name: docker.io/vaultwarden/server

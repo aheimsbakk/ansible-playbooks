@@ -179,7 +179,7 @@ spec:
       port: 80
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.containo.us/v1
 kind: IngressRoute
 metadata:
   name: pihole

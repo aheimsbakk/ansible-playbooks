@@ -18,10 +18,9 @@ Vagrant.configure("2") do |config|
       config.vm.box = "debian/bookworm64"
       config.vm.synced_folder "./", "/vagrant", type: :sshfs, disabled: true
 
-      config.vm.provider "virtualbox" do |v|
+      config.vm.provider "libvirt" do |v|
         v.cpus = 2
         v.memory = "3000"
-        v.linked_clone = true
       end
 
       if node == nodes.last
