@@ -221,6 +221,10 @@ spec:
               value: oc_
             - name: NEXTCLOUD_TRUSTED_DOMAINS
               value: nextcloud.192.168.56.11.nip.io
+            - name: PHP_MEMORY_LIMIT
+              value: 1024M
+            - name: PHP_UPLOAD_LIMIT
+              value: 1024M
             - name: TRUSTED_PROXIES
               value: 10.0.0.0/8
             - name: REDIS_HOST
