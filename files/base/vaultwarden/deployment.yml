@@ -42,12 +42,6 @@ spec:
                   key: ADMIN_TOKEN
             - name: LOG_LEVEL
               value: debug
-            - name: WEBSOCKET_ENABLED
-              value: 'true'
-            - name: WEBSOCKET_ADDRESS
-              value: '0.0.0.0'
-            - name: WEBSOCKET_PORT
-              value: '3012'
             - name: EVENTS_DAYS_RETAIN
               value: '30'
             - name: ORG_CREATION_USERS
@@ -80,8 +74,6 @@ spec:
           ports:
             - name: vw-web
               containerPort: 80
-            - name: vw-socket
-              containerPort: 3012
           volumeMounts:
             - name: vaultwarden-data
               mountPath: /data
@@ -105,9 +97,6 @@ spec:
     - protocol: TCP
       name: vw-web
       port: 80
-    - protocol: TCP
-      name: vw-socket
-      port: 3012
 
 ---
 kind: Ingress
@@ -124,13 +113,6 @@ spec:
     - host: vaultwarden.192.168.56.11.nip.io
       http:
         paths:
-          - path: /notifications/hub
-            pathType: Prefix
-            backend:
-              service:
-                name: vaultwarden
-                port:
-                  number: 3012
           - path: /
             pathType: Prefix
             backend:
