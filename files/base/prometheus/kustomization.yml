@@ -8,4 +8,5 @@ configMapGenerator:
 patchesStrategicMerge:
   - targets-traefik.yml
 resources:
+  - rbac.yml
   - deployment.yml
