@@ -58,6 +58,7 @@ scrape_configs:
       - source_labels: [__meta_kubernetes_node_name]
         regex: (.+)
         target_label: __metrics_path__
+        # Use kubectl get --raw /api/v1/nodes..... to test
         replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
     metric_relabel_configs:
       - action: replace
