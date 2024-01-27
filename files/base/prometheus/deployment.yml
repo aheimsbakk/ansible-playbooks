@@ -16,6 +16,7 @@ spec:
       labels:
         app: prometheus
     spec:
+      serviceAccountName: prometheus
       initContainers:
         - name: prometheus-init
           image: docker.io/alpine:latest
