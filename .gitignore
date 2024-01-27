@@ -16,3 +16,6 @@ vault-*
 # Roles
 !roles/requirements.yml
 roles/*
+
+# Binaries
+kustomize
