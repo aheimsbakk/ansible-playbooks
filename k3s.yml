@@ -254,8 +254,8 @@
         dest: /etc/logrotate.d/traefik
         content: |
           /srv/traefik/log/access.log {
-            daily
-            rotate 7
+            weekly
+            rotate 16
             compress
             delaycompress
             missingok
