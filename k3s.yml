@@ -248,6 +248,23 @@
       ansible.builtin.wait_for:
         port: 6443
 
+    - name: logrotate for traefik container
+      copy:
+        mode: "0644"
+        dest: /etc/logrotate.d/traefik
+        content: |
+          /srv/traefik/log/access.log {
+            weekly
+            rotate 16
+            compress
+            delaycompress
+            missingok
+            notifempty
+            create 644 root root
+            copytruncate
+          }
+
+
 ###############################################################################
 
 - name: configure k3s agent node
