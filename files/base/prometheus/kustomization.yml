@@ -5,7 +5,17 @@ configMapGenerator:
   - files:
       - config/prometheus.yml
     name: prometheus-config
-patchesStrategicMerge:
-  - targets-traefik.yml
+patches:
+  ## targets-traefik.yml
+  - patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: prometheus-config
+      data:
+        targets-traefik.yml: |
+          ---
+          - targets:
+            - traefik.192.168.56.11.nip.io:8082
 resources:
   - deployment.yml

@@ -1,5 +1,22 @@
 ---
 resources:
   - ../deployment
-patchesStrategicMerge:
-  - traefik.yml
+patches:
+  ## Traefik
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        namespace: traefik
+        name: traefik
+      spec:
+        template:
+          spec:
+            nodeSelector:
+              kubernetes.io/hostname: k3s-m1
+            tolerations:
+              - effect: NoExecute
+                operator: Exists
+              - effect: NoSchedule
+                operator: Exists
+
