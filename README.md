@@ -46,7 +46,7 @@ Services restricted to source IP range. Defaults to `192.168.0.0/16`, `172.16.0.
 * [Collabora CODE Admin](https://collabora.192.168.56.11.nip.io/browser/dist/admin/admin.html), default username `admin` and password `password`
 * [Grafana](https://grafana.192.168.56.11.nip.io)
 * [Munin](https://munin.192.168.56.11.nip.io)
-* [Prometheus](https://traefik.192.168.56.11.nip.io)
+* [Prometheus](https://prometheus.192.168.56.11.nip.io)
 * [Smokeping](https://smokeping.192.168.56.11.nip.io)
 * [Traefik](https://traefik.192.168.56.11.nip.io)
 * [Vaultwarden Admin](https://traefik.192.168.56.11.nip.io/admin), Vaultwarden administration UI
