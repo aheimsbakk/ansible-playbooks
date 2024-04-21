@@ -105,6 +105,11 @@
           - wireguard-tools       # Wireguard VPN
           - yamllint              # YAML files need to be linted too
           - zmap                  # Map internet
+          - qt6-gtk-platformtheme
+          - qt5-gtk-platformtheme
+          - adwaita-qt
+          - adwaita-qt6
+          - qgnomeplatform-qt5
 
     - name: Increase user watches
       become: true
@@ -112,14 +117,14 @@
         name: fs.inotify.max_user_watches
         value: "2097152"
 
-    - name: Disable the unsecure firewire-dma
-      become: true
-      ansible.builtin.copy:
-        dest: /etc/modprobe.d/blacklist-dma.conf
-        mode: 0644
-        content: |
-          blacklist firewire-core
-          blacklist thunderbolt
+    # - name: Disable the unsecure firewire-dma
+    #   become: true
+    #   ansible.builtin.copy:
+    #     dest: /etc/modprobe.d/blacklist-dma.conf
+    #     mode: 0644
+    #     content: |
+    #       blacklist firewire-core
+    #       blacklist thunderbolt
 
     - name: Fix rotation on ideapad d330
       become: true
@@ -202,13 +207,13 @@
         - com.mattjakeman.ExtensionManager
         - fr.handbrake.ghb
         - io.github.quodlibet.ExFalso
-        - net.supertuxkart.SuperTuxKart
+#        - net.supertuxkart.SuperTuxKart
         - org.audacityteam.Audacity
         - org.chromium.Chromium
         - org.mozilla.Thunderbird
         - org.mozilla.firefox
         - org.signal.Signal
-        - org.supertuxproject.SuperTux
+#        - org.supertuxproject.SuperTux
 #        - com.belmoussaoui.Decoder
 #        - com.nextcloud.desktopclient.nextcloud
 #        - org.gabmus.whatip
