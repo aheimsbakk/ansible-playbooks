@@ -213,6 +213,7 @@
         - org.mozilla.Thunderbird
         - org.mozilla.firefox
         - org.signal.Signal
+        - org.upscayl.Upscayl
 #        - org.supertuxproject.SuperTux
 #        - com.belmoussaoui.Decoder
 #        - com.nextcloud.desktopclient.nextcloud
