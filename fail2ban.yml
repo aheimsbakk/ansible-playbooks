@@ -1,30 +1,30 @@
 # vim: ai et ts=2 st=2 sw=2 :
 ---
-- name: homeserver configuration
-  hosts: master_node
+- name: Fail2ban for debian servers
+  hosts: fail2ban
   become: true
 
   tasks:
-    - name: install packages
-      apt:
+    - name: Install packages
+      ansible.builtin.apt:
         name: fail2ban
 
-    - name: convert key value to ini_file compatible option value pair
-      set_fact:
+    - name: Convert key value to ini_file compatible option value pair
+      ansible.builtin.set_fact:
         fail2ban_jail_d_conf: |
           {
-          {%- for item in fail2ban_jail_d | dict2items  %}
+          {%- for item in fail2ban_jail_d | dict2items %}
             "{{ item.key }}": {{ item.value | dict2items(key_name='option', value_name='value') }},
           {%- endfor %}
           }
 
-    - name: remove debain default config
-      file:
+    - name: Remove debain default config
+      ansible.builtin.file:
         path: /etc/fail2ban/jail.d/defaults-debian.conf
         state: absent
 
-    - name: write fail2ban config
-      ini_file:
+    - name: Write fail2ban config
+      community.general.ini_file:
         path: '/etc/fail2ban/jail.d/{{ item.0.section }}.conf'
         section: '{{ item.0.section }}'
         option: '{{ item.1.option }}'
@@ -34,8 +34,8 @@
       loop: '{{ fail2ban_jail_d_conf | dict2items(key_name="section") | subelements("value") }}'
       register: fail2ban_conf
 
-    - name: restart fail2ban on config change
-      systemd:
+    - name: Restart fail2ban on config change
+      ansible.builtin.systemd:
         name: fail2ban
         state: restarted
         enabled: true

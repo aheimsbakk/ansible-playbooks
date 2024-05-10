@@ -28,18 +28,23 @@ scrape_configs:
 
     static_configs:
       - targets:
-          - localhost:9090
+        - localhost:9090
 
     # Download official dashboard from: https://github.com/traefik/traefik/tree/master/contrib/grafana
   - job_name: traefik
     file_sd_configs:
       - files:
-          - targets-traefik.yml
+        - targets-traefik.yml
+
+  - job_name: authlog
+    file_sd_configs:
+      - files:
+        - targets-authlog.yml
 
   - job_name: node-exporter
     file_sd_configs:
       - files:
-          - targets-ne.yml
+        - targets-ne.yml
 
   - job_name: kubernetes-nodes-cadvisor
     scheme: https  # remove if you want to scrape metrics on insecure port
