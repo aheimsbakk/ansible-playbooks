@@ -29,8 +29,6 @@
       become: true
       ansible.builtin.dnf:
         name:
-          - ansible-core      # Automate everything, with new Ansible 2.10+
-          - ansible-lint      # Lint everything
           - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
           - btrfs-heatmap     # Visualize how data is stored on disk
           - catimg            # Display images in terminal
@@ -141,25 +139,25 @@
           TCPSegmentationOffload=false
           NamePolicy=keep kernel database onboard slot path
 
-    #- name: Flatpak remote flathub
-    #  community.general.flatpak_remote:
-    #    name: flathub
-    #    state: present
-    #    method: user
-    #    flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+    - name: Flatpak remote flathub
+      community.general.flatpak_remote:
+        name: flathub
+        state: present
+        method: user
+        flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
 
-    #- name: Flatpak remote fedora
-    #  community.general.flatpak_remote:
-    #    name: fedora
-    #    state: present
-    #    method: user
-    #    flatpakrepo_url: oci+https://registry.fedoraproject.org
+    - name: Flatpak remote fedora
+      community.general.flatpak_remote:
+        name: fedora
+        state: present
+        method: user
+        flatpakrepo_url: oci+https://registry.fedoraproject.org
 
     - name: Install flatpaks from flathub
       community.general.flatpak:
         name: '{{ item }}'
         remote: flathub
-        method: system
+        method: user
       loop:
         - com.belmoussaoui.Decoder
         - com.calibre_ebook.calibre
@@ -175,9 +173,9 @@
         - org.signal.Signal
         - org.videolan.VLC
 
-#   - name: Install flatpaks from fedora
-#     community.general.flatpak:
-#       name: '{{ item }}'
-#       remote: fedora
-#       method: user
-#     loop:
+    - name: Install flatpaks from fedora
+      community.general.flatpak:
+        name: '{{ item }}'
+        remote: fedora
+        method: user
+      loop: []
