@@ -161,16 +161,19 @@
       loop:
         - com.belmoussaoui.Decoder
         - com.calibre_ebook.calibre
-        - com.github.micahflee.torbrowser-launcher
         - com.github.phase1geo.minder
         - com.github.tchx84.Flatseal
         - com.mattjakeman.ExtensionManager
+        - com.valvesoftware.Steam
         - fr.handbrake.ghb
         - org.audacityteam.Audacity
         - org.gimp.GIMP
         - org.gnome.Shotwell
+        - org.mozilla.Thunderbird
         - org.remmina.Remmina
         - org.signal.Signal
+        - org.torproject.torbrowser-launcher
+        - org.upscayl.Upscayl
         - org.videolan.VLC
 
     - name: Install flatpaks from fedora
