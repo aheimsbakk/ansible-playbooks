@@ -175,7 +175,7 @@
     - name: share /nfs4 to the kubernetes cluster, so other nodes can start containers
       ansible.builtin.lineinfile:
         path: /etc/exports
-        line: /nfs4/k3s {{ item }}(rw,async,no_subtree_check,no_auth_nlm,insecure,no_root_squash)
+        line: /nfs4/k3s {{ item }}(rw,sync,no_subtree_check,no_auth_nlm,insecure,no_root_squash)
         mode: 0644
         create: true
       loop: '{{ k3s_master + k3s_agents }}'
@@ -196,7 +196,7 @@
       ansible.posix.mount:
         path: /srv
         src: '{{ nfs_ip | default( node_ip ) }}:/nfs4/k3s'
-        opts: tcp,async
+        opts: tcp,async,noatime,nodiratime
         state: mounted
         fstype: nfs4
 
