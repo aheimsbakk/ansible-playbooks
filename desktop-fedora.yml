@@ -30,6 +30,7 @@
       ansible.builtin.dnf:
         name:
           - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
+          - btop              # Better top
           - btrfs-heatmap     # Visualize how data is stored on disk
           - catimg            # Display images in terminal
           - clevis-dracut     # Decrypt Luks during boot with TPM
@@ -86,6 +87,13 @@
       ansible.builtin.sysctl:
         name: fs.inotify.max_user_watches
         value: "2097152"
+
+    - name: Reduse use of memory swap
+      become: true
+      ansible.builtin.sysctl:
+        name: vm.swappiness
+        value: "10"
+
 
     - name: PAM YubiKey
       become: true

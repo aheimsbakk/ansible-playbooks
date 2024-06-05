@@ -5,14 +5,21 @@
   become: true
 
   tasks:
-    - name: allow other things
+    - name: Set SSH keys
+      ansible.posix.authorized_key:
+        user: '{{ ansible_user }}'
+        key: '{{ authorized_key }}'
+        exclusive: true
+      become: false
+
+    - name: Allow other things
       ufw:
         rule: allow
         port: "{{ item.port }}"
         proto: "{{ item.proto }}"
       loop: '{{ base_ufw_rules | default([]) }}'
 
-    - name: add cron jobs
+    - name: Add cron jobs
       cron:
         name: '{{ item.name }}'
         weekday: '{{ item.weekday | default(omit) }}'
@@ -26,19 +33,19 @@
       tags:
         - cron
 
-    - name: server ssh notify
+    - name: Server ssh notify
       template:
         src: sshnotif
         dest: /usr/local/bin/sshnotif
         mode: 0755
 
-    - name: add notify on ssh
+    - name: Add notify on ssh
       lineinfile:
         path: /etc/pam.d/common-session
         line: session optional pam_exec.so /usr/local/bin/sshnotif
       when: ansible_os_family | lower  == "debian"
 
-    - name: add notify on ssh
+    - name: Add notify on ssh
       lineinfile:
         path: /etc/pam.d/sshd
         line: session optional pam_exec.so /usr/local/bin/sshnotif
