@@ -94,6 +94,19 @@
         name: vm.swappiness
         value: "10"
 
+    - name: PAM config for pam_u2f
+      become: true
+      ansible.builtin.copy:
+        dest: "/etc/pam.d/u2f-{{ item }}"
+        content: |
+          #%PAM-1.0
+          auth {{ item }} pam_u2f.so cue
+        mode: "0644"
+      loop:
+        - sufficient
+        - required
+      tags:
+        - pam
 
     - name: PAM YubiKey
       become: true
@@ -101,7 +114,18 @@
         path: '{{ item }}'
         insertafter: PAM
         firstmatch: true
+        line: auth include u2f-sufficient
+      loop:
+        - /etc/pam.d/sudo
+      tags:
+        - pam
+
+    - name: PAM YubiKey
+      become: true
+      ansible.builtin.lineinfile:
+        path: '{{ item }}'
         line: auth sufficient pam_u2f.so cue
+        state: absent
       loop:
         # - /etc/pam.d/password-auth
         # - /etc/pam.d/system-auth
