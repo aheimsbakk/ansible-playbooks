@@ -42,6 +42,7 @@ spec:
             - --transaction-isolation=READ-COMMITTED
             - --binlog-format=ROW
             - --innodb-file-per-table=1
+            - --log-bin-trust-function-creators=1
             - --log-bin
           volumeMounts:
             - name: mysql-data
