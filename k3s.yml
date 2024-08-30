@@ -1,25 +1,25 @@
 ---
-- name: common configuration for k3s nodes
+- name: Common configuration for k3s nodes
   hosts:
     - k3s_master
     - k3s_agents
   become: true
 
   tasks:
-    - name: set variables for all plays
+    - name: Set variables for all plays
       ansible.builtin.set_fact:
         k3s_master: '{{ groups["k3s_master"] | map("extract", hostvars, "node_ip") | list }}'
         k3s_agents: '{{ groups["k3s_agents"] | map("extract", hostvars, "node_ip") | list }}'
         k3s_version: '{{ k3s_version | default("v1.25.3+k3s1") }}'
         k9s_version: '{{ k9s_version | default("v0.26.7") }}'
 
-    - name: install python-apt
+    - name: Install python-apt
       ansible.builtin.apt:
         name: python3-apt
       check_mode: false
-      when: ansible_check_mode|bool
+      when: ansible_check_mode | bool
 
-    - name: install packages
+    - name: Install packages
       ansible.builtin.apt:
         name:
           - curl                    # needed by k3s installation script
@@ -29,24 +29,24 @@
 
     ## ufw
 
-    - name: install ufw
+    - name: Install ufw
       ansible.builtin.package:
         name: ufw
 
-    - name: enable and start ufw
+    - name: Enable and start ufw
       ansible.builtin.systemd:
         name: ufw
         enabled: true
         state: started
 
-    - name: ufw allow ssh
-      ansible.builtin.ufw:
+    - name: Ufw allow ssh
+      community.general.ufw:
         rule: allow
         port: '22'
         proto: tcp
 
-    - name: ufw allow wireguard
-      ansible.builtin.ufw:
+    - name: Ufw allow wireguard
+      community.general.ufw:
         rule: allow
         port: '51820'
         proto: udp
@@ -58,7 +58,7 @@
     #     to: 10.42.0.0/16
 
     - name: Ufw allow kubelet metrics
-      ansible.builtin.ufw:
+      community.general.ufw:
         rule: allow
         port: '10250'
         proto: tcp
@@ -66,16 +66,16 @@
       loop: '{{ k3s_master + k3s_agents }}'
 
     - name: Ufw allow kubernetes api
-      ansible.builtin.ufw:
+      community.general.ufw:
         rule: allow
         port: '6443'
         proto: tcp
         from: '{{ item }}'
-      loop: '{{ k3s_master + k3s_agents + [ "10.42.0.0/16" ] }}'
+      loop: '{{ k3s_master + k3s_agents + ["10.42.0.0/16"] }}'
       when: inventory_hostname in groups["k3s_master"]
 
     - name: Ufw allow etcd between masters
-      ansible.builtin.ufw:
+      community.general.ufw:
         rule: allow
         port: '2379:2380'
         proto: tcp
@@ -84,7 +84,7 @@
       when: inventory_hostname in groups["k3s_master"]
 
     - name: Allow kubernetes and pods to connect to systemd-resolv
-      ansible.builtin.ufw:
+      community.general.ufw:
         rule: allow
         port: '5355'
         from_ip: fe80::/64
@@ -106,7 +106,7 @@
       when: ufw_defaults is changed
 
     - name: Enable ufw and set policy
-      ansible.builtin.ufw:
+      community.general.ufw:
         policy: reject
         state: enabled
 
@@ -122,6 +122,7 @@
     - name: Disable swap
       ansible.builtin.command: swapoff -a
       when: ansible_swaptotal_mb > 0
+      changed_when: false
 
     - name: Get k3s install script from stable branch
       ansible.builtin.get_url:
@@ -131,7 +132,7 @@
         mode: 0755
 
     - name: Allow ping from containers which has net_admin + net_raw
-      ansible.builtin.sysctl:
+      ansible.posix.sysctl:
         name: net.ipv4.ping_group_range
         value: "0 2147483647"
         sysctl_set: true
@@ -150,11 +151,11 @@
 
   tasks:
     - name: Ufw allow nfs
-      ansible.builtin.ufw:
+      community.general.ufw:
         rule: allow
         port: '{{ item.0 | string }}'
         from: '{{ item.1 }}'
-      loop: '{{ [111,2049,20048] | product(k3s_master + k3s_agents) | list }}'
+      loop: '{{ [111, 2049, 20048] | product(k3s_master + k3s_agents) | list }}'
       when: nfs_ip is not defined
 
     - name: Install nfs for serving storage to the cluster
@@ -187,6 +188,7 @@
       when:
         - etc_exportfs is changed
         - nfs_ip is not defined
+      changed_when: false
 
     - name: Install nfs client
       ansible.builtin.apt:
@@ -194,8 +196,8 @@
 
     - name: Mount nfs shared volume on srv
       ansible.posix.mount:
-        path: "/srv"
-        src: '{{ nfs_ip | default( node_ip ) }}:/nfs4/k3s'
+        path: /srv
+        src: '{{ nfs_ip | default(node_ip) }}:/nfs4/k3s'
         opts: tcp,async
         state: mounted
         fstype: nfs4
@@ -232,6 +234,7 @@
         url: 'https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/k9s_Linux_{{ architecture_map[ansible_architecture] }}.tar.gz'
         checksum: 'sha256:https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/checksums.sha256'
         dest: /tmp/k9s.tar.gz
+        mode: "0644"
       register: k9s_download
 
     - name: Uncompress k9s on master
@@ -249,7 +252,7 @@
         port: 6443
 
     - name: Logrotate for traefik container
-      copy:
+      ansible.builtin.copy:
         mode: "0644"
         dest: /etc/logrotate.d/traefik
         content: |
@@ -264,7 +267,6 @@
             copytruncate
           }
 
-
 ###############################################################################
 
 - name: Configure k3s agent node
@@ -277,9 +279,9 @@
         name: nfs-client
 
     - name: Mount nfs shared volume on srv
-      ansible.builtin.mount:
-        path: "/srv"
-        src: '{{ nfs_ip | default( hostvars[groups["k3s_master"][0]]["node_ip"] ) }}:/nfs4/k3s'
+      ansible.posix.mount:
+        path: /srv
+        src: '{{ nfs_ip | default(hostvars[groups["k3s_master"][0]]["node_ip"]) }}:/nfs4/k3s'
         opts: tcp
         state: mounted
         fstype: nfs4
