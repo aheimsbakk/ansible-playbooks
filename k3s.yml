@@ -57,7 +57,7 @@
     #     from: 10.42.0.0/16
     #     to: 10.42.0.0/16
 
-    - name: ufw allow kubelet metrics
+    - name: Ufw allow kubelet metrics
       ansible.builtin.ufw:
         rule: allow
         port: '10250'
@@ -65,7 +65,7 @@
         from: '{{ item }}'
       loop: '{{ k3s_master + k3s_agents }}'
 
-    - name: ufw allow kubernetes api
+    - name: Ufw allow kubernetes api
       ansible.builtin.ufw:
         rule: allow
         port: '6443'
@@ -74,7 +74,7 @@
       loop: '{{ k3s_master + k3s_agents + [ "10.42.0.0/16" ] }}'
       when: inventory_hostname in groups["k3s_master"]
 
-    - name: ufw allow etcd between masters
+    - name: Ufw allow etcd between masters
       ansible.builtin.ufw:
         rule: allow
         port: '2379:2380'
@@ -83,13 +83,13 @@
       loop: '{{ k3s_master }}'
       when: inventory_hostname in groups["k3s_master"]
 
-    - name: allow kubernetes and pods to connect to systemd-resolv
+    - name: Allow kubernetes and pods to connect to systemd-resolv
       ansible.builtin.ufw:
         rule: allow
         port: '5355'
         from_ip: fe80::/64
 
-    - name: allow forwarding to pods
+    - name: Allow forwarding to pods
       community.general.ini_file:
         path: /etc/default/ufw
         section: null
@@ -99,18 +99,18 @@
         mode: 0644
       register: ufw_defaults
 
-    - name: restart ufw on config change
+    - name: Restart ufw on config change
       ansible.builtin.systemd:
         name: ufw
         state: restarted
       when: ufw_defaults is changed
 
-    - name: enable ufw and set policy
+    - name: Enable ufw and set policy
       ansible.builtin.ufw:
         policy: reject
         state: enabled
 
-    - name: remove swapfile from /etc/fstab
+    - name: Remove swapfile from /etc/fstab
       ansible.posix.mount:
         name: '{{ item }}'
         fstype: swap
@@ -119,18 +119,18 @@
         - swap
         - none
 
-    - name: disable swap
+    - name: Disable swap
       ansible.builtin.command: swapoff -a
       when: ansible_swaptotal_mb > 0
 
-    - name: get k3s install script from stable branch
+    - name: Get k3s install script from stable branch
       ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/k3s-io/k3s/v1.27.3%2Bk3s1/install.sh
         checksum: sha256:fbcfd9f516127878984a81f1f25b085f5913933171977bfdf5189e95df3f4fc1
         dest: /root/install.sh
         mode: 0755
 
-    - name: allow ping from containers which has net_admin + net_raw
+    - name: Allow ping from containers which has net_admin + net_raw
       ansible.builtin.sysctl:
         name: net.ipv4.ping_group_range
         value: "0 2147483647"
@@ -139,7 +139,7 @@
 
 ###############################################################################
 
-- name: configure k3s master nodes
+- name: Configure k3s master nodes
   hosts: k3s_master
   become: true
   vars:
@@ -149,7 +149,7 @@
       x86_64: amd64
 
   tasks:
-    - name: ufw allow nfs
+    - name: Ufw allow nfs
       ansible.builtin.ufw:
         rule: allow
         port: '{{ item.0 | string }}'
@@ -157,13 +157,13 @@
       loop: '{{ [111,2049,20048] | product(k3s_master + k3s_agents) | list }}'
       when: nfs_ip is not defined
 
-    - name: install nfs for serving storage to the cluster
+    - name: Install nfs for serving storage to the cluster
       ansible.builtin.apt:
         name: nfs-kernel-server
       when: nfs_ip is not defined
 
     # https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
-    - name: prepare space for nfs-subdir-external-provisioner and general volume to all nodes
+    - name: Prepare space for nfs-subdir-external-provisioner and general volume to all nodes
       ansible.builtin.file:
         path: /nfs4/{{ item }}
         state: directory
@@ -172,7 +172,7 @@
         - k3s
       when: nfs_ip is not defined
 
-    - name: share /nfs4 to the kubernetes cluster, so other nodes can start containers
+    - name: Share /nfs4 to the kubernetes cluster, so other nodes can start containers
       ansible.builtin.lineinfile:
         path: /etc/exports
         line: /nfs4/k3s {{ item }}(rw,async,no_subtree_check,no_auth_nlm,insecure,no_root_squash)
@@ -182,25 +182,25 @@
       register: etc_exportfs
       when: nfs_ip is not defined
 
-    - name: export filesystems through nfs
+    - name: Export filesystems through nfs
       ansible.builtin.command: exportfs -r
       when:
         - etc_exportfs is changed
         - nfs_ip is not defined
 
-    - name: install nfs client
+    - name: Install nfs client
       ansible.builtin.apt:
         name: nfs-client
 
-    - name: mount nfs shared volume on srv
+    - name: Mount nfs shared volume on srv
       ansible.posix.mount:
-        path: /srv
+        path: "/srv"
         src: '{{ nfs_ip | default( node_ip ) }}:/nfs4/k3s'
         opts: tcp,async
         state: mounted
         fstype: nfs4
 
-    - name: install / upgrade k3s on master
+    - name: Install / upgrade k3s on master
       ansible.builtin.command: /root/install.sh
       environment:
         INSTALL_K3S_EXEC: 'server --node-ip {{ node_ip }} --node-external-ip {{ node_ip }} --disable traefik --write-kubeconfig-mode 600 --write-kubeconfig /root/.kube/config --kubelet-arg image-gc-low-threshold=70 --kubelet-arg image-gc-high-threshold=75 --flannel-backend wireguard-native --flannel-external-ip'
@@ -209,13 +209,13 @@
       register: k3s_server
       changed_when: k3s_server.rc == 0
 
-    - name: bash completion directory on master
+    - name: Bash completion directory on master
       ansible.builtin.file:
         path: /etc/bash_completion.d
         state: directory
         mode: 0755
 
-    - name: generate bash completion on master
+    - name: Generate bash completion on master
       ansible.builtin.copy:
         content: |
           #!/bin/bash
@@ -227,14 +227,14 @@
         dest: /etc/bash_completion.d/k3s
         mode: 0644
 
-    - name: download k9s on master
+    - name: Download k9s on master
       ansible.builtin.get_url:
         url: 'https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/k9s_Linux_{{ architecture_map[ansible_architecture] }}.tar.gz'
         checksum: 'sha256:https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/checksums.sha256'
         dest: /tmp/k9s.tar.gz
       register: k9s_download
 
-    - name: uncompress k9s on master
+    - name: Uncompress k9s on master
       ansible.builtin.unarchive:
         src: /tmp/k9s.tar.gz
         dest: /usr/local/bin
@@ -244,11 +244,11 @@
         - not ansible_check_mode
         - k9s_download is changed
 
-    - name: wait for master node to finish
+    - name: Wait for master node to finish
       ansible.builtin.wait_for:
         port: 6443
 
-    - name: logrotate for traefik container
+    - name: Logrotate for traefik container
       copy:
         mode: "0644"
         dest: /etc/logrotate.d/traefik
@@ -267,35 +267,35 @@
 
 ###############################################################################
 
-- name: configure k3s agent node
+- name: Configure k3s agent node
   hosts: k3s_agents
   become: true
 
   tasks:
-    - name: install nfs client for mounting nfs on all agents
+    - name: Install nfs client for mounting nfs on all agents
       ansible.builtin.apt:
         name: nfs-client
 
-    - name: mount nfs shared volume on srv
+    - name: Mount nfs shared volume on srv
       ansible.builtin.mount:
-        path: /srv
+        path: "/srv"
         src: '{{ nfs_ip | default( hostvars[groups["k3s_master"][0]]["node_ip"] ) }}:/nfs4/k3s'
         opts: tcp
         state: mounted
         fstype: nfs4
 
-    - name: get join token form the master node
+    - name: Get join token form the master node
       ansible.builtin.slurp:
         src: /var/lib/rancher/k3s/server/node-token
       register: k3s_token
       delegate_to: '{{ groups["k3s_master"][0] }}'
 
-    - name: prepare variables for joining master
+    - name: Prepare variables for joining master
       ansible.builtin.set_fact:
         k3s_url: '{{ hostvars[groups["k3s_master"][0]]["node_ip"] }}'
         k3s_token: '{{ k3s_token.content | b64decode | trim }}'
 
-    - name: install / upgrade k3s on agent
+    - name: Install / upgrade k3s on agent
       ansible.builtin.command: /root/install.sh
       environment:
         INSTALL_K3S_EXEC: '--node-ip {{ node_ip }} --node-external-ip {{ node_ip }} --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75'

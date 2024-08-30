@@ -1,5 +1,5 @@
 ---
-- name: configure k3s master
+- name: Configure k3s master
   hosts: k3s_master
   become: true
 
@@ -7,7 +7,7 @@
     deployment_path: /root/deployments
 
   tasks:
-    - name: copy out deployment
+    - name: Copy out deployment
       ansible.builtin.copy:
         src: "{{ item }}/"
         dest: "{{ deployment_path }}/{{ item }}/"
@@ -18,11 +18,11 @@
         - deployment
         - '{{ env }}'
 
-    - name: "apply depolyments env '{{ env }}'"
+    - name: "Apply depolyments env '{{ env }}'"
       ansible.builtin.command: "kubectl apply -k {{ deployment_path }}/{{ env }}"
       changed_when: true
 
-    - name: remove deployment files
+    - name: Remove deployment files
       ansible.builtin.file:
         path: "{{ deployment_path }}"
         state: absent
