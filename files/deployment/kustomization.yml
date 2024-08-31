@@ -27,11 +27,11 @@ images:
   - name: docker.io/aheimsbakk/smokeping
     newTag: latest
   - name: docker.io/traefik
-    newTag: v2.10
+    newTag: v2.11
   - name: docker.io/prom/prometheus
-    newTag: v2.48.0
+    newTag: v2.54.1
   - name: docker.io/grafana/grafana
-    newTag: 10.2.2
+    newTag: 11.2.0
   - name: docker.io/jellyfin/jellyfin
     newTag: latest
   - name: docker.io/vaultwarden/server
