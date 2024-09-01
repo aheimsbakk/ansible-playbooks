@@ -2,7 +2,7 @@
 http:
   middlewares:
     private-ip-ranges:
-      ipWhiteList:
+      ipAllowList:
         sourceRange:
           - 192.168.0.0/16
           - 172.16.0.0/12

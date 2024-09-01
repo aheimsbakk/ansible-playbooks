@@ -138,6 +138,18 @@
         sysctl_set: true
         reload: true
 
+    - name: Set UDP buffer size for HTTP3
+      ansible.posix.sysctl:
+        name: "{{ item.n }}"
+        value: "{{ item.v }}"
+        sysctl_set: true
+        reload: true
+      loop:
+        - n: "net.core.rmem_max"
+          v: "7500000"
+        - n: "net.core.wmem_max"
+          v: "7500000"
+
 ###############################################################################
 
 - name: Configure k3s master nodes

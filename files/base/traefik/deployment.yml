@@ -48,7 +48,7 @@ spec:
             - --log.level=WARN
             - --accesslog
             - --accesslog.filepath=/var/log/access.log
-            - --experimental.http3=true
+            - --core.defaultrulesyntax=v3
             # Don't verfy tls on dockers
             - --serverstransport.insecureskipverify=true
             # File provider
@@ -91,6 +91,10 @@ spec:
               containerPort: 443
               hostPort: 443
               protocol: TCP
+            - name: websecure-udp
+              containerPort: 443
+              hostPort: 443
+              protocol: UDP
             - name: metrics
               containerPort: 8082
               hostPort: 8082
