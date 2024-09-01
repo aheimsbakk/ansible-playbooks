@@ -91,10 +91,6 @@ spec:
               containerPort: 443
               hostPort: 443
               protocol: TCP
-            - name: websecure-udp
-              containerPort: 443
-              hostPort: 443
-              protocol: UDP
             - name: metrics
               containerPort: 8082
               hostPort: 8082
