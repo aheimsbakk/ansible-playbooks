@@ -1,0 +1,28 @@
+{
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "containerEnv": {
+    "HOME": "/home/vscode"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  },
+  "forwardPorts": [
+    3000
+  ],
+  "runArgs": [
+    "--userns=keep-id"
+    //    "--security-opt", "apparmor=unconfined"
+    //    "--security-opt", "seccomp=unconfined",
+    "--security-opt",
+    "label=disable",
+  ],
+  "workspaceFolder": "/home/vscode/code",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/code,type=bind",
+  "onCreateCommand": "pipenv --python 3 install"
+}
