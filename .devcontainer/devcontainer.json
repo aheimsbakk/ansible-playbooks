@@ -1,5 +1,6 @@
 {
   "build": {
+    "context": ".",
     "dockerfile": "Dockerfile"
   },
   "containerEnv": {
@@ -8,21 +9,35 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "dbaeumer.vscode-eslint"
-      ]
+        "redhat.ansible",
+        "ms-python.flake8"
+      ],
+      "settings": {
+        "flake8.args": [
+          "--max-line-length=120"
+        ],
+        // https://github.com/>/vscode-python/wiki/Migration-to-Python-Tools-Extensions
+        "python.formatting.provider": "black",
+        "python.linting.flake8": true,
+        "python.pythonPath": "/home/vscode/code/.venv/bin/python"
+      }
     }
   },
   "forwardPorts": [
     3000
   ],
+  // Initial python environment and locale settings
+  "onCreateCommand": "PIPENV_VENV_IN_PROJECT=1 pipenv --python 3 install;  sudo sed -i -E 's/^# (${localEnv:LANG}.*)$/\\1/' /etc/locale.gen; sudo locale-gen",
+  "remoteEnv": {
+    "LANG": "${localEnv:LANG}"
+  },
+  "remoteUser": "vscode",
+  // Allow bind mount on podman
   "runArgs": [
     "--userns=keep-id",
-    //    "--security-opt", "apparmor=unconfined"
-    //    "--security-opt", "seccomp=unconfined",
     "--security-opt",
     "label=disable"
   ],
   "workspaceFolder": "/home/vscode/code",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/code,type=bind",
-  "onCreateCommand": "pipenv --python 3 install"
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/code,type=bind"
 }

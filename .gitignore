@@ -1,7 +1,9 @@
 # Editor temporary files
 *swp
 *~
-venv
+
+# Python virtual environment used by pipenv
+.venv
 
 # Vagrant temporary files
 *.log
