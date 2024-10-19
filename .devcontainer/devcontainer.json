@@ -16,11 +16,11 @@
     3000
   ],
   "runArgs": [
-    "--userns=keep-id"
+    "--userns=keep-id",
     //    "--security-opt", "apparmor=unconfined"
     //    "--security-opt", "seccomp=unconfined",
     "--security-opt",
-    "label=disable",
+    "label=disable"
   ],
   "workspaceFolder": "/home/vscode/code",
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/code,type=bind",
