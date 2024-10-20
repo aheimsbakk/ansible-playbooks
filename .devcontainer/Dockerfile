@@ -5,7 +5,15 @@ LABEL org.opencontainers.image.authors="arnulf.heimsbakk@gmail.com"
 
 # Install software
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install git sudo powerline pipenv locales procps nano vim \
+    && apt-get -y install \
+        dnsutils \
+        git \
+        locales \
+        nano \
+        powerline pipenv \
+        procps \
+        sudo \
+        vim \
     && apt-get -y autoremove
 
 # Add vscode user with bash as default shell
