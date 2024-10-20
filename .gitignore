@@ -20,5 +20,8 @@ vault-*
 !roles/requirements.yml
 roles/*
 
+# Collections
+collections/*
+
 # Binaries
 kustomize
