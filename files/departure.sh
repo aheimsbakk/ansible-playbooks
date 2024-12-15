@@ -3,6 +3,7 @@ set -e
 
 # Find stations: https://stoppested.entur.org/ user:guest pass:guest
 # API IDE: https://api.entur.io/journey-planner/v2/ide/
+# query MyQuery{stopPlace(id:"NSR:StopPlace:5823"){id name estimatedCalls(timeRange:72100 numberOfDepartures:2){expectedArrivalTime destinationDisplay{frontText}serviceJourney{journeyPattern{line{transportMode}}situations{description{language value}}}}}}
 
 DEP_DATETIME=""
 DEP_FRONTTEXT=""
@@ -19,10 +20,10 @@ UPDATE_FREQ_MIN=10
 trap 'rm -f "$UPDATED_JSON_FILE" "$UPDATED_TIME_FILE"' INT TERM QUIT
 
 function get_update() {
-  curl -s https://api.entur.io/journey-planner/v2/graphql \
+  curl -s https://api.entur.io/journey-planner/v3/graphql \
        -H 'Content-Type: application/json' \
        -H 'ET-Client-Name: heimsbakk.no-rasberrypi' \
-       -d '{"query":"{stopPlace(id:\"'$STATION_ID'\"){id name estimatedCalls(timeRange:72100 numberOfDepartures:'$STATION_COUNT' omitNonBoarding:true){expectedDepartureTime destinationDisplay{frontText}serviceJourney{journeyPattern{line{transportMode}}}situations{description{language value}}}}}"}'
+       -d '{"query": "{stopPlace(id:\"'$STATION_ID'\"){id name estimatedCalls(timeRange:72100 numberOfDepartures:'$STATION_COUNT'){expectedDepartureTime destinationDisplay{frontText}serviceJourney{journeyPattern{line{transportMode}}situations{description{language value}}}}}}"}'
 }
 
 function get_departure_data() {
