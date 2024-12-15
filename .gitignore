@@ -14,9 +14,10 @@ console.out
 # Ansible vault
 vault-*
 
-# Roles
+# Roles and collections
 !roles/requirements.yml
 roles/*
+collections/*
 
 # Binaries
 kustomize
