@@ -50,3 +50,14 @@
         path: /etc/pam.d/sshd
         line: session optional pam_exec.so /usr/local/bin/sshnotif
       when: ansible_os_family | lower  == "redhat"
+
+    - name: Checkout notes repository containing powerline
+      ansible.builtin.git:
+        repo: 'https://github.com/aheimsbakk/notes.git'
+        dest: /tmp/notes-git
+        version: master
+
+    - name: Install dependencies for powerline
+      ansible.builtin.command: /tmp/notes-git/install-powerline-go.sh
+      args:
+        creates: /etc/profile.d/z-powerline-go.sh
