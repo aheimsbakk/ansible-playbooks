@@ -48,7 +48,7 @@ Services restricted to source IP range. Defaults to `192.168.0.0/16`, `172.16.0.
 * [Munin](https://munin.192.168.56.11.nip.io)
 * [Prometheus](https://prometheus.192.168.56.11.nip.io)
 * [Smokeping](https://smokeping.192.168.56.11.nip.io)
-* [Traefik](https://traefik.192.168.56.11.nip.io)
+* [Traefik](https://traefik.192.168.56.11.nip.io)  
     HTTP Strict Transport Security is disabled in development environment, the middleware `default-https-headers@file` is not enabled. This ensure that we can test Collabora office. Ensure to turn it on in production.
 * [Vaultwarden Admin](https://vaultwarden.192.168.56.11.nip.io/admin), Vaultwarden administration UI
 
