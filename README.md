@@ -38,7 +38,7 @@ Public available services.
     * Allow list for WOPI requests should contain `192.168.56.0/24`.
     * Go to the admin interface for Collabora and accept the certificate.
     * Now you can edit Office documents.
-* [Vaultwarden](https://nextcloud.192.168.56.11.nip.io) with database backup cronjob  
+* [Vaultwarden](https://vaultwarden.192.168.56.11.nip.io) with database backup cronjob  
     Configured with signup. Change in admin GUI.
 
 Services restricted to source IP range. Defaults to `192.168.0.0/16`, `172.16.0.0/12` and `10.0.0.0/8`.
@@ -48,8 +48,8 @@ Services restricted to source IP range. Defaults to `192.168.0.0/16`, `172.16.0.
 * [Munin](https://munin.192.168.56.11.nip.io)
 * [Prometheus](https://prometheus.192.168.56.11.nip.io)
 * [Smokeping](https://smokeping.192.168.56.11.nip.io)
-* [Traefik](https://traefik.192.168.56.11.nip.io)
-* [Vaultwarden Admin](https://traefik.192.168.56.11.nip.io/admin), Vaultwarden administration UI
+* [Traefik](https://traefik.192.168.56.11.nip.io) with HTTP Strict Transport Security disabled, the middleware `default-https-headers@file` is disabled. This ensure that we can test Collabora office. Turn HSTS on in production.
+* [Vaultwarden Admin](https://vaultwarden.192.168.56.11.nip.io/admin), Vaultwarden administration UI
 
 Other services running.
 
