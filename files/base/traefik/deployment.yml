@@ -68,7 +68,7 @@ spec:
             - --entrypoints.websecure.http.tls=true
             - --entrypoints.websecure.http.tls.options=mintls12@file
             # - --entrypoints.websecure.http.tls.certresolver=letsencrypt
-            - --entrypoints.websecure.http.middlewares=default-https-headers@file
+            # - --entrypoints.websecure.http.middlewares=default-https-headers@file
             - --entrypoints.websecure.http3
             # Metrics
             - --metrics.prometheus.addServicesLabels=true

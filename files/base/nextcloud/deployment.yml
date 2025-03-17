@@ -222,6 +222,8 @@ spec:
               value: oc_
             - name: NEXTCLOUD_TRUSTED_DOMAINS
               value: nextcloud.192.168.56.11.nip.io
+            - name: OVERWRITEPROTOCOL
+              value: https
             - name: PHP_MEMORY_LIMIT
               value: 1024M
             - name: PHP_UPLOAD_LIMIT
