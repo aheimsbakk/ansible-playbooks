@@ -42,8 +42,6 @@ spec:
                   key: password
             - name: dictionaries
               value: 'nn_NO nb_NO de_DE en_GB en_US'
-            - name: server_name
-              value: 'collabora.192.168.56.11.nip.io:443'
             - name: aliasgroup1
               value: 'https://nextcloud\.192\.168\.56\.11\.nip\.io:443'
             - name: extra_params
