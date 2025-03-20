@@ -414,7 +414,7 @@ spec:
             - name: NC_DOMAIN
               value: nextcloud.192.168.56.11.nip.io
             - name: TALK_PORT
-              value: 3478
+              value: "3478"
           securityContext:
             allowPrivilegeEscalation: false
             # readOnlyRootFilesystem: true
@@ -422,8 +422,23 @@ spec:
             #   drop: [ "all" ]
             #   add: [ "chown" ]
           ports:
-            - name: nextcloud-talk-hpb
+            - name: web
               containerPort: 8081
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextcloud-talk-hpb
+  labels:
+    app: nextcloud-talk-hpb
+spec:
+  selector:
+    app: nextcloud-talk-hpb
+  ports:
+    - protocol: TCP
+      name: web
+      port: 8081
 
 ---
 kind: Ingress
