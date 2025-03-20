@@ -15,6 +15,19 @@ stringData:
   NEXTCLOUD_ADMIN_PASSWORD: password
 
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nextcloud-talk-hpb
+  labels:
+    app: nextcloud-talk-hpb
+type: Opaque
+stringData:
+  TURN_SECRET: password
+  SIGNALING_SECRET: password
+  INTERNAL_SECRET: password
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -356,3 +369,80 @@ spec:
                 name: nextcloud
                 port:
                   number: 80
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud-talk-hpb
+  labels:
+    app: nextcloud-talk-hpb
+    auto-update-hour: '00'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud-talk-hpb
+  template:
+    metadata:
+      labels:
+        app: nextcloud-talk-hpb
+    spec:
+      containers:
+        - name: nextcloud-talk-hpb
+          image: docker.io/nextcloud/aio-talk:latest
+          imagePullPolicy: Always
+          # resources:
+          #   limits:
+          #     memory: 2Gi
+          env:
+            - name: TURN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-talk-hpb
+                  key: TURN_SECRET
+            - name: SIGNALING_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-talk-hpb
+                  key: SIGNALING_SECRET
+            - name: INTERNAL_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-talk-hpb
+                  key: INTERNAL_SECRET
+            - name: NC_DOMAIN
+              value: nextcloud.192.168.56.11.nip.io
+            - name: TALK_PORT
+              value: 3478
+          securityContext:
+            allowPrivilegeEscalation: false
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
+          ports:
+            - name: nextcloud-talk-hpb
+              containerPort: 8081
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: nextcloud-talk-hpb
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  labels:
+    app: nextcloud-talk-hpb
+spec:
+  rules:
+    - host: talk-hpb.192.168.56.11.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nextcloud-talk-hpb
+                port:
+                  number: 8081

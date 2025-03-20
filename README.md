@@ -31,13 +31,16 @@ Public available services.
 
 * [Gotify](https://gotify.192.168.56.11.nip.io), default username `admin` and password `password`  
     After installing playbooks, go into the Gotify and add an application. Take the applications token and update the `gotify_token`. Voila, you get a notification every time someone logs into `homeserver`.
-* [Nextcloud](https://nextcloud.192.168.56.11.nip.io) with database backup cronjob - default username `admin` and password `password`  
-    For Collabora office install the app `Nextcloud Office` and go to admin interface and find `Office`
+* [Nextcloud](https://nextcloud.192.168.56.11.nip.io) with database backup cronjob - default username `admin` and password `password`
+  * For Collabora office install the app `Nextcloud Office` and go to admin interface and find `Office`
     * Use your own server, in `URL (and Port) of Collabora Online-server` add `https://collabora.192.168.56.11.nip.io/`.
     * Check `Disable certificate verification`.
     * Allow list for WOPI requests should contain `192.168.56.0/24`.
     * Go to the admin interface for Collabora and accept the certificate.
     * Now you can edit Office documents.
+  * Nextcloud Talk
+    * List of Public STUN server, [public-stun-list.txt](https://gist.github.com/mondain/b0ec1cf5f60ae726202e).
+    * 
 * [Vaultwarden](https://vaultwarden.192.168.56.11.nip.io) with database backup cronjob  
     Configured with signup. Change in admin GUI.
 
