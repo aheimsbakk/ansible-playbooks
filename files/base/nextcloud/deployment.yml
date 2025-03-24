@@ -44,6 +44,9 @@ spec:
             - --innodb-file-per-table=1
             - --log-bin-trust-function-creators=1
             - --log-bin
+            - --expire-logs-days=7
+            - --slave-connections-needed-for-purge=0
+            - --innodb-buffer-pool-size=536870912
           volumeMounts:
             - name: mysql-data
               mountPath: /var/lib/mysql
