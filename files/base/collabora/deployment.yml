@@ -81,7 +81,7 @@ metadata:
     app: collabora
 spec:
   rules:
-    - host: collabora.192.168.56.11.nip.io
+    - host: collabora.nextcloud.192.168.56.11.nip.io
       http:
         paths:
           - path: /browser
@@ -132,7 +132,7 @@ metadata:
     app: collabora
 spec:
   rules:
-    - host: collabora.192.168.56.11.nip.io
+    - host: collabora.nextcloud.192.168.56.11.nip.io
       http:
         paths:
           - path: /browser/dist/admin

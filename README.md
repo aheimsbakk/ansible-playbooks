@@ -33,20 +33,23 @@ Public available services.
     After installing playbooks, go into the Gotify and add an application. Take the applications token and update the `gotify_token`. Voila, you get a notification every time someone logs into `homeserver`.
 * [Nextcloud](https://nextcloud.192.168.56.11.nip.io) with database backup cronjob - default username `admin` and password `password`
   * For Collabora office install the app `Nextcloud Office` and go to admin interface and find `Office`
-    * Use your own server, in `URL (and Port) of Collabora Online-server` add `https://collabora.192.168.56.11.nip.io/`.
+    * Use your own server, in `URL (and Port) of Collabora Online-server` add `https://collabora.nextcloud.192.168.56.11.nip.io/`.
     * Check `Disable certificate verification`.
-    * Allow list for WOPI requests should contain `192.168.56.0/24`.
+    * Allow list for WOPI requests should contain `10.42.0.1`.
     * Go to the admin interface for Collabora and accept the certificate.
     * Now you can edit Office documents.
-  * Nextcloud Talk
+  * Nextcloud Talk, with `talk-aio` container. Configure as follows.
+    * High-performance backend `hpb.nextcloud.192.168.56.11.nip.io` with password `password`.  
+      Caveats: Will only work with proper certificate and can't be tested in this setup.
     * List of Public STUN server, [public-stun-list.txt](https://gist.github.com/mondain/b0ec1cf5f60ae726202e).
-    * 
+    * TURN server is our server `nextcloud.192.168.56.11.nip.io:3478` with password `password`.  
+      TURN server is exposed with K3s LoadBalancer on port `3478` UDP and TCP on all nodes in this setup.
 * [Vaultwarden](https://vaultwarden.192.168.56.11.nip.io) with database backup cronjob  
     Configured with signup. Change in admin GUI.
 
 Services restricted to source IP range. Defaults to `192.168.0.0/16`, `172.16.0.0/12` and `10.0.0.0/8`.
 
-* [Collabora CODE Admin](https://collabora.192.168.56.11.nip.io/browser/dist/admin/admin.html), default username `admin` and password `password`
+* [Collabora CODE Admin](https://collabora.nextcloud.192.168.56.11.nip.io/browser/dist/admin/admin.html), default username `admin` and password `password`
 * [Grafana](https://grafana.192.168.56.11.nip.io)
 * [Munin](https://munin.192.168.56.11.nip.io)
 * [Prometheus](https://prometheus.192.168.56.11.nip.io)
