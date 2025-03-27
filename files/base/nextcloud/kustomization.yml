@@ -3,9 +3,12 @@ generatorOptions:
   disableNameSuffixHash: true
 configMapGenerator:
   - files:
-      - mpm_prefork.conf
-      - apache2.conf
+      - config/mpm_prefork.conf
+      - config/apache2.conf
     name: nextcloud-apache-config
+  - files:
+      - config/nextcloud-apc.ini
+    name: nextcloud-php-config
 resources:
   - rbac.yml
   - deployment.yml

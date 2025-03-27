@@ -293,6 +293,10 @@ spec:
               mountPath: /etc/apache2/apache2.conf
               subPath: apache2.conf
               readOnly: true
+            - name: nextcloud-php-config
+              mountPath: /usr/local/etc/php/conf.d/nextcloud-apc.ini
+              subPath: nextcloud-apc.ini
+              readOnly: true
         - name: nextcloud-cron
           image: docker.io/nextcloud:21
           imagePullPolicy: Always
@@ -315,6 +319,10 @@ spec:
               mountPath: /etc/apache2/apache2.conf
               subPath: apache2.conf
               readOnly: true
+            - name: nextcloud-php-config
+              mountPath: /usr/local/etc/php/conf.d/nextcloud-apc.ini
+              subPath: nextcloud-apc.ini
+              readOnly: true
       volumes:
         - name: nextcloud-html
           persistentVolumeClaim:
@@ -334,6 +342,9 @@ spec:
         - name: nextcloud-apache-config
           configMap:
             name: nextcloud-apache-config
+        - name: nextcloud-php-config
+          configMap:
+            name: nextcloud-php-config
 
 ---
 apiVersion: v1
