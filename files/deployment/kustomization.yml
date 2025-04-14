@@ -37,4 +37,5 @@ images:
   - name: docker.io/vaultwarden/server
     newTag: latest
   - name: docker.io/collabora/code
-    newTag: 24.04.13.1.1
+    newTag: latest
+    # newTag: 24.04.13.1.1
