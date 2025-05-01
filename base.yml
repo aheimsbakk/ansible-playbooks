@@ -11,6 +11,8 @@
         key: '{{ authorized_key }}'
         exclusive: true
       become: false
+      tags:
+        - ssh
 
     - name: Allow other things
       ufw:
