@@ -13,9 +13,9 @@ configMapGenerator:
       - config/router-traefik.yaml
       - config/router-metrics.yaml
       - config/middleware-rate200in1min.yaml
+      - config/router-forgejo-ssh.yaml
     name: traefik-config
 resources:
-  - ns.yml
   - rbac.yml
   - deployment.yml
   - ingress.yml

@@ -1,5 +1,6 @@
 ---
 namespace: traefik
 resources:
+  - ns.yml
   - ../../base/traefik
   - ../../base/pod-updater

@@ -156,6 +156,8 @@ spec:
                 secretKeyRef:
                   name: forgejo
                   key: MARIADB_PASSWORD
+            - name: FORGEJO__server__SSH_PORT
+              value: "2022"
           securityContext:
             allowPrivilegeEscalation: false
           ports:

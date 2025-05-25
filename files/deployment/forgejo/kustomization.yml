@@ -1,0 +1,6 @@
+---
+namespace: forgejo
+resources:
+  - ns.yml
+  - ../../base/forgejo
+  - netpol.yml
