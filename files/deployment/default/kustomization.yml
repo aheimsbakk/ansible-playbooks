@@ -12,3 +12,4 @@ resources:
   - ../../base/grafana
   - ../../base/vaultwarden
   - ../../base/collabora
+  - ../../base/forgejo
