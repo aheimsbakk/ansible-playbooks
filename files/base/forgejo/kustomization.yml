@@ -1,6 +1,5 @@
 ---
 resources:
-#  - rbac.yml
+  - rbac.yml
   - deployment.yml
-#  - crontab.yml
-
+  - crontab.yml
