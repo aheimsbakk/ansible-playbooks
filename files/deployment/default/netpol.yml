@@ -51,6 +51,10 @@ spec:
             cidr: 0.0.0.0/0
       ports:
         - port: 3478
+          protocol: TCP
+        - port: 3478
+          protocol: UDP
+
     - from:
         - podSelector: {}
 
