@@ -43,6 +43,7 @@ metadata:
   name: allow-outgoing-except-private-ranges
 spec:
   podSelector: {}
+  ingress: []
   egress:
     - to:
         - podSelector: {}
