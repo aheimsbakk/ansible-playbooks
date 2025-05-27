@@ -53,6 +53,10 @@
         line: session optional pam_exec.so /usr/local/bin/sshnotif
       when: ansible_os_family | lower  == "redhat"
 
+    - name: Ensure that git is installed
+      ansible.builtin.package:
+        name: git
+
     - name: Checkout notes repository containing powerline
       ansible.builtin.git:
         repo: 'https://github.com/aheimsbakk/notes.git'

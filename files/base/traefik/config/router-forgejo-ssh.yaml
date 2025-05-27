@@ -1,0 +1,15 @@
+tcp:
+  routers:
+    forgejo:
+      entryPoints:
+        - "ssh"
+      # Catch every request (only available rule for non-tls routers. See below.)
+      rule: "HostSNI(`*`)"
+      service: forgejo-ssh
+
+  services:
+    forgejo-ssh:
+      loadBalancer:
+        servers:
+        - address: "forgejo.forgejo.svc.cluster.local:22"
+        

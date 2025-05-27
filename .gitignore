@@ -1,7 +1,8 @@
 # Editor temporary files
 *swp
 *~
-venv
+.venv
+.cache
 
 # Vagrant temporary files
 *.log

@@ -1,0 +1,132 @@
+---
+- name: Install a forge-jo runner
+  hosts: forgejo-runner
+
+  tasks:
+    - name: Install utils
+      check_mode: false
+      ansible.builtin.package:
+        name:
+          - jq
+          - curl
+          - podman
+          - podman-docker
+
+    - name: Ensure the system group 'appgroup' exists
+      ansible.builtin.group:
+        name: runner
+        state: present
+        system: yes
+
+    - name: Ensure the system user 'appuser' exists with no password and home directory
+      ansible.builtin.user:
+        name: runner
+        group: runner
+        state: present
+        system: true
+        create_home: true
+        home: /opt/runner
+        shell: /bin/bash
+        password: "!"
+
+    - name: Enable lingering systemd services
+      ansible.builtin.command: /usr/bin/loginctl enable-linger {{ item }}
+      args:
+        creates: "/var/lib/systemd/linger/{{ item }}" 
+      loop:
+        - runner
+
+    - name: Rootless Podman for user runner
+      ansible.builtin.lineinfile:
+        path: "{{ item }}"
+        line: "runner:200000:65536"
+        mode: "0644"
+      loop:
+        - /etc/subuid
+        - /etc/subgid
+
+    - name: Start Podman service for runner
+      ansible.builtin.systemd:
+        name: podman.service
+        enabled: true
+        state: started
+        scope: user
+      ignore_errors: "{{ ansible_check_mode }}"    
+      become_user: runner
+      become: true
+
+    - name: Get forgejo runner version
+      check_mode: false
+      changed_when: false
+      ansible.builtin.shell:
+        cmd: "curl -X 'GET' https://data.forgejo.org/api/v1/repos/forgejo/runner/releases/latest | jq .name -r | cut -c2-"
+      args:
+        executable: /bin/bash
+      register: current_forgejo_runner_version
+
+    - name: Set current version
+      ansible.builtin.set_fact:
+        RUNNER_VERSION: "{{ current_forgejo_runner_version.stdout_lines.0 }}"
+
+    - name: Get forgejo runner
+      ansible.builtin.get_url:
+        url: "https://code.forgejo.org/forgejo/runner/releases/download/v{{ RUNNER_VERSION }}/forgejo-runner-{{ RUNNER_VERSION }}-linux-amd64"
+        checksum: "sha256:https://code.forgejo.org/forgejo/runner/releases/download/v{{ RUNNER_VERSION }}/forgejo-runner-{{ RUNNER_VERSION }}-linux-amd64.sha256"
+        dest: /usr/local/bin/forgejo-runner
+        mode: "0755"
+
+    - name: Generate default config for runner
+      ansible.builtin.shell: forgejo-runner generate-config > config.yaml
+      args:
+        chdir: /opt/runner
+        creates: config.yaml
+      become_user: runner
+      become: true
+
+    - name: Get runner uid
+      ansible.builtin.command: id -u runner
+      changed_when: false
+      register: id_cmd
+
+    - name: Set Docker socket for runner
+      ansible.builtin.lineinfile:
+        path: /opt/runner/config.yaml
+        search_string: "docker_host:"
+        line: '  docker_host: "unix:///run/user/{{ id_cmd.stdout }}/podman/podman.sock"'
+      become_user: runner
+      become: true
+
+    - name: Add systemd service
+      ansible.builtin.copy:
+        mode: "0644"
+        dest: /etc/systemd/system/forgejo-runner.service
+        content: |
+          [Unit]
+          Description=Forgejo Runner
+          Documentation=https://forgejo.org/docs/latest/admin/actions/
+          After=podman.service
+
+          [Service]
+          ExecStart=forgejo-runner -c /opt/runner/config.yaml daemon
+          ExecReload=/bin/kill -s HUP $MAINPID
+
+          # This user and working directory must already exist
+          User=runner 
+          WorkingDirectory=/opt/runner
+          Restart=on-failure
+          TimeoutSec=0
+          RestartSec=10
+
+          [Install]
+          WantedBy=default.target
+
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Enable and start service
+      ansible.builtin.systemd:
+        name: forgejo-runner.service
+        enabled: true
+        state: started
+      ignore_errors: "{{ ansible_check_mode }}"

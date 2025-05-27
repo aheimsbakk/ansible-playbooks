@@ -45,9 +45,9 @@ spec:
           imagePullPolicy: Always
           args:
             - --api=true
-            - --log.level=WARN
+            - --log.level=INFO
             - --accesslog
-            - --accesslog.filepath=/var/log/access.log
+            # - --accesslog.filepath=/var/log/access.log
             - --core.defaultrulesyntax=v3
             # Don't verfy tls on dockers
             - --serverstransport.insecureskipverify=true
@@ -76,6 +76,8 @@ spec:
             - --metrics.prometheus.addEntryPointsLabels=true
             - --metrics.prometheus.manualrouting=true
             - --entryPoints.metrics.address=:8082
+            # Forgejo
+            - --entryPoints.ssh.address=:2022
           securityContext:
             allowPrivilegeEscalation: false
             # readOnlyRootFilesystem: true
@@ -87,13 +89,17 @@ spec:
               containerPort: 80
               hostPort: 80
               protocol: TCP
-            - name: websecure-tcp
+            - name: websecure
               containerPort: 443
               hostPort: 443
               protocol: TCP
             - name: metrics
               containerPort: 8082
               hostPort: 8082
+              protocol: TCP
+            - name: ssh
+              containerPort: 2022
+              hostPort: 2022
               protocol: TCP
           volumeMounts:
             - name: letsencrypt

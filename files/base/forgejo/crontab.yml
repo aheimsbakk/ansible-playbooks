@@ -1,0 +1,45 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: forgejo-backup
+  labels:
+    app: forgejo
+spec:
+  schedule: "0 12 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 3600
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          serviceAccountName: cron-forgejo
+          restartPolicy: Never
+          containers:
+            - name: kubectl
+              image: docker.io/rancher/k3s:latest
+              command:
+                - /bin/sh
+              args:
+                - -c
+                - kubectl exec deployment.apps/forgejo-mariadb -- sh -c "exec mariadb-dump --add-drop-table --user=$(MARIADB_USER) --password='$(MARIADB_PASSWORD)' forgejo | zstd -9" | cat > /mnt/forgejo-$(date -Is).sql.zstd; find /mnt/ -type f -mtime +30 -exec rm {} +; sleep 60
+              env:
+                - name: MARIADB_USER
+                  valueFrom:
+                    secretKeyRef:
+                      key: MARIADB_USER
+                      name: forgejo
+                - name: MARIADB_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: MARIADB_PASSWORD
+                      name: forgejo
+              volumeMounts:
+                - name: forgejo-backup
+                  mountPath: /mnt
+          volumes:
+            - name: forgejo-backup
+              hostPath:
+                type: DirectoryOrCreate
+                path: "/srv/forgejo/backup"

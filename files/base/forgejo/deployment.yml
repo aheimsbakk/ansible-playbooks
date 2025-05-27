@@ -1,0 +1,213 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: forgejo
+  labels:
+    app: forgejo
+type: Opaque
+stringData:
+  MARIADB_USER: forgejo
+  MARIADB_PASSWORD: password
+  MARIADB_ROOT_PASSWORD: password
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: forgejo-talk-hpb
+  labels:
+    app: forgejo-talk-hpb
+type: Opaque
+stringData:
+  TURN_SECRET: password
+  SIGNALING_SECRET: password
+  INTERNAL_SECRET: password
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forgejo-mariadb
+  labels:
+    app: forgejo-mariadb
+    auto-update-hour: '04'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: forgejo-mariadb
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: forgejo-mariadb
+    spec:
+      containers:
+        - name: forgejo-mariadb
+          image: docker.io/mariadb:11
+          imagePullPolicy: Always
+          args:
+            - --transaction-isolation=READ-COMMITTED
+            - --binlog-format=ROW
+            - --innodb-file-per-table=1
+            - --log-bin-trust-function-creators=1
+            - --log-bin
+            - --expire-logs-days=7
+            - --slave-connections-needed-for-purge=0
+            # - --innodb-buffer-pool-size=536870912
+          volumeMounts:
+            - name: mariadb-data
+              mountPath: /var/lib/mysql
+          env:
+            - name: MARIADB_AUTO_UPGRADE
+              value: "1"
+            - name: MARIADB_DATABASE
+              value: forgejo
+            - name: MARIADB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo
+                  key: MARIADB_USER
+            - name: MARIADB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo
+                  key: MARIADB_PASSWORD
+            - name: MARIADB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo
+                  key: MARIADB_ROOT_PASSWORD
+          securityContext:
+            allowPrivilegeEscalation: false
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
+          ports:
+            - name: forgejo-mariadb
+              containerPort: 3306
+      volumes:
+        - name: mariadb-data
+          hostPath:
+            path: /srv/forgejo/mysql
+            type: DirectoryOrCreate
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forgejo-mariadb
+  labels:
+    app: forgejo-mariadb
+spec:
+  selector:
+    app: forgejo-mariadb
+  ports:
+    - protocol: TCP
+      name: mysql
+      port: 3306
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forgejo
+  labels:
+    app: forgejo
+    auto-update-hour: '04'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: forgejo
+  template:
+    metadata:
+      labels:
+        app: forgejo
+    spec:
+      containers:
+        - name: forgejo
+          image: codeberg.org/forgejo/forgejo:11
+          imagePullPolicy: Always
+          env:
+            - name: USER_UID
+              value: "1000"
+            - name: USER_GID
+              value: "1000"
+            - name: FORGEJO__database__DB_TYPE
+              value: mysql
+            - name: FORGEJO__database__NAME
+              value: forgejo
+            - name: FORGEJO__database__HOST
+              value: forgejo-mariadb
+            - name: FORGEJO__database__USER
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo
+                  key: MARIADB_USER
+            - name: FORGEJO__database__PASSWD
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo
+                  key: MARIADB_PASSWORD
+            - name: FORGEJO__server__SSH_PORT
+              value: "2022"
+          securityContext:
+            allowPrivilegeEscalation: false
+          ports:
+            - name: forgejo-web
+              containerPort: 3000
+            - name: forgejo-ssh
+              containerPort: 22
+          volumeMounts:
+            - name: forgejo-data
+              mountPath: /data
+      volumes:
+        - name: forgejo-data
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/forgejo/data
+ 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forgejo
+  labels:
+    app: forgejo
+spec:
+  selector:
+    app: forgejo
+  ports:
+    - protocol: TCP
+      name: forgejo-web
+      port: 3000
+    - protocol: TCP
+      name: forgejo-ssh
+      port: 22
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: forgejo
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: private-ip-ranges@file
+  labels:
+    app: forgejo
+spec:
+  rules:
+    - host: forgejo.192.168.56.11.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: forgejo
+                port:
+                  number: 3000

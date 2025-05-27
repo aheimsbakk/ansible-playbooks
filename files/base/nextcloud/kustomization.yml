@@ -13,7 +13,4 @@ resources:
   - rbac.yml
   - deployment.yml
   - crontab.yml
-images:
-  - name: docker.io/aheimsbakk/nextcloud-20-apache
-    newName: docker.io/aheimsbakk/nextcloud-21-apache
-    newTag: latest
+
