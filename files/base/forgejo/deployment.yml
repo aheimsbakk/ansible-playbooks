@@ -196,6 +196,7 @@ metadata:
   name: forgejo
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: private-ip-ranges@file
   labels:
     app: forgejo
 spec:
