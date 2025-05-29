@@ -1,116 +1,4 @@
 ---
-apiVersion: v1
-kind: Secret
-metadata:
-  name: forgejo
-  labels:
-    app: forgejo
-type: Opaque
-stringData:
-  MARIADB_USER: forgejo
-  MARIADB_PASSWORD: password
-  MARIADB_ROOT_PASSWORD: password
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: forgejo-talk-hpb
-  labels:
-    app: forgejo-talk-hpb
-type: Opaque
-stringData:
-  TURN_SECRET: password
-  SIGNALING_SECRET: password
-  INTERNAL_SECRET: password
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: forgejo-mariadb
-  labels:
-    app: forgejo-mariadb
-    auto-update-hour: '04'
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: forgejo-mariadb
-  strategy:
-    type: Recreate
-  template:
-    metadata:
-      labels:
-        app: forgejo-mariadb
-    spec:
-      containers:
-        - name: forgejo-mariadb
-          image: docker.io/mariadb:11
-          imagePullPolicy: Always
-          args:
-            - --transaction-isolation=READ-COMMITTED
-            - --binlog-format=ROW
-            - --innodb-file-per-table=1
-            - --log-bin-trust-function-creators=1
-            - --log-bin
-            - --expire-logs-days=7
-            - --slave-connections-needed-for-purge=0
-            # - --innodb-buffer-pool-size=536870912
-          volumeMounts:
-            - name: mariadb-data
-              mountPath: /var/lib/mysql
-          env:
-            - name: MARIADB_AUTO_UPGRADE
-              value: "1"
-            - name: MARIADB_DATABASE
-              value: forgejo
-            - name: MARIADB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: forgejo
-                  key: MARIADB_USER
-            - name: MARIADB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: forgejo
-                  key: MARIADB_PASSWORD
-            - name: MARIADB_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: forgejo
-                  key: MARIADB_ROOT_PASSWORD
-          securityContext:
-            allowPrivilegeEscalation: false
-            # readOnlyRootFilesystem: true
-            # capabilities:
-            #   drop: [ "all" ]
-            #   add: [ "chown" ]
-          ports:
-            - name: forgejo-mariadb
-              containerPort: 3306
-      volumes:
-        - name: mariadb-data
-          hostPath:
-            path: /srv/forgejo/mysql
-            type: DirectoryOrCreate
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: forgejo-mariadb
-  labels:
-    app: forgejo-mariadb
-spec:
-  selector:
-    app: forgejo-mariadb
-  ports:
-    - protocol: TCP
-      name: mysql
-      port: 3306
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -138,23 +26,27 @@ spec:
             - name: USER_GID
               value: "1000"
             - name: FORGEJO__database__DB_TYPE
-              value: mysql
-            - name: FORGEJO__database__NAME
-              value: forgejo
-            - name: FORGEJO__database__HOST
-              value: forgejo-mariadb
-            - name: FORGEJO__database__USER
-              valueFrom:
-                secretKeyRef:
-                  name: forgejo
-                  key: MARIADB_USER
-            - name: FORGEJO__database__PASSWD
-              valueFrom:
-                secretKeyRef:
-                  name: forgejo
-                  key: MARIADB_PASSWORD
+              value: sqlite3
+            - name: FORGEJO__database__SQLITE_JOURNAL_MODE
+              value: WAL
             - name: FORGEJO__server__SSH_PORT
               value: "2022"
+            - name: FORGEJO__service__USERNAME_COOLDOWN_PERIOD
+              value: "7"
+            - name: FORGEJO__repository__signing__DEFAULT_TRUST_MODEL
+              value: commiter
+            - name: FORGEJO__security__LOGIN_REMEMBER_DAYS
+              value: "30"
+            - name: FORGEJO__service__ENABLE_CAPTCHA
+              value: "true"
+            - name: FORGEJO__server__REQUIRE_CAPTCHA_FOR_LOGIN
+              value: "true"
+            - name: FORGEJO__database__SLOW_QUERY_THRESHOLD
+              value: "3"
+            - name: FORGEJO__cache__ADAPTER
+              value: twoqueue
+            - name: FORGEJO__cache__HOST
+              value: '{"size":100, "recent_ratio":0.25, "ghost_ratio":0.5}'
           securityContext:
             allowPrivilegeEscalation: false
           ports:
