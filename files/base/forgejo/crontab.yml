@@ -6,7 +6,7 @@ metadata:
   labels:
     app: forgejo
 spec:
-  schedule: "0 12 * * *"
+  schedule: "3 13 * * *"
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
@@ -17,29 +17,29 @@ spec:
           serviceAccountName: cron-forgejo
           restartPolicy: Never
           containers:
-            - name: kubectl
-              image: docker.io/rancher/k3s:latest
+            - name: forgejo-backup
+              image: docker.io/alpine:latest
               command:
                 - /bin/sh
               args:
                 - -c
-                - kubectl exec deployment.apps/forgejo-mariadb -- sh -c "exec mariadb-dump --add-drop-table --user=$(MARIADB_USER) --password='$(MARIADB_PASSWORD)' forgejo | zstd -9" | cat > /mnt/forgejo-$(date -Is).sql.zstd; find /mnt/ -type f -mtime +30 -exec rm {} +; sleep 60
-              env:
-                - name: MARIADB_USER
-                  valueFrom:
-                    secretKeyRef:
-                      key: MARIADB_USER
-                      name: forgejo
-                - name: MARIADB_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      key: MARIADB_PASSWORD
-                      name: forgejo
+                - |
+                  apk --no-cache add sqlite ;
+                  cd /data/gitea ;
+                  echo == VACUUM ;
+                  sqlite3 gitea.db "PRAGMA wal_checkpoint;" ;
+                  sqlite3 gitea.db "VACUUM;" ;
+                  echo == BACKUP ;
+                  sqlite3 gitea.db ".backup gitea-backup-$(date -Is | tr : -).db" ;
+                  ls gitea-backup* ;
+                  echo == DELETE OLDER THAN 7 DAYS ;
+                  find . -type f -maxdepth 1 -mtime +7 -name 'gitea-backup-*.db' -delete ;
+                  ls gitea-backup*
               volumeMounts:
-                - name: forgejo-backup
-                  mountPath: /mnt
+                - name: forgejo-data
+                  mountPath: /data
           volumes:
-            - name: forgejo-backup
+            - name: forgejo-data
               hostPath:
                 type: DirectoryOrCreate
-                path: "/srv/forgejo/backup"
+                path: /srv/forgejo/data
