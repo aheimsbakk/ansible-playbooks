@@ -31,16 +31,20 @@ spec:
               value: WAL
             - name: FORGEJO__server__SSH_PORT
               value: "2022"
+            - name: FORGEJO__server__LANDING_PAGE
+              value: explore
             - name: FORGEJO__service__USERNAME_COOLDOWN_PERIOD
               value: "7"
-            - name: FORGEJO__repository__signing__DEFAULT_TRUST_MODEL
-              value: commiter
-            - name: FORGEJO__security__LOGIN_REMEMBER_DAYS
-              value: "30"
             - name: FORGEJO__service__ENABLE_CAPTCHA
               value: "true"
             - name: FORGEJO__server__REQUIRE_CAPTCHA_FOR_LOGIN
               value: "true"
+            - name: FORGEJO__server__CAPTCHA_TYPE
+              value: image
+            - name: FORGEJO__repository__signing__DEFAULT_TRUST_MODEL
+              value: commiter
+            - name: FORGEJO__security__LOGIN_REMEMBER_DAYS
+              value: "30"
             - name: FORGEJO__database__SLOW_QUERY_THRESHOLD
               value: "3"
             - name: FORGEJO__cache__ADAPTER

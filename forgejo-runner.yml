@@ -11,6 +11,7 @@
           - curl
           - podman
           - podman-docker
+          - cron
 
     - name: Ensure the system group 'appgroup' exists
       ansible.builtin.group:
@@ -45,13 +46,21 @@
         - /etc/subuid
         - /etc/subgid
 
-    - name: Start Podman service for runner
+    - name: Enable Podman service for runner
       ansible.builtin.systemd:
         name: podman.service
         enabled: true
+        scope: user
+      ignore_errors: "{{ ansible_check_mode }}"
+      become_user: runner
+      become: true
+
+    - name: Start Podman service for runner
+      ansible.builtin.systemd:
+        name: podman.service
         state: started
         scope: user
-      ignore_errors: "{{ ansible_check_mode }}"    
+      ignore_errors: "{{ ansible_check_mode }}"
       become_user: runner
       become: true
 
@@ -130,3 +139,12 @@
         enabled: true
         state: started
       ignore_errors: "{{ ansible_check_mode }}"
+
+    - name: Enable Podman cleanup
+      ansible.builtin.cron:
+        name: podman cleanup
+        minute: "0"
+        hour: "5"
+        job: "podman system prune --force --all --volumes --filter until=120h"
+      become_user: runner
+      become: true
