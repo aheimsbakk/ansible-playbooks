@@ -9,10 +9,9 @@
         name:
           - cron
           - curl
-          - jq
-          - podman
-          - podman-docker
-          - systemd-zram-generator
+          - cron
+          - docker.io
+          - node-typescript
 
     - name: Ensure the system group 'appgroup' exists
       ansible.builtin.group:
@@ -24,6 +23,7 @@
       ansible.builtin.user:
         name: runner
         group: runner
+        groups: docker
         state: present
         system: true
         create_home: true
@@ -37,33 +37,6 @@
         creates: "/var/lib/systemd/linger/{{ item }}" 
       loop:
         - runner
-
-    - name: Rootless Podman for user runner
-      ansible.builtin.lineinfile:
-        path: "{{ item }}"
-        line: "runner:200000:65536"
-        mode: "0644"
-      loop:
-        - /etc/subuid
-        - /etc/subgid
-
-    - name: Enable Podman service for runner
-      ansible.builtin.systemd:
-        name: podman
-        enabled: true
-        scope: user
-      ignore_errors: "{{ ansible_check_mode }}"
-      become_user: runner
-      become: true
-
-    - name: Start Podman service for runner
-      ansible.builtin.systemd:
-        name: podman
-        state: started
-        scope: user
-      ignore_errors: "{{ ansible_check_mode }}"
-      become_user: runner
-      become: true
 
     - name: Get forgejo runner version
       check_mode: false
@@ -93,16 +66,19 @@
       become_user: runner
       become: true
 
-    - name: Get runner uid
-      ansible.builtin.command: id -u runner
-      changed_when: false
-      register: id_cmd
-
     - name: Set Docker socket for runner
       ansible.builtin.lineinfile:
         path: /opt/runner/config.yaml
         search_string: "docker_host:"
-        line: '  docker_host: "unix:///run/user/{{ id_cmd.stdout }}/podman/podman.sock"'
+        line: '  docker_host: "automount"'
+      become_user: runner
+      become: true
+
+    - name: Force pull of new images
+      ansible.builtin.lineinfile:
+        path: /opt/runner/config.yaml
+        search_string: "force_pull:"
+        line: '  force_pull: true'
       become_user: runner
       become: true
 
@@ -141,7 +117,6 @@
         state: started
       ignore_errors: "{{ ansible_check_mode }}"
 
-
     - name: Enable and start service
       ansible.builtin.systemd:
         name: forgejo-runner
@@ -149,19 +124,11 @@
         state: started
       ignore_errors: "{{ ansible_check_mode }}"
 
-    - name: Enable Podman cleanup
+    - name: Enable Docker Cleanup
       ansible.builtin.cron:
-        name: podman cleanup
-        cron_file: forgejo-runner
-        user: runner
+        name: docker cleanup
         minute: "0"
         hour: "5"
-        job: "podman system prune --force --all --volumes --filter until=120h"
-
-    - name: Enable multiarch at boot
-      ansible.builtin.cron:
-        name: enable multiarch system
-        cron_file: forgejo-runner
-        user: root
-        special_time: reboot
-        job: "podman run --privileged docker.io/multiarch/qemu-user-static"
+        job: "docker system prune --force --filter until=120h"
+      become_user: runner
+      become: true
