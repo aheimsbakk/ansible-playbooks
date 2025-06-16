@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: smokeping
-          image: docker.io/aheimsbakk/smokeping:latest
+          image: ghcr.io/aheimsbakk/smokeping:latest
           imagePullPolicy: Always
           volumeMounts:
             - name: smokeping-config
