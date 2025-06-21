@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
         - name: munin
-          image: docker.io/aheimsbakk/munin-alpine:latest
+          image: ghcr.io/aheimsbakk/munin:latest
           imagePullPolicy: Always
           env:
             - name: NODES
