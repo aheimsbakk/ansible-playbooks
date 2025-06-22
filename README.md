@@ -49,13 +49,14 @@ Public available services.
 
 Services restricted to source IP range. Defaults to `192.168.0.0/16`, `172.16.0.0/12` and `10.0.0.0/8`.
 
-* [Collabora CODE Admin](https://collabora.nextcloud.192.168.56.11.nip.io/browser/dist/admin/admin.html), default username `admin` and password `password`
+* [Collabora CODE Admin](https://collabora.nextcloud.192.168.56.11.nip.io/browser/dist/admin/admin.html), default username `admin` and password `password`.
+* [ForgeJo](https://forgejo.192.168.56.11.nip.io), ForgeJo self-hosted GitHub alternative. Needs configuring before usage.
 * [Grafana](https://grafana.192.168.56.11.nip.io)
 * [Munin](https://munin.192.168.56.11.nip.io)
 * [Prometheus](https://prometheus.192.168.56.11.nip.io)
 * [Smokeping](https://smokeping.192.168.56.11.nip.io)
 * [Traefik](https://traefik.192.168.56.11.nip.io) with HTTP Strict Transport Security disabled, the middleware `default-https-headers@file` is disabled. This ensure that we can test Collabora office. Turn HSTS on in production.
-* [Vaultwarden Admin](https://vaultwarden.192.168.56.11.nip.io/admin), Vaultwarden administration UI
+* [Vaultwarden Admin](https://vaultwarden.192.168.56.11.nip.io/admin), Vaultwarden administration UI.
 
 Other services running.
 
