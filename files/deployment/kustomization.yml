@@ -16,7 +16,7 @@ images:
     newTag: latest
   - name: docker.io/gotify/server
     newTag: "2"
-  - name: docker.io/aheimsbakk/munin-alpine
+  - name: ghcr.io/aheimsbakk/munin
     newTag: latest
   - name: docker.io/mariadb
     newTag: "11"
