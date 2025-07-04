@@ -1,6 +1,8 @@
 [restic]
 
 [restic:vars]
+restic_backup_restic_version = 0.18.0
+restic_backup_rclone_version = v1.70.2
 #restic_destination=backup.foo.bar
 #restic_destination_user=rbackup
 #restic_destination_dir=/mnt/backup
