@@ -5,6 +5,7 @@
 ---
 - name: Configure debian desktop
   hosts: localhost
+  become: true
 
   tasks:
     - name: Run only on debain distros
@@ -12,146 +13,111 @@
         that: ansible_os_family == "Debian"
 
     - name: add repo key media repo
-      become: true
-      ansible.builtin.apt_key:
-        id: A401FF99368FA1F98152DE755C808C2B65558117
-        keyserver: keyring.debian.org
-        keyring: /etc/apt/trusted.gpg.d/ansible.gpg
-
+      ansible.builtin.apt:
+        force: true
+        deb: https://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2024.9.1_all.deb
+        
     - name: add media repo
-      become: true
-      ansible.builtin.apt_repository:
-        repo: deb http://www.deb-multimedia.org bookworm main
-        filename: ansible
-        state: present
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/dmo.sources
+        mode: "0644"
+        content: |
+          Types: deb
+          URIs: https://www.deb-multimedia.org
+          Suites: {{ ansible_distribution_release }}
+          Components: main non-free
+          Signed-By: /usr/share/keyrings/deb-multimedia-keyring.pgp
+          Enabled: yes
 
     - name: Install packages
-      become: true
       ansible.builtin.apt:
+        update_cache: true
         name:
-          # - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
-          # - duply             # Vrapper for Duplicity backup
-          # - iucode-tool       # Intel microcode tool
-          # - libdvdcss         # Play your old DVDs on Linux
-          # - libgnome-keyring  # Save passwords in Nextcloud, missing dep.
-          # - libmp4v2          # Need it, realy need it
-          # - marker            # A good GTK markdown editor
-          # - network-manager-openvpn-gnome  # Connect to OpenVPN server
-          # - rkhunter          # Root kit hunter, just the basics
-          # - tlp                   # Save battery power on laptops
-          # - vim-syntastic     # <3
-          # - yubikey-personalization-gui  # Yubico configuration
-          # - yubioath-desktop      # The Yubico Authenticator
-          - ansible-core          # Automate everything
-          - ansible-lint          # Lint everything
+          - adwaita-qt
+          - adwaita-qt6
           - btrfs-compsize        # Check the compression ratio on btrfs
           - btrfs-heatmap         # Visualize how data is stored on disk
           - catimg                # Display images in terminal
           - curl                  # Fetch stuff from the Internet
-          - davfs2                # DavFS for mounting Nextcloud, no need to sync everything
-          - dconf-editor          # Edit desktop configuration
           - dstat                 # Stat system values in colors
           - duperemove            # Dedup btrfs
           - etckeeper             # Watch what happens in /etc
           - ffmpeg                # Transcode audio and video
-          - firefox-esr-l10n-nb-no
           - flac                  # Lossless audio
-          - flatpak               # Flatpak for extra graphical programs
-          - gedit-plugins         # Extra plugins for gedit
           - git                   # Version control <3
           - gnome-shell-extension-appindicator  # Legacy app indicator
-          - gnome-shell-extension-bluetooth-quick-connect  #  Connect to pared bluetooth devices
           - gnome-shell-extension-caffeine  # Don't sleep on fullscreen
           - gnome-software-plugin-flatpak  # Integrate flatpak with gnome-software
           - gnupg-pkcs11-scd      # Smart card functionality for SSH keys on Yubikey
-          - haveged               # More random data from CPU flutter
-          - hugo                  # Static blog generator
           - lame                  # Encode mp3
-          - lftp                  # FTP isn't dead
+          - libdvdcss         # Play your old DVDs on Linux
+          - libmp4v2-2        # Need it, realy need it
           - libpam-u2f            # U2F token 2 factor in PAM
-          - libreoffice-l10n-nb
           - ltrace                # Trace library calls
-          - mediainfo
-          - menulibre             # Edit Gnome menu items
           - mp4v2-utils
           - mtr                   # Better traceroute
           - nautilus-nextcloud    # Nextcloud integration into nautilus
           - ncdu                  # Visual terminal 'du -h'
-          - nextcloud-desktop     # Client Nextcloud application
           - nmap                  # Scan network ports
-          - npm                   # Needed by vim-lsp
           - offlineimap           # Make local backup of IMAP
           - pamu2fcfg             # Set up U2F token
           - pcscd                 # Smart card daemon
+          - pipx                  # Yes, need to install python programs
           - podman                # Yep! Containers, containers...
           - pv                    # How fast do we transfer
           - python3-pip           # Yes, need to install python packages
           - python3-pygments      # Syntax highlighting in Hugo
           - python3-qrcode        # Generate QR-codes in terminal with qr
-          - resolvconf            # Needed for wireguard DNS configuration
+          - qgnomeplatform-qt5    # Better Qt integration
+          - qgnomeplatform-qt6
+          - qt5ct
+          - qt6-wayland
+          - qt6ct
+          - qtwayland5
           - rsync                 # Syncing files, syncing life
-          - screenfetch           # Screenshot information tool
           - strace                # String trace processes
           - sysfsutils            # Control /sys
           - systemd-zram-generator # Use the new ram zswap
-          - thunderbird-l10n-nb-no
           - tmux                  # <3
           - tree                  # Show dirs as tree structure
           - u2f-host              # Commandline U2F operations
           - ufw                   # Uncomplicated firewall
-          - vim-nox               # <3
           - virt-manager          # Graphical interface to Libvirt
           - whois                 # A must
           - wireguard-tools       # Wireguard VPN
           - yamllint              # YAML files need to be linted too
           - zmap                  # Map internet
-          - qt6-gtk-platformtheme
-          - qt5-gtk-platformtheme
-          - adwaita-qt
-          - adwaita-qt6
-          - qgnomeplatform-qt5
 
     - name: Increase user watches
-      become: true
       ansible.builtin.sysctl:
         name: fs.inotify.max_user_watches
         value: "2097152"
 
-    # - name: Disable the unsecure firewire-dma
+    # - name: Fix rotation on ideapad d330
     #   become: true
     #   ansible.builtin.copy:
-    #     dest: /etc/modprobe.d/blacklist-dma.conf
+    #     dest: /etc/udev/hwdb.d/61-sensor-local.hwdb
     #     mode: 0644
     #     content: |
-    #       blacklist firewire-core
-    #       blacklist thunderbolt
-
-    - name: Fix rotation on ideapad d330
-      become: true
-      ansible.builtin.copy:
-        dest: /etc/udev/hwdb.d/61-sensor-local.hwdb
-        mode: 0644
-        content: |
-          # IdeaPad D330
-          sensor:modalias:acpi:BOSC0200*:dmi:*:svnLENOVO:*:pvrLenovoideapadD330*
-              ACCEL_MOUNT_MATRIX=0, 1, 0; -1, 0, 0; 0, 0, 1
-      notify: handler_hwdb_update
+    #       # IdeaPad D330
+    #       sensor:modalias:acpi:BOSC0200*:dmi:*:svnLENOVO:*:pvrLenovoideapadD330*
+    #           ACCEL_MOUNT_MATRIX=0, 1, 0; -1, 0, 0; 0, 0, 1
+    #   notify: handler_hwdb_update
 
 
-      # - name: pam yubikey
-      #   lineinfile:
-      #     path: '{{ item }}'
-      #     insertafter: pam_faildelay.so
-      #     firstmatch: true
-      #     line: auth sufficient pam_u2f.so cue
-      #   loop:
-      #     # - /etc/pam.d/password-auth
-      #     - /etc/pam.d/system-auth
-      #   tags:
-      #     - pam
+    # - name: pam yubikey
+    #   lineinfile:
+    #     path: '{{ item }}'
+    #     insertafter: pam_faildelay.so
+    #     firstmatch: true
+    #     line: auth sufficient pam_u2f.so cue
+    #   loop:
+    #     # - /etc/pam.d/password-auth
+    #     - /etc/pam.d/system-auth
+    #   tags:
+    #     - pam
 
     - name: Enable services
-      become: true
       ansible.builtin.service:
         name: '{{ item }}'
         enabled: true
@@ -167,71 +133,70 @@
         log: false
         state: enabled
 
-    - name: Fix for slow wifi
-      become: true
-      ansible.builtin.copy:
-        dest: /etc/systemd/network/10-intel-wifi.link
-        mode: 0644
-        content: |
-          [Match]
-          Driver=iwlwifi
+    # - name: Fix for slow wifi
+    #   ansible.builtin.copy:
+    #     dest: /etc/systemd/network/10-intel-wifi.link
+    #     mode: 0644
+    #     content: |
+    #       [Match]
+    #       Driver=iwlwifi
 
-          [Link]
-          TCPSegmentationOffload=false
-          NamePolicy=keep kernel database onboard slot path
+    #       [Link]
+    #       TCPSegmentationOffload=false
+    #       NamePolicy=keep kernel database onboard slot path
 
     - name: Flatpak remote flathub
       community.general.flatpak_remote:
         name: flathub
         state: present
-        method: user
+        method: system
         flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
 
     - name: Flatpak remote fedora
       community.general.flatpak_remote:
         name: fedora
         state: present
-        method: user
+        method: system
         flatpakrepo_url: oci+https://registry.fedoraproject.org
 
     - name: Install flatpaks from flathub
       community.general.flatpak:
         name: '{{ item }}'
         remote: flathub
-        method: user
+        method: system
       loop:
         - com.calibre_ebook.calibre
         - com.github.micahflee.torbrowser-launcher
-        - com.github.phase1geo.minder
         - com.github.tchx84.Flatseal
-        - com.mattjakeman.ExtensionManager
         - fr.handbrake.ghb
         - io.github.quodlibet.ExFalso
-#        - net.supertuxkart.SuperTuxKart
         - org.audacityteam.Audacity
-        - org.chromium.Chromium
-        - org.mozilla.Thunderbird
+        - org.gimp.GIMP
         - org.mozilla.firefox
+        - org.mozilla.Thunderbird
         - org.signal.Signal
         - org.upscayl.Upscayl
-#        - org.supertuxproject.SuperTux
-#        - com.belmoussaoui.Decoder
-#        - com.nextcloud.desktopclient.nextcloud
-#        - org.gabmus.whatip
-#        - org.gimp.GIMP
-#        - org.gnome.Dictionary
-#        - org.gnome.Epiphany
-#        - org.gnome.Evince
-#        - org.gnome.Evolution
-#        - org.gnome.Extensions
-#        - org.gnome.FileRoller
-#        - org.gnome.Maps
-#        - org.gnome.Shotwell
-#        - org.gnome.TextEditor
-#        - org.gnome.Todo
-#        - org.gnome.gitlab.somas.Apostrophe
-#        - org.remmina.Remmina
-#        - org.videolan.VLC
+        # - com.github.phase1geo.minder
+        # - com.mattjakeman.ExtensionManager
+        # - net.supertuxkart.SuperTuxKart
+        # - com.belmoussaoui.Decoder
+        # - com.nextcloud.desktopclient.nextcloud
+        # - org.chromium.Chromium
+        # - org.gabmus.whatip
+        # - org.gnome.Dictionary
+        # - org.gnome.Epiphany
+        # - org.gnome.Evince
+        # - org.gnome.Evolution
+        # - org.gnome.Extensions
+        # - org.gnome.FileRoller
+        # - org.gnome.gitlab.somas.Apostrophe
+        # - org.gnome.Maps
+        # - org.gnome.Shotwell
+        # - org.gnome.TextEditor
+        # - org.gnome.Todo
+        # - org.remmina.Remmina
+        # - org.supertuxproject.SuperTux
+        # - org.videolan.VLC
 
     - name: Install flatpaks from fedora
       community.general.flatpak:
@@ -240,8 +205,8 @@
         method: user
       loop: [ ]
 
-  handlers:
-    - name: Update hwdb
-      ansible.builtin.command: systemd-hwdb update
-      listen: handler_hwdb_update
-      become: true
+  # handlers:
+  #   - name: Update hwdb
+  #     ansible.builtin.command: systemd-hwdb update
+  #     listen: handler_hwdb_update
+  #     become: true
