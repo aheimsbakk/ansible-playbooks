@@ -16,7 +16,7 @@
       ansible.builtin.apt:
         force: true
         deb: https://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2024.9.1_all.deb
-        
+
     - name: add media repo
       ansible.builtin.copy:
         dest: /etc/apt/sources.list.d/dmo.sources
@@ -28,6 +28,15 @@
           Components: main non-free
           Signed-By: /usr/share/keyrings/deb-multimedia-keyring.pgp
           Enabled: yes
+
+    - name: add media repo
+      ansible.builtin.copy:
+        dest: /etc/apt/preferences.d/pin-media.pref
+        mode: "0644"
+        content: |
+          Package: *
+          Pin: origin "www.deb-multimedia.org"
+          Pin-Priority: 100
 
     - name: Install packages
       ansible.builtin.apt:
@@ -50,8 +59,8 @@
           - gnome-software-plugin-flatpak  # Integrate flatpak with gnome-software
           - gnupg-pkcs11-scd      # Smart card functionality for SSH keys on Yubikey
           - lame                  # Encode mp3
-          - libdvdcss         # Play your old DVDs on Linux
-          - libmp4v2-2        # Need it, realy need it
+          - libdvdcss             # Play your old DVDs on Linux
+          - libmp4v2-2            # Need it, realy need it
           - libpam-u2f            # U2F token 2 factor in PAM
           - ltrace                # Trace library calls
           - mp4v2-utils
@@ -93,30 +102,6 @@
         name: fs.inotify.max_user_watches
         value: "2097152"
 
-    # - name: Fix rotation on ideapad d330
-    #   become: true
-    #   ansible.builtin.copy:
-    #     dest: /etc/udev/hwdb.d/61-sensor-local.hwdb
-    #     mode: 0644
-    #     content: |
-    #       # IdeaPad D330
-    #       sensor:modalias:acpi:BOSC0200*:dmi:*:svnLENOVO:*:pvrLenovoideapadD330*
-    #           ACCEL_MOUNT_MATRIX=0, 1, 0; -1, 0, 0; 0, 0, 1
-    #   notify: handler_hwdb_update
-
-
-    # - name: pam yubikey
-    #   lineinfile:
-    #     path: '{{ item }}'
-    #     insertafter: pam_faildelay.so
-    #     firstmatch: true
-    #     line: auth sufficient pam_u2f.so cue
-    #   loop:
-    #     # - /etc/pam.d/password-auth
-    #     - /etc/pam.d/system-auth
-    #   tags:
-    #     - pam
-
     - name: Enable services
       ansible.builtin.service:
         name: '{{ item }}'
@@ -126,24 +111,11 @@
         - ufw                 # Simpler firewall, Ubuntus default
 
     - name: Deny incomming, and don't bother to log
-      become: true
       ansible.builtin.ufw:
         policy: deny
         direction: incoming
         log: false
-        state: enabled
-
-    # - name: Fix for slow wifi
-    #   ansible.builtin.copy:
-    #     dest: /etc/systemd/network/10-intel-wifi.link
-    #     mode: 0644
-    #     content: |
-    #       [Match]
-    #       Driver=iwlwifi
-
-    #       [Link]
-    #       TCPSegmentationOffload=false
-    #       NamePolicy=keep kernel database onboard slot path
+        state: disabled
 
     - name: Flatpak remote flathub
       community.general.flatpak_remote:
@@ -176,27 +148,7 @@
         - org.mozilla.Thunderbird
         - org.signal.Signal
         - org.upscayl.Upscayl
-        # - com.github.phase1geo.minder
-        # - com.mattjakeman.ExtensionManager
-        # - net.supertuxkart.SuperTuxKart
-        # - com.belmoussaoui.Decoder
-        # - com.nextcloud.desktopclient.nextcloud
-        # - org.chromium.Chromium
-        # - org.gabmus.whatip
-        # - org.gnome.Dictionary
-        # - org.gnome.Epiphany
-        # - org.gnome.Evince
-        # - org.gnome.Evolution
-        # - org.gnome.Extensions
-        # - org.gnome.FileRoller
-        # - org.gnome.gitlab.somas.Apostrophe
-        # - org.gnome.Maps
-        # - org.gnome.Shotwell
-        # - org.gnome.TextEditor
-        # - org.gnome.Todo
-        # - org.remmina.Remmina
-        # - org.supertuxproject.SuperTux
-        # - org.videolan.VLC
+        - com.bitwarden.desktop
 
     - name: Install flatpaks from fedora
       community.general.flatpak:
@@ -204,9 +156,3 @@
         remote: fedora
         method: user
       loop: [ ]
-
-  # handlers:
-  #   - name: Update hwdb
-  #     ansible.builtin.command: systemd-hwdb update
-  #     listen: handler_hwdb_update
-  #     become: true
