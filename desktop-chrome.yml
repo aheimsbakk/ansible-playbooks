@@ -13,21 +13,35 @@
         that: ansible_distribution == "Debian"
 
     - name: add repo key media repo
-      ansible.builtin.apt_key:
-        id: A401FF99368FA1F98152DE755C808C2B65558117
-        keyserver: keyring.debian.org
-        keyring: /etc/apt/trusted.gpg.d/ansible.gpg
+      ansible.builtin.apt:
+        force: true
+        deb: https://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2024.9.1_all.deb
 
     - name: add media repo
-      ansible.builtin.apt_repository:
-        repo: deb http://www.deb-multimedia.org bullseye main
-        filename: ansible
-        state: present
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/dmo.sources
+        mode: "0644"
+        content: |
+          Types: deb
+          URIs: https://www.deb-multimedia.org
+          Suites: {{ ansible_distribution_release }}
+          Components: main non-free
+          Signed-By: /usr/share/keyrings/deb-multimedia-keyring.pgp
+          Enabled: yes
+
+    - name: add media repo
+      ansible.builtin.copy:
+        dest: /etc/apt/preferences.d/pin-media.pref
+        mode: "0644"
+        content: |
+          Package: *
+          Pin: origin "www.deb-multimedia.org"
+          Pin-Priority: 100
 
     - name: install packages
       ansible.builtin.apt:
+        update_cache: true
         name:
-          - davfs2            # DavFS for mounting Nextcloud, no need to sync everything
           - dstat             # Stat system values in colors
           - duperemove        # Dedup btrfs
           - etckeeper         # Watch what happens in /etc
@@ -37,18 +51,14 @@
           - flac              # Lossless audio
           - flatpak           # Get software from flathub
           - git               # Version control <3
-          - gnome-terminal    # Proper fast terminal than handles fonts better
-          - hugo              # Static blog generator
           - lame              # Encode mp3
           - lftp              # FTP isn't dead
           - mediainfo         # Manipulate mediainfo on mediafiles
-          - mediainfo         # Used by AAX
           - mp4v2-utils       # For working with mp4 files
           - ncdu              # Interactive du
           - nmap              # Scan network ports
           - offlineimap       # Make local backup of IMAP
           - pv                # How fast do we transfer
-          - python3-pygments  # Syntax highlighting in Hugo
           - python3-qrcode    # Generate QR-codes in terminal with qr
           - rsync             # Syncing files, syncing life
           - strace            # String trace processes
