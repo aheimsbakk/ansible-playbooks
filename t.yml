@@ -1,0 +1,97 @@
+# vim: ai et ts=2 st=2 sw=2 :
+#
+# libcairo2-dev libvirt-dev libcairo2-dev libgirepository-2.0-dev libxml2-dev  libxml2-dev libxslt-dev python3-dev
+#
+# How to run this playbook:
+# $ ansible-playbook -K dekstop.yml
+---
+- name: create a vm
+  hosts: localhost
+  vars:
+    instance_name: trixie
+    instance_memory_megabyte: 4096
+    instance_disk_size: 20G
+    instance_cloud_image_url: https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.qcow2
+    instance_libvirt_storage_pool: default
+    instance_libvirt_connection: qemu:///session
+
+  tasks:
+    - name: set temporary variables
+      ansible.builtin.set_fact:
+        instance_local_file: "{{ instance_cloud_image_url | basename | split('.') }}"
+
+    - name: set temporary variables
+      ansible.builtin.set_fact:
+        instance_local_file_path: "/tmp/{{ instance_cloud_image_url | basename }}"
+        instance_local_file_suffix: "{{ instance_local_file[-1] }}"
+
+    - name: root password file
+      ansible.builtin.copy:
+        dest: /tmp/root_password
+        mode: 0600
+        content: |
+          password
+
+    - name: user password file
+      ansible.builtin.copy:
+        dest: /tmp/user_password
+        mode: 0600
+        content: |
+          password
+
+
+    - name: fetch local copy of cloud image
+      ansible.builtin.get_url:
+        url: "{{ instance_cloud_image_url }}"
+        dest: "{{ instance_local_file_path }}"
+        mode: '0644'
+        checksum: "{{ instance_cloud_image_sha | default(omit) }}"
+
+    - name: check if volume exists in pool
+      ansible.builtin.command:
+        argv:
+          - virsh
+          - vol-info
+          - "{{ instance_name }}.{{ instance_local_file_suffix }}"
+          - --pool
+          - "{{ instance_libvirt_storage_pool }}"
+      register: volume_info
+      changed_when: false
+      failed_when: false
+
+    - debug:
+        var: volume_info
+
+    - name: create disk place holder in storage pool
+      ansible.builtin.command:
+        argv:
+          - virsh
+          - vol-create-as
+          - "{{ instance_libvirt_storage_pool }}"
+          - "{{ instance_name }}.{{ instance_local_file_suffix }}"
+          - "{{ instance_disk_size }}"
+          - --format
+          - qcow2
+      when: volume_info.rc != 0
+
+    - name: import disk to storage pool
+      ansible.builtin.command:
+        argv:
+          - virsh
+          - vol-upload
+          - "{{ instance_name }}.{{ instance_local_file_suffix }}"
+          - "{{ instance_local_file_path }}"
+          - --sparse
+          - --pool
+          - "{{ instance_libvirt_storage_pool }}"
+
+    - name: resize instance disk
+      ansible.builtin.command:
+        argv:
+          - virsh
+          - vol-resize
+          - "{{ instance_name }}.{{ instance_local_file_suffix }}"
+          - "{{ instance_disk_size }}"
+          - --pool
+          - "{{ instance_libvirt_storage_pool }}"
+
