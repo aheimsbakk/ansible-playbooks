@@ -1,0 +1,134 @@
+# vim: ai et ts=2 st=2 sw=2 :
+#
+# Install: python3-libvirt python3-lxml
+#
+# How to run this playbook:
+# $ ansible-playbook -K dekstop.yml
+---
+- name: Create a VM
+  gather_facts: false
+  hosts: localhost
+  vars:
+    instance_name: trixie
+    instance_memory_megabyte: 4096
+    instance_disk_size: 20G
+    instance_cloud_image_url: https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.qcow2
+    instance_libvirt_storage_pool: default
+    instance_libvirt_connection: qemu:///system
+    # virt-install --os-variant list
+    instance_os_variant: debian13
+
+  tasks:
+    - name: Set temporary variables
+      ansible.builtin.set_fact:
+        instance_local_file: "{{ instance_cloud_image_url | basename | split('.') }}"
+
+    - name: Set temporary variables
+      ansible.builtin.set_fact:
+        instance_local_file_path: "/tmp/{{ instance_cloud_image_url | basename }}"
+        instance_local_file_suffix: "{{ instance_local_file[-1] }}"
+
+    - name: Root password file
+      ansible.builtin.copy:
+        dest: /tmp/root_password
+        mode: 0600
+        content: |
+          password
+
+    - name: User password file
+      ansible.builtin.copy:
+        dest: /tmp/user_password
+        mode: 0600
+        content: |
+          password
+
+    - name: Fetch local copy of cloud image
+      ansible.builtin.get_url:
+        url: "{{ instance_cloud_image_url }}"
+        dest: "{{ instance_local_file_path }}"
+        mode: '0644'
+        checksum: "{{ instance_cloud_image_sha | default(omit) }}"
+
+    - name: Check if volume exists in pool
+      ansible.builtin.command:
+        argv:
+          - virsh
+          - --connect
+          - "{{ instance_libvirt_connection }}"
+          - vol-info
+          - "{{ instance_name }}.{{ instance_local_file_suffix }}"
+          - --pool
+          - "{{ instance_libvirt_storage_pool }}"
+      register: volume_info
+      changed_when: false
+      failed_when: false
+
+    - name: New facts based on volume status
+      ansible.builtin.set_fact:
+        volume_exists: "{{ volume_info.rc == 0 }}"
+
+    - name: Create disk place holder in storage pool
+      ansible.builtin.command:
+        argv:
+          - virsh
+          - --connect
+          - "{{ instance_libvirt_connection }}"
+          - vol-create-as
+          - "{{ instance_libvirt_storage_pool }}"
+          - "{{ instance_name }}.{{ instance_local_file_suffix }}"
+          - "{{ instance_disk_size }}"
+          - --format
+          - qcow2
+      when: not volume_exists
+
+    - name: Import disk to storage pool
+      ansible.builtin.command:
+        argv:
+          - virsh
+          - --connect
+          - "{{ instance_libvirt_connection }}"
+          - vol-upload
+          - "{{ instance_name }}.{{ instance_local_file_suffix }}"
+          - "{{ instance_local_file_path }}"
+          - --sparse
+          - --pool
+          - "{{ instance_libvirt_storage_pool }}"
+      when: not volume_exists
+
+    - name: Resize instance disk
+      ansible.builtin.command:
+        argv:
+          - virsh
+          - --connect
+          - "{{ instance_libvirt_connection }}"
+          - vol-resize
+          - "{{ instance_name }}.{{ instance_local_file_suffix }}"
+          - "{{ instance_disk_size }}"
+          - --pool
+          - "{{ instance_libvirt_storage_pool }}"
+      when: not volume_exists
+
+    - name: Install VM
+      community.libvirt.virt_install:
+        uri: "{{ instance_libvirt_connection }}"
+        name: "{{ instance_name }}"
+        memory: 1024
+        vcpus: 1
+        import: true
+        osinfo:
+          name: debian13
+        boot: uefi
+        disks:
+          - vol: "{{ instance_libvirt_storage_pool }}/{{ instance_name }}.{{ instance_local_file_suffix }}"
+            bus: virtio
+            driver:
+              discard: unmap
+        cloud_init:
+          disable: true
+          root_ssh_key: "{{ lookup('env','HOME') }}/.ssh/id_ed25519.pub"
+          root_password_generate: true
+        state: present
+        networks:
+          - network: default
+            model:
+              type: virtio
