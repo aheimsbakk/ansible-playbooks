@@ -14,11 +14,93 @@
     instance_disk_size: 20G
     instance_cloud_image_url: https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.qcow2
     instance_libvirt_storage_pool: default
-    instance_libvirt_connection: qemu:///system
     # virt-install --os-variant list
     instance_os_variant: debian13
 
+    libvirt_connection: qemu:///system
+
+    default_distros:
+      trixie:
+        url: https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.qcow2
+        os_variant: debian13
+
+    default_vm_net_config:
+      version: 2
+      ethernets:
+        enp1s0:
+          dhcp4: false
+          addresses:
+            - 192.168.122.10/24
+          routes:
+            - to: default
+              via: 192.168.122.1
+          nameservers:
+            addresses:
+              - 1.1.1.1
+              - 8.8.8.8
+
+    default_vm_config:
+      memory_mb: 1024
+      disk_gb: 10
+      vcpus: 1
+      distro: trixie
+      boot: uefi
+      bridge: virbr0
+      net_config: {}
+
+
+    libvirt_vms:
+      - name: trixie01
+        memory_mb: 2000
+        disk_gb: 20
+        vcpus: 2
+        distro: trixie
+        net_config:
+          ethernets:
+            enp1s0:
+              addresses:
+                - 192.168.122.11/24
+      - name: trixie02
+        memory_mb: 1500
+        distro: trixie
+        net_config:
+          ethernets:
+            enp1s0:
+              addresses:
+                - 192.168.122.12/24
+      - name: trixie03
+
+    # Instances that will run, used to assemble each VMs full configuration
+    running_vms: [ ]
+
   tasks:
+
+    # - name: Combine default and custom VM config
+    #   ansible.builtin.set_fact:
+    #     vms_with_config: "{{ vms_with_config | default([]) + [default_vm_config | combine(item)] }}"
+    #   loop: "{{ libvirt_vms }}"
+
+    - name: Combine default and custom network config for each VM
+      ansible.builtin.set_fact:
+        running_vms: "{{ running_vms | default([]) + [default_vm_config | combine(item) | combine({'net_config': default_vm_net_config}) | combine(item, recursive=True)] }}"
+      loop: "{{ libvirt_vms }}"
+      when: item.net_config is defined and item.net_config != {}
+
+    - name: Add back VMs that do not have network config set
+      ansible.builtin.set_fact:
+        running_vms: "{{ running_vms | default([]) + [default_vm_config | combine(item)] }}"
+      loop: "{{ libvirt_vms }}"
+      when: item.net_config is not defined
+
+    - name: Debug
+      ansible.builtin.debug:
+        var: running_vms
+
+    - name: Break
+      ansible.builtin.assert:
+        that:
+          - false
+
     - name: Set temporary variables
       ansible.builtin.set_fact:
         instance_local_file: "{{ instance_cloud_image_url | basename | split('.') }}"
@@ -27,20 +109,6 @@
       ansible.builtin.set_fact:
         instance_local_file_path: "/tmp/{{ instance_cloud_image_url | basename }}"
         instance_local_file_suffix: "{{ instance_local_file[-1] }}"
-
-    - name: Root password file
-      ansible.builtin.copy:
-        dest: /tmp/root_password
-        mode: 0600
-        content: |
-          password
-
-    - name: User password file
-      ansible.builtin.copy:
-        dest: /tmp/user_password
-        mode: 0600
-        content: |
-          password
 
     - name: Fetch local copy of cloud image
       ansible.builtin.get_url:
@@ -54,7 +122,7 @@
         argv:
           - virsh
           - --connect
-          - "{{ instance_libvirt_connection }}"
+          - "{{ libvirt_connection }}"
           - vol-info
           - "{{ instance_name }}.{{ instance_local_file_suffix }}"
           - --pool
@@ -72,7 +140,7 @@
         argv:
           - virsh
           - --connect
-          - "{{ instance_libvirt_connection }}"
+          - "{{ libvirt_connection }}"
           - vol-create-as
           - "{{ instance_libvirt_storage_pool }}"
           - "{{ instance_name }}.{{ instance_local_file_suffix }}"
@@ -86,7 +154,7 @@
         argv:
           - virsh
           - --connect
-          - "{{ instance_libvirt_connection }}"
+          - "{{ libvirt_connection }}"
           - vol-upload
           - "{{ instance_name }}.{{ instance_local_file_suffix }}"
           - "{{ instance_local_file_path }}"
@@ -100,7 +168,7 @@
         argv:
           - virsh
           - --connect
-          - "{{ instance_libvirt_connection }}"
+          - "{{ libvirt_connection }}"
           - vol-resize
           - "{{ instance_name }}.{{ instance_local_file_suffix }}"
           - "{{ instance_disk_size }}"
@@ -108,11 +176,37 @@
           - "{{ instance_libvirt_storage_pool }}"
       when: not volume_exists
 
+
+    - name: Create network config file
+      ansible.builtin.tempfile:
+        state: file
+        suffix: ansible
+      register: tmp_file_network
+
+    - name: Add network file content
+      ansible.builtin.copy:
+        dest: "{{ tmp_file_network.path }}"
+        mode: "0600"
+        content: |
+          version: 2
+          ethernets:
+            enp1s0:
+              dhcp4: false
+              addresses:
+                - 192.168.122.10/24
+              routes:
+                - to: default
+                  via: 192.168.122.1
+              nameservers:
+                addresses:
+                  - 1.1.1.1
+                  - 8.8.8.8
+
     - name: Install VM
       community.libvirt.virt_install:
-        uri: "{{ instance_libvirt_connection }}"
+        uri: "{{ libvirt_connection }}"
         name: "{{ instance_name }}"
-        memory: 1024
+        memory: "{{ instance_memory_megabyte }}"
         vcpus: 1
         import: true
         osinfo:
@@ -125,10 +219,22 @@
               discard: unmap
         cloud_init:
           disable: true
-          root_ssh_key: "{{ lookup('env','HOME') }}/.ssh/id_ed25519.pub"
-          root_password_generate: true
+          root_ssh_key: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519.pub"
+          network_config: "{{ tmp_file_network.path }}"
+          # root_password_generate: true
         state: present
         networks:
-          - network: default
+          # - network: default
+          - bridge: virbr0
             model:
               type: virtio
+        graphics:
+          type: none
+
+    - name: Remove the temporary network config
+      ansible.builtin.file:
+        path: "{{ tmp_file_network.path }}"
+        state: absent
+      # The 'when' check prevents errors if 'temp_file_info' was never registered
+      # (e.g., if the playbook failed before the first task ran)
+      when: tmp_file_network is defined and tmp_file_network.path is defined
