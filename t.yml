@@ -12,6 +12,8 @@
     libvirt_connection: qemu:///system
     libvirt_storage_pool: default
 
+    state: present
+
     default_distros:
       trixie:
         url: https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.qcow2
@@ -96,7 +98,7 @@
         running_vms: "{{ running_vms | default([]) + [default_vm_config | combine(item)] }}"
       loop: "{{ libvirt_vms }}"
       loop_control:
-        label: '{{ item.name  }}'
+        label: '{{ item.name }}'
       when: item.net_config | default({}) == {}
 
     - name: Set temporary variables for cloud image information
@@ -124,25 +126,6 @@
       loop_control:
         label: '{{ item.cloud_image_url }}'
 
-
-    # - name: Check if volume exists in pool
-    #   ansible.builtin.command:
-    #     argv:
-    #       - virsh
-    #       - --connect
-    #       - "{{ libvirt_connection }}"
-    #       - vol-info
-    #       - "{{ instance_name }}.{{ instance_local_file_suffix }}"
-    #       - --pool
-    #       - "{{ instance_libvirt_storage_pool }}"
-    #   register: volume_info
-    #   changed_when: false
-    #   failed_when: false
-
-    # - name: New facts based on volume status
-    #   ansible.builtin.set_fact:
-    #     volume_exists: "{{ volume_info.rc == 0 }}"
-
     - name: Create disk placeholder in storage pool
       ansible.builtin.command:
         argv:
@@ -162,14 +145,17 @@
       ignore_errors: true
       failed_when: false
       changed_when: false
+      when: state == "present"
 
     - name: List new placeholders in storage pool
       ansible.builtin.command: echo
       loop: "{{ disk_placeholder.results }}"
       loop_control:
         label: '{{ item.item.name }}.qcow2'
-      when: item.rc == 0
       changed_when: true
+      when:
+        - state == "present"
+        - item.rc == 0
 
     - name: Import cloud image into placeholder
       ansible.builtin.command:
@@ -186,10 +172,12 @@
       loop: "{{ disk_placeholder.results }}"
       loop_control:
         label: '{{ item.item.name }}.qcow2'
-      when: item.rc == 0
       changed_when: true
+      when:
+        - state == "present"
+        - item.rc == 0
 
-    - name: Resize instance disk
+    - name: Resize VM disk
       ansible.builtin.command:
         argv:
           - virsh
@@ -203,44 +191,56 @@
       loop: "{{ disk_placeholder.results }}"
       loop_control:
         label: '{{ item.item.name }}.qcow2'
-      when: item.rc == 0
       changed_when: true
+      when:
+        - state == "present"
+        - item.rc == 0
 
-    - name: Create network config file
+    - name: Create temporary network config file
       ansible.builtin.tempfile:
         state: file
         suffix: ansible
       register: temp_net_config
-      loop: "{{ disk_placeholder.results }}"
+      loop: "{{ running_vms }}"
       loop_control:
-        label: '{{ item.item.name }}'
-      when: item.rc == 0
+        label: '{{ item.name }}'
 
-    - name: Create temporary net_config file
+    - name: Populate temporary network config file
       ansible.builtin.copy:
         dest: "{{ item.path }}"
         mode: "0600"
         content: |
-          {{ item.item.item.net_config | to_nice_yaml }}
+          {{ item.item.net_config | to_nice_yaml }}
       loop: "{{ temp_net_config.results }}"
       loop_control:
-        label: '{{ item.item.item.name }}'
+        label: '{{ item.item.name }}'
       when:
-        - item.item.rc == 0
-        - item.item.item.net_config | default({}) != {}
+        - item.item.net_config | default({}) != {}
 
-    - name: Create VM
+
+    - name: Undefine VMs
+      community.libvirt.virt:
+        name: "{{ item.item.name }}"
+        command: undefine
+        flags:
+          - nvram
+      loop: "{{ temp_net_config.results }}"
+      loop_control:
+        label: '{{ item.item.name }}'
+      when: state == "absent"
+
+    - name: Create VMs
       community.libvirt.virt_install:
         uri: "{{ libvirt_connection }}"
-        name: "{{ item.item.item.name }}"
-        memory: "{{ item.item.item.memory_mb }}"
-        vcpus: "{{ item.item.item.vcpus }}"
+        name: "{{ item.item.name }}"
+        memory: "{{ item.item.memory_mb }}"
+        vcpus: "{{ item.item.vcpus }}"
         import: true
         osinfo:
-          name: "{{ default_distros[item.item.item.distro]['os_variant'] }}"
-        boot: "{{ default_distros[item.item.item.distro]['boot'] | default(omit) }}"
+          name: "{{ default_distros[item.item.distro]['os_variant'] }}"
+        boot: "{{ default_distros[item.item.distro]['boot'] | default(omit) }}"
         disks:
-          - vol: "{{ libvirt_storage_pool }}/{{ item.item.item.name }}.qcow2"
+          - vol: "{{ libvirt_storage_pool }}/{{ item.item.name }}.qcow2"
             bus: virtio
             driver:
               discard: unmap
@@ -248,19 +248,48 @@
           disable: true
           root_ssh_key: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519.pub"
           network_config: "{{ item.path | default(omit) }}"
-        state: present
-        networks: "{{ item.item.item.networks | default(omit) }}"
+        networks: "{{ item.item.networks | default(omit) }}"
         graphics:
           type: none
       loop: "{{ temp_net_config.results }}"
       loop_control:
-        label: '{{ item.item.item.name }}'
+        label: '{{ item.item.name }}'
+      when: state == "present"
 
-    - name: Remove the temporary network config
+    - name: Remove temporary network config file
       ansible.builtin.file:
         path: "{{ item.path }}"
         state: absent
       loop: "{{ temp_net_config.results }}"
       loop_control:
-        label: '{{ item.item.item.name }}'
+        label: '{{ item.item.name }}'
       when: item.path is defined
+
+    - name: Delete VM disks
+      ansible.builtin.command:
+        argv:
+          - virsh
+          - --connect
+          - "{{ libvirt_connection }}"
+          - vol-delete
+          - "{{ item.name }}.qcow2"
+          - --pool
+          - "{{ libvirt_storage_pool }}"
+      register: deleted_vm_disks
+      loop: "{{ running_vms }}"
+      loop_control:
+        label: '{{ item.name }}.qcow2'
+      changed_when: false
+      failed_when: false
+      when:
+        - state == "absent"
+
+    - name: List deleted VM disks
+      ansible.builtin.command: echo
+      loop: "{{ deleted_vm_disks.results }}"
+      loop_control:
+        label: '{{ item.item.name }}.qcow2'
+      changed_when: true
+      when:
+        - item.rc is defined
+        - item.rc == 0
