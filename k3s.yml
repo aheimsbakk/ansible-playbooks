@@ -6,6 +6,10 @@
   become: true
 
   tasks:
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: '{{ inventory_hostname }}'
+
     - name: Set variables for all plays
       ansible.builtin.set_fact:
         k3s_master: '{{ groups["k3s_master"] | map("extract", hostvars, "node_ip") | list }}'
@@ -19,13 +23,18 @@
       check_mode: false
       when: ansible_check_mode | bool
 
+    - name: Update APT cache
+      ansible.builtin.apt:
+        name: ufw
+        update_cache: true
+      check_mode: false
+
     - name: Install packages
       ansible.builtin.apt:
         name:
           - curl                    # needed by k3s installation script
           - unattended-upgrades     # auto-upgrade packages
           - wireguard               # wireguard for communication between k3s nodes
-        update_cache: true
 
     ## ufw
 
@@ -96,7 +105,7 @@
         option: DEFAULT_FORWARD_POLICY
         value: '"ACCEPT"'
         no_extra_spaces: true
-        mode: 0644
+        mode: '0644'
       register: ufw_defaults
 
     - name: Restart ufw on config change
@@ -129,7 +138,7 @@
         url: https://raw.githubusercontent.com/k3s-io/k3s/v1.27.3%2Bk3s1/install.sh
         checksum: sha256:fbcfd9f516127878984a81f1f25b085f5913933171977bfdf5189e95df3f4fc1
         dest: /root/install.sh
-        mode: 0755
+        mode: '0755'
 
     - name: Allow ping from containers which has net_admin + net_raw
       ansible.posix.sysctl:
@@ -189,7 +198,7 @@
       ansible.builtin.lineinfile:
         path: /etc/exports
         line: /nfs4/k3s {{ item }}(rw,async,no_subtree_check,no_auth_nlm,insecure,no_root_squash)
-        mode: 0644
+        mode: '0644'
         create: true
       loop: '{{ k3s_master + k3s_agents }}'
       register: etc_exportfs
@@ -227,7 +236,7 @@
       ansible.builtin.file:
         path: /etc/bash_completion.d
         state: directory
-        mode: 0755
+        mode: '0755'
 
     - name: Generate bash completion on master
       ansible.builtin.copy:
@@ -239,14 +248,14 @@
             . <(crictl completion bash)
           fi
         dest: /etc/bash_completion.d/k3s
-        mode: 0644
+        mode: '0644'
 
     - name: Download k9s on master
       ansible.builtin.get_url:
         url: 'https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/k9s_Linux_{{ architecture_map[ansible_architecture] }}.tar.gz'
         checksum: 'sha256:https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/checksums.sha256'
         dest: /tmp/k9s.tar.gz
-        mode: "0644"
+        mode: '0644'
       register: k9s_download
 
     - name: Uncompress k9s on master
@@ -254,7 +263,7 @@
         src: /tmp/k9s.tar.gz
         dest: /usr/local/bin
         remote_src: true
-        mode: 0755
+        mode: '0755'
       when:
         - not ansible_check_mode
         - k9s_download is changed
@@ -303,18 +312,19 @@
         src: /var/lib/rancher/k3s/server/node-token
       register: k3s_token
       delegate_to: '{{ groups["k3s_master"][0] }}'
+      when: not ansible_check_mode
 
-    - name: Prepare variables for joining master
+    - name: Fetch the k3s token, to join master
       ansible.builtin.set_fact:
-        k3s_url: '{{ hostvars[groups["k3s_master"][0]]["node_ip"] }}'
         k3s_token: '{{ k3s_token.content | b64decode | trim }}'
+      when: not ansible_check_mode
 
     - name: Install / upgrade k3s on agent
       ansible.builtin.command: /root/install.sh
       environment:
         INSTALL_K3S_EXEC: '--node-ip {{ node_ip }} --node-external-ip {{ node_ip }} --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=75'
         INSTALL_K3S_VERSION: '{{ k3s_version }}'
-        K3S_URL: 'https://{{ k3s_url }}:6443'
+        K3S_URL: 'https://{{ hostvars[groups["k3s_master"][0]]["node_ip"] }}:6443'
         K3S_TOKEN: '{{ k3s_token }}'
       register: k3s_server
       changed_when: k3s_server.rc == 0
