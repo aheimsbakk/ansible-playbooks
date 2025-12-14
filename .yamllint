@@ -2,10 +2,27 @@
 extends: default
 rules:
   line-length: disable
-  brackets:
-    forbid: false
-    min-spaces-inside: 1
+  comments-indentation: false
+  comments:
+    min-spaces-from-content: 1
+  braces:
     max-spaces-inside: 1
+  # brackets:
+  #   forbid: false
+  #   min-spaces-inside: 1
+  #   max-spaces-inside: 1
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
 ignore: |
   secrets.yml
   host_vars/*
+  .ansible/*
+  collections/*
+  ansible.cfg
+  Vagrantfile
+  vault-*
+  *txt
+  *md
+  *sh
+  Pipfile*
