@@ -77,7 +77,7 @@
             enp1s0:
               addresses:
                 - 192.168.122.12/24
-      - name: trixie03
+      - name: ubuntu01
         distro: noble
         networks:
 
@@ -217,18 +217,6 @@
       when:
         - item.item.net_config | default({}) != {}
 
-
-    - name: Undefine VMs
-      community.libvirt.virt:
-        name: "{{ item.item.name }}"
-        command: undefine
-        flags:
-          - nvram
-      loop: "{{ temp_net_config.results }}"
-      loop_control:
-        label: '{{ item.item.name }}'
-      when: state == "absent"
-
     - name: Create VMs
       community.libvirt.virt_install:
         uri: "{{ libvirt_connection }}"
@@ -251,10 +239,24 @@
         networks: "{{ item.item.networks | default(omit) }}"
         graphics:
           type: none
+        state: "{{ state }}"
       loop: "{{ temp_net_config.results }}"
       loop_control:
         label: '{{ item.item.name }}'
-      when: state == "present"
+      failed_when: false
+      # when: state == "present"
+
+    - name: Undefine VMs
+      community.libvirt.virt:
+        name: "{{ item.item.name }}"
+        command: undefine
+        flags:
+          - nvram
+      loop: "{{ temp_net_config.results }}"
+      loop_control:
+        label: '{{ item.item.name }}'
+      failed_when: false
+      when: state == "absent"
 
     - name: Remove temporary network config file
       ansible.builtin.file:
@@ -264,32 +266,3 @@
       loop_control:
         label: '{{ item.item.name }}'
       when: item.path is defined
-
-    - name: Delete VM disks
-      ansible.builtin.command:
-        argv:
-          - virsh
-          - --connect
-          - "{{ libvirt_connection }}"
-          - vol-delete
-          - "{{ item.name }}.qcow2"
-          - --pool
-          - "{{ libvirt_storage_pool }}"
-      register: deleted_vm_disks
-      loop: "{{ running_vms }}"
-      loop_control:
-        label: '{{ item.name }}.qcow2'
-      changed_when: false
-      failed_when: false
-      when:
-        - state == "absent"
-
-    - name: List deleted VM disks
-      ansible.builtin.command: echo
-      loop: "{{ deleted_vm_disks.results }}"
-      loop_control:
-        label: '{{ item.item.name }}.qcow2'
-      changed_when: true
-      when:
-        - item.rc is defined
-        - item.rc == 0
