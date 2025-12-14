@@ -9,20 +9,26 @@
   gather_facts: false
   hosts: localhost
   vars:
-    instance_name: trixie
-    instance_memory_megabyte: 4096
-    instance_disk_size: 20G
-    instance_cloud_image_url: https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.qcow2
-    instance_libvirt_storage_pool: default
-    # virt-install --os-variant list
-    instance_os_variant: debian13
-
     libvirt_connection: qemu:///system
+    libvirt_storage_pool: default
 
     default_distros:
       trixie:
         url: https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.qcow2
         os_variant: debian13
+        boot: uefi
+      noble:
+        url: https://cloud-images.ubuntu.com/minimal/daily/noble/current/noble-minimal-cloudimg-amd64.img
+        os_variant: ubuntu24.04
+        boot: uefi
+      rocky10:
+        url: https://dl.rockylinux.org/pub/rocky/10/images/x86_64/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2
+        os_variant: rocky-unknown
+        boot: uefi
+      rocky9:
+        url: https://dl.rockylinux.org/pub/rocky/9/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2
+        os_variant: rocky9
+        boot: uefi
 
     default_vm_net_config:
       version: 2
@@ -44,10 +50,11 @@
       disk_gb: 10
       vcpus: 1
       distro: trixie
-      boot: uefi
-      bridge: virbr0
+      networks:
+        - bridge: virbr0
+          model:
+            type: virtio
       net_config: {}
-
 
     libvirt_vms:
       - name: trixie01
@@ -69,99 +76,118 @@
               addresses:
                 - 192.168.122.12/24
       - name: trixie03
+        distro: noble
+        networks:
 
     # Instances that will run, used to assemble each VMs full configuration
     running_vms: [ ]
 
   tasks:
-
-    # - name: Combine default and custom VM config
-    #   ansible.builtin.set_fact:
-    #     vms_with_config: "{{ vms_with_config | default([]) + [default_vm_config | combine(item)] }}"
-    #   loop: "{{ libvirt_vms }}"
-
-    - name: Combine default and custom network config for each VM
+    - name: Combine default and custom config for VMs with network net_config
       ansible.builtin.set_fact:
         running_vms: "{{ running_vms | default([]) + [default_vm_config | combine(item) | combine({'net_config': default_vm_net_config}) | combine(item, recursive=True)] }}"
       loop: "{{ libvirt_vms }}"
+      loop_control:
+        label: '{{ item.name }}'
       when: item.net_config is defined and item.net_config != {}
 
-    - name: Add back VMs that do not have network config set
+    - name: Combine default and custom config for the rest
       ansible.builtin.set_fact:
         running_vms: "{{ running_vms | default([]) + [default_vm_config | combine(item)] }}"
       loop: "{{ libvirt_vms }}"
-      when: item.net_config is not defined
+      loop_control:
+        label: '{{ item.name  }}'
+      when: item.net_config | default({}) == {}
 
-    - name: Debug
-      ansible.builtin.debug:
-        var: running_vms
-
-    - name: Break
-      ansible.builtin.assert:
-        that:
-          - false
-
-    - name: Set temporary variables
+    - name: Set temporary variables for cloud image information
       ansible.builtin.set_fact:
-        instance_local_file: "{{ instance_cloud_image_url | basename | split('.') }}"
+        cloud_image_name: "{{ default_distros[item.distro]['url'] | basename }}"
+        cloud_image_url: "{{ default_distros[item.distro]['url'] }}"
+        cloud_image_sha: "{{ default_distros[item.distro]['sha'] | default(omit) }}"
+      loop: "{{ running_vms }}"
+      loop_control:
+        label: '{{ item.name }}'
+      register: cloud_images_information
 
-    - name: Set temporary variables
+    - name: Find unique cloud images to download, and ready to download
       ansible.builtin.set_fact:
-        instance_local_file_path: "/tmp/{{ instance_cloud_image_url | basename }}"
-        instance_local_file_suffix: "{{ instance_local_file[-1] }}"
+        cloud_images_unique: "{{ cloud_images_information.results | map(attribute='ansible_facts') | unique | list }}"
+        temp_folder: /tmp
 
-    - name: Fetch local copy of cloud image
+    - name: Download local copy of cloud images
       ansible.builtin.get_url:
-        url: "{{ instance_cloud_image_url }}"
-        dest: "{{ instance_local_file_path }}"
+        url: "{{ item.cloud_image_url }}"
+        dest: "{{ temp_folder }}/{{ item.cloud_image_name }}"
         mode: '0644'
-        checksum: "{{ instance_cloud_image_sha | default(omit) }}"
+        checksum: "{{ item.cloud_image_sha | default(omit) }}"
+      loop: "{{ cloud_images_unique }}"
+      loop_control:
+        label: '{{ item.cloud_image_url }}'
 
-    - name: Check if volume exists in pool
-      ansible.builtin.command:
-        argv:
-          - virsh
-          - --connect
-          - "{{ libvirt_connection }}"
-          - vol-info
-          - "{{ instance_name }}.{{ instance_local_file_suffix }}"
-          - --pool
-          - "{{ instance_libvirt_storage_pool }}"
-      register: volume_info
-      changed_when: false
-      failed_when: false
 
-    - name: New facts based on volume status
-      ansible.builtin.set_fact:
-        volume_exists: "{{ volume_info.rc == 0 }}"
+    # - name: Check if volume exists in pool
+    #   ansible.builtin.command:
+    #     argv:
+    #       - virsh
+    #       - --connect
+    #       - "{{ libvirt_connection }}"
+    #       - vol-info
+    #       - "{{ instance_name }}.{{ instance_local_file_suffix }}"
+    #       - --pool
+    #       - "{{ instance_libvirt_storage_pool }}"
+    #   register: volume_info
+    #   changed_when: false
+    #   failed_when: false
 
-    - name: Create disk place holder in storage pool
+    # - name: New facts based on volume status
+    #   ansible.builtin.set_fact:
+    #     volume_exists: "{{ volume_info.rc == 0 }}"
+
+    - name: Create disk placeholder in storage pool
       ansible.builtin.command:
         argv:
           - virsh
           - --connect
           - "{{ libvirt_connection }}"
           - vol-create-as
-          - "{{ instance_libvirt_storage_pool }}"
-          - "{{ instance_name }}.{{ instance_local_file_suffix }}"
-          - "{{ instance_disk_size }}"
+          - "{{ libvirt_storage_pool }}"
+          - "{{ item.name }}.qcow2"
+          - "{{ item.disk_gb }}G"
           - --format
           - qcow2
-      when: not volume_exists
+      loop: "{{ running_vms }}"
+      register: disk_placeholder
+      loop_control:
+        label: '{{ item.name }}.qcow2'
+      ignore_errors: true
+      failed_when: false
+      changed_when: false
 
-    - name: Import disk to storage pool
+    - name: List new placeholders in storage pool
+      ansible.builtin.command: echo
+      loop: "{{ disk_placeholder.results }}"
+      loop_control:
+        label: '{{ item.item.name }}.qcow2'
+      when: item.rc == 0
+      changed_when: true
+
+    - name: Import cloud image into placeholder
       ansible.builtin.command:
         argv:
           - virsh
           - --connect
           - "{{ libvirt_connection }}"
           - vol-upload
-          - "{{ instance_name }}.{{ instance_local_file_suffix }}"
-          - "{{ instance_local_file_path }}"
+          - "{{ item.item.name }}.qcow2"
+          - "{{ temp_folder }}/{{ default_distros[item.item.distro]['url'] | basename }}"
           - --sparse
           - --pool
-          - "{{ instance_libvirt_storage_pool }}"
-      when: not volume_exists
+          - "{{ libvirt_storage_pool }}"
+      loop: "{{ disk_placeholder.results }}"
+      loop_control:
+        label: '{{ item.item.name }}.qcow2'
+      when: item.rc == 0
+      changed_when: true
 
     - name: Resize instance disk
       ansible.builtin.command:
@@ -170,71 +196,71 @@
           - --connect
           - "{{ libvirt_connection }}"
           - vol-resize
-          - "{{ instance_name }}.{{ instance_local_file_suffix }}"
-          - "{{ instance_disk_size }}"
+          - "{{ item.item.name }}.qcow2"
+          - "{{ item.item.disk_gb }}G"
           - --pool
-          - "{{ instance_libvirt_storage_pool }}"
-      when: not volume_exists
-
+          - "{{ libvirt_storage_pool }}"
+      loop: "{{ disk_placeholder.results }}"
+      loop_control:
+        label: '{{ item.item.name }}.qcow2'
+      when: item.rc == 0
+      changed_when: true
 
     - name: Create network config file
       ansible.builtin.tempfile:
         state: file
         suffix: ansible
-      register: tmp_file_network
+      register: temp_net_config
+      loop: "{{ disk_placeholder.results }}"
+      loop_control:
+        label: '{{ item.item.name }}'
+      when: item.rc == 0
 
-    - name: Add network file content
+    - name: Create temporary net_config file
       ansible.builtin.copy:
-        dest: "{{ tmp_file_network.path }}"
+        dest: "{{ item.path }}"
         mode: "0600"
         content: |
-          version: 2
-          ethernets:
-            enp1s0:
-              dhcp4: false
-              addresses:
-                - 192.168.122.10/24
-              routes:
-                - to: default
-                  via: 192.168.122.1
-              nameservers:
-                addresses:
-                  - 1.1.1.1
-                  - 8.8.8.8
+          {{ item.item.item.net_config | to_nice_yaml }}
+      loop: "{{ temp_net_config.results }}"
+      loop_control:
+        label: '{{ item.item.item.name }}'
+      when:
+        - item.item.rc == 0
+        - item.item.item.net_config | default({}) != {}
 
-    - name: Install VM
+    - name: Create VM
       community.libvirt.virt_install:
         uri: "{{ libvirt_connection }}"
-        name: "{{ instance_name }}"
-        memory: "{{ instance_memory_megabyte }}"
-        vcpus: 1
+        name: "{{ item.item.item.name }}"
+        memory: "{{ item.item.item.memory_mb }}"
+        vcpus: "{{ item.item.item.vcpus }}"
         import: true
         osinfo:
-          name: debian13
-        boot: uefi
+          name: "{{ default_distros[item.item.item.distro]['os_variant'] }}"
+        boot: "{{ default_distros[item.item.item.distro]['boot'] | default(omit) }}"
         disks:
-          - vol: "{{ instance_libvirt_storage_pool }}/{{ instance_name }}.{{ instance_local_file_suffix }}"
+          - vol: "{{ libvirt_storage_pool }}/{{ item.item.item.name }}.qcow2"
             bus: virtio
             driver:
               discard: unmap
         cloud_init:
           disable: true
           root_ssh_key: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519.pub"
-          network_config: "{{ tmp_file_network.path }}"
-          # root_password_generate: true
+          network_config: "{{ item.path | default(omit) }}"
         state: present
-        networks:
-          # - network: default
-          - bridge: virbr0
-            model:
-              type: virtio
+        networks: "{{ item.item.item.networks | default(omit) }}"
         graphics:
           type: none
+      loop: "{{ temp_net_config.results }}"
+      loop_control:
+        label: '{{ item.item.item.name }}'
 
     - name: Remove the temporary network config
       ansible.builtin.file:
-        path: "{{ tmp_file_network.path }}"
+        path: "{{ item.path }}"
         state: absent
-      # The 'when' check prevents errors if 'temp_file_info' was never registered
-      # (e.g., if the playbook failed before the first task ran)
-      when: tmp_file_network is defined and tmp_file_network.path is defined
+      loop: "{{ temp_net_config.results }}"
+      loop_control:
+        label: '{{ item.item.item.name }}'
+      when: item.path is defined
