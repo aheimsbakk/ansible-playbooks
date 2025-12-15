@@ -23,26 +23,38 @@
       vars:
         libvirt_provision_root_password: root
         libvirt_provision_virtual_machine_config:
-          memory_mb: 2500
-          disk_gb: 10
-          vcpus: 2
-          distro: trixie
+          memory_mb: 1000
+          disk_gb: 5
+          vcpus: 1
+          distro: noble
         libvirt_provision_virtual_machines:
-          - name: k3s-m1
+          - name: k3s-cp1
             net_config:
               ethernets:
                 enp1s0:
                   addresses:
                     - 192.168.122.11/24
-          - name: k3s-a1
+          - name: k3s-cp2
             net_config:
               ethernets:
                 enp1s0:
                   addresses:
                     - 192.168.122.12/24
-          - name: k3s-a2
+          - name: k3s-cp3
             net_config:
               ethernets:
                 enp1s0:
                   addresses:
                     - 192.168.122.13/24
+          - name: k3s-n1
+            net_config:
+              ethernets:
+                enp1s0:
+                  addresses:
+                    - 192.168.122.21/24
+          - name: k3s-n2
+            net_config:
+              ethernets:
+                enp1s0:
+                  addresses:
+                    - 192.168.122.22/24
