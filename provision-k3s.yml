@@ -24,9 +24,9 @@
         libvirt_provision_root_password: root
         libvirt_provision_virtual_machine_config:
           memory_mb: 2500
-          disk_gb: 5
-          vcpus: 1
-          distro: noble
+          disk_gb: 10
+          vcpus: 2
+          distro: trixie
         libvirt_provision_virtual_machines:
           - name: k3s-cp1
             net_config:
