@@ -10,22 +10,15 @@ k3s:
       hosts:
         k3s-cp1:
           ansible_host: 192.168.122.11
-          node_ip: 192.168.122.11
-        k3s-cp2:
-          ansible_host: 192.168.122.12
-          node_ip: 192.168.122.12
-        k3s-cp3:
-          ansible_host: 192.168.122.13
-          node_ip: 192.168.122.13
+          k3s_node_ip: 192.168.122.11
     k3s_node:
       hosts:
         k3s-n1:
           ansible_host: 192.168.122.21
-          node_ip: 192.168.122.21
+          k3s_node_ip: 192.168.122.21
         k3s-n2:
           ansible_host: 192.168.122.22
-          node_ip: 192.168.122.22
+          k3s_node_ip: 192.168.122.22
   vars:
     ansible_user: root
-    # k3s_opts: --flannel-iface enp1s0
     env: dev
