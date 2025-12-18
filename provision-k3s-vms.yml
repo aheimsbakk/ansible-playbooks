@@ -19,7 +19,7 @@
       delegate_to: localhost
 
   roles:
-    - name: aheimsbakk.libvirt_provision
+    - role: aheimsbakk.libvirt_provision
       vars:
         libvirt_provision_root_password: root
         libvirt_provision_temp_path: '{{ lookup("env", "HOME") + "/tmp" }}'
