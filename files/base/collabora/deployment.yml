@@ -27,8 +27,8 @@ spec:
     metadata:
       labels:
         app: collabora
-      annotations:
-        container.apparmor.security.beta.kubernetes.io/collabora: unconfined
+      # annotations:
+      #   container.apparmor.security.beta.kubernetes.io/collabora: unconfined
     spec:
       containers:
         - name: collabora
