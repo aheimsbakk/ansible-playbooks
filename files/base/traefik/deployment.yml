@@ -65,6 +65,14 @@ spec:
             - --entrypoints.websecure.address=:443
             - --entrypoints.websecure.proxyprotocol=true
             - --entrypoints.websecure.proxyprotocol.trustedips=10.0.0.0/8
+            # https://help.nextcloud.com/t/make-nextcloud-collabora-work-with-traefik-3-6-4/237255
+            - --entryPoints.websecure.http.encodedCharacters.allowEncodedSlash=true
+            - --entryPoints.websecure.http.encodedCharacters.allowEncodedBackSlash=true
+            # - --entryPoints.websecure.http.encodedCharacters.allowEncodedNullCharacter=false
+            # - --entryPoints.websecure.http.encodedCharacters.allowEncodedSemicolon=false
+            - --entryPoints.websecure.http.encodedCharacters.allowEncodedPercent=true
+            - --entryPoints.websecure.http.encodedCharacters.allowEncodedQuestionMark=true
+            # - --entryPoints.websecure.http.encodedCharacters.allowEncodedHash=false
             - --entrypoints.websecure.http.tls=true
             - --entrypoints.websecure.http.tls.options=mintls12@file
             # - --entrypoints.websecure.http.tls.certresolver=letsencrypt

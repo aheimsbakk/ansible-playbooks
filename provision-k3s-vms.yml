@@ -24,7 +24,7 @@
         libvirt_provision_root_password: root
         libvirt_provision_temp_path: '{{ lookup("env", "HOME") + "/tmp" }}'
         libvirt_provision_virtual_machine_config:
-          memory_mb: 2500
+          memory_mb: 3000
           disk_gb: 10
           vcpus: 1
           distro: trixie
