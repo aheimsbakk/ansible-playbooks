@@ -13,7 +13,7 @@ patches:
         template:
           spec:
             nodeSelector:
-              kubernetes.io/hostname: k3s-m1
+              kubernetes.io/hostname: k3s-cp1
             tolerations:
               - effect: NoExecute
                 operator: Exists

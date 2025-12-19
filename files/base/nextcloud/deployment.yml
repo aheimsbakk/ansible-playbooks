@@ -237,7 +237,7 @@ spec:
             - name: NEXTCLOUD_TABLE_PREFIX
               value: oc_
             - name: NEXTCLOUD_TRUSTED_DOMAINS
-              value: nextcloud.192.168.56.11.nip.io
+              value: nextcloud.192.168.122.11.nip.io
             - name: OVERWRITEPROTOCOL
               value: https
             - name: PHP_MEMORY_LIMIT
@@ -373,7 +373,7 @@ metadata:
     app: nextcloud
 spec:
   rules:
-    - host: nextcloud.192.168.56.11.nip.io
+    - host: nextcloud.192.168.122.11.nip.io
       http:
         paths:
           - path: /
@@ -426,11 +426,11 @@ spec:
                   name: nextcloud-talk-hpb
                   key: INTERNAL_SECRET
             - name: NC_DOMAIN
-              value: nextcloud.192.168.56.11.nip.io
+              value: nextcloud.192.168.122.11.nip.io
             - name: TALK_PORT
               value: "3478"
             - name: TALK_HOST
-              value: hpb.nextcloud.192.168.56.11.nip.io
+              value: hpb.nextcloud.192.168.122.11.nip.io
           securityContext:
             allowPrivilegeEscalation: false
             # readOnlyRootFilesystem: true
@@ -496,7 +496,7 @@ metadata:
     app: nextcloud-talk-hpb
 spec:
   rules:
-    - host: hpb.nextcloud.192.168.56.11.nip.io
+    - host: hpb.nextcloud.192.168.122.11.nip.io
       http:
         paths:
           - path: /

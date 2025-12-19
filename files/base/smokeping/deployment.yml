@@ -74,7 +74,7 @@ metadata:
     app: smokeping
 spec:
   rules:
-    - host: smokeping.192.168.56.11.nip.io
+    - host: smokeping.192.168.122.11.nip.io
       http:
         paths:
           - path: /

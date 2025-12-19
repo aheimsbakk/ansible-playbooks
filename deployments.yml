@@ -1,6 +1,6 @@
 ---
 - name: Configure k3s master
-  hosts: k3s_master
+  hosts: k3s_cp
   become: true
 
   vars:
@@ -11,8 +11,8 @@
       ansible.builtin.copy:
         src: "{{ item }}/"
         dest: "{{ deployment_path }}/{{ item }}/"
-        mode: 0600
-        directory_mode: 0700
+        mode: '0600'
+        directory_mode: '0700'
       loop:
         - base
         - deployment

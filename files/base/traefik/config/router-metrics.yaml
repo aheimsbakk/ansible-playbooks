@@ -2,7 +2,7 @@
 http:
   routers:
     metrics:
-      rule: Host(`traefik.192.168.56.11.nip.io`) && Path(`/metrics`)
+      rule: Host(`traefik.192.168.122.11.nip.io`) && Path(`/metrics`)
       service: prometheus@internal
       middlewares:
         - private-ip-ranges@file

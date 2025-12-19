@@ -78,7 +78,7 @@ metadata:
     app: grafana
 spec:
   rules:
-    - host: grafana.192.168.56.11.nip.io
+    - host: grafana.192.168.122.11.nip.io
       http:
         paths:
           - path: /
