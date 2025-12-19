@@ -30,6 +30,8 @@
 
         # Super secret password used for connecting nodes to cluster
         k3s_token: '{{ k3s_token | default("my-secret-token") }}'
+      tags:
+        - always
 
     - name: Set node hostname, k3s nodes need a host name
       ansible.builtin.hostname:
@@ -40,6 +42,8 @@
       ansible.builtin.set_fact:
         k3s_enable_etcd: --cluster-init
       when: groups["k3s_cp"] | length > 1
+      tags:
+        - k3s
 
     - name: Install packages
       ansible.builtin.apt:
@@ -220,6 +224,19 @@
 
     # Download k9s on control plane
 
+    - name: Save k9s version
+      ansible.builtin.copy:
+        dest: /etc/k9s-version
+        mode: '0644'
+        content: |
+          # Ansible managed
+          {{ k9s_version }}
+      register: k9s_version_file
+      when:
+        - inventory_hostname in groups["k3s_cp"]
+      tags:
+        - k9s
+
     - name: Download k9s on control plain
       ansible.builtin.get_url:
         url: 'https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/k9s_Linux_{{ architecture_map[ansible_architecture] }}.tar.gz'
@@ -227,7 +244,10 @@
         dest: /tmp/k9s.tar.gz
         mode: "0644"
       register: k9s_download
-      when: inventory_hostname in groups["k3s_cp"]
+      when:
+        - k9s_version_file is changed
+      tags:
+        - k9s
 
     - name: Uncompress k9s on control plain
       ansible.builtin.unarchive:
@@ -236,10 +256,24 @@
         remote_src: true
         mode: '0755'
       when:
-        - not ansible_check_mode
         - k9s_download is changed
+        - not ansible_check_mode
+      tags:
+        - k9s
 
     # Download k3s install
+
+
+    - name: Save k3s version
+      ansible.builtin.copy:
+        dest: /etc/k3s-version
+        mode: '0644'
+        content: |
+          # Ansible managed
+          {{ k3s_version }}
+      register: k3s_version_file
+      tags:
+        - k3s
 
     - name: Download k3s versions install script
       ansible.builtin.get_url:
@@ -247,6 +281,9 @@
         checksum: 'sha256:https://raw.githubusercontent.com/k3s-io/k3s/refs/tags/{{ k3s_version }}/install.sh.sha256sum'
         dest: /root/install.sh
         mode: '0755'
+      when: k3s_version_file is changed
+      tags:
+        - k3s
 
     # k3s control plane
 
@@ -259,12 +296,18 @@
         INSTALL_K3S_VERSION: '{{ k3s_version }}'
       register: k3s_server
       changed_when: k3s_server.rc == 0
-      when: inventory_hostname == k3s_prime_cp_name
+      when:
+        - k3s_version_file is changed
+        - inventory_hostname == k3s_prime_cp_name
+      tags:
+        - k3s
 
     - name: Wait for prime node to finish
       ansible.builtin.wait_for:
         port: 6443
       when: inventory_hostname == k3s_prime_cp_name
+      tags:
+        - k3s
 
     - name: Install / upgrade k3s control plane
       ansible.builtin.command: /root/install.sh
@@ -277,8 +320,11 @@
       register: k3s_server
       changed_when: k3s_server.rc == 0
       when:
+        - k3s_version_file is changed
         - inventory_hostname in groups["k3s_cp"]
         - inventory_hostname != k3s_prime_cp_name
+      tags:
+        - k3s
 
     - name: Wait for control plane to finish
       ansible.builtin.wait_for:
@@ -286,6 +332,8 @@
       when:
         - inventory_hostname in groups["k3s_cp"]
         - inventory_hostname != k3s_prime_cp_name
+      tags:
+        - k3s
 
     - name: Bash completion directory on master
       ansible.builtin.file:
@@ -318,7 +366,37 @@
         K3S_TOKEN: '{{ k3s_token }}'
       register: k3s_agent
       changed_when: k3s_agent.rc == 0
-      when: inventory_hostname in groups["k3s_node"]
+      when:
+        - k3s_version_file is changed
+        - inventory_hostname in groups["k3s_node"]
+      tags:
+        - k3s
+
+    # Enable mirroring of docker.io
+
+    - name: Set gcr as mirror for docker.io
+      ansible.builtin.copy:
+        dest: /etc/rancher/k3s/registries.yaml
+        mode: '0644'
+        content: |
+          # Ansible managed
+          ---
+          mirrors:
+            docker.io:
+              endpoint:
+                - "https://mirror.gcr.io"
+      register: config_mirror
+      when: inventory_hostname in groups["k3s_cp"]
+      tags:
+        - mirror
+
+    - name: Restart k3s service when mirrors has changed
+      ansible.builtin.systemd:
+        name: k3s
+        state: restarted
+      when: config_mirror is changed
+      tags:
+        - mirror
 
     # I install traefik and enable logging, need rotation
 
