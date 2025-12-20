@@ -15,7 +15,7 @@
     - name: Set variables for all plays
       ansible.builtin.set_fact:
         k3s_cp: '{{ groups["k3s_cp"] | map("extract", hostvars, "k3s_node_ip") | list }}'
-        k3s_node: '{{ groups["k3s_node"] | map("extract", hostvars, "k3s_node_ip") | list }}'
+        k3s_node: '{{ groups["k3s_node"] | map("extract", hostvars, "k3s_node_ip") | default([]) | list }}'
         k3s_version: '{{ k3s_version | default("v1.34.2+k3s1") }}'
         k9s_version: '{{ k9s_version | default("v0.50.16") }}'
 
@@ -368,7 +368,7 @@
       changed_when: k3s_agent.rc == 0
       when:
         - k3s_version_file is changed
-        - inventory_hostname in groups["k3s_node"]
+        - inventory_hostname in groups["k3s_node"] | default([])
       tags:
         - k3s
 

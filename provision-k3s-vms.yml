@@ -25,8 +25,8 @@
         libvirt_provision_temp_path: '{{ lookup("env", "HOME") + "/tmp" }}'
         libvirt_provision_virtual_machine_config:
           memory_mb: 8000
-          disk_gb: 10
-          vcpus: 1
+          disk_gb: 20
+          vcpus: 2
           distro: trixie
         libvirt_provision_virtual_machines:
           - name: k3s-cp1
