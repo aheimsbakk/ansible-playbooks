@@ -27,8 +27,6 @@ spec:
     metadata:
       labels:
         app: collabora
-      # annotations:
-      #   container.apparmor.security.beta.kubernetes.io/collabora: unconfined
     spec:
       containers:
         - name: collabora
@@ -52,12 +50,10 @@ spec:
             allowPrivilegeEscalation: true
             readOnlyRootFilesystem: false
             capabilities:
-              # drop:
-              #   - ALL
               add:
                 - MKNOD
-                - CHOWN
-                - FOWNER
+                # - CHOWN
+                # - FOWNER
           ports:
             - name: web
               containerPort: 9980
@@ -119,13 +115,6 @@ spec:
                 name: collabora
                 port:
                   number: 9980
-          # - path: /lool
-          #   pathType: Prefix
-          #   backend:
-          #     service:
-          #       name: collabora
-          #       port:
-          #         number: 9980
 
 ---
 kind: Ingress

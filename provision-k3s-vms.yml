@@ -24,7 +24,7 @@
         libvirt_provision_root_password: root
         libvirt_provision_temp_path: '{{ lookup("env", "HOME") + "/tmp" }}'
         libvirt_provision_virtual_machine_config:
-          memory_mb: 3000
+          memory_mb: 8000
           disk_gb: 10
           vcpus: 1
           distro: trixie
@@ -35,15 +35,15 @@
                 enp1s0:
                   addresses:
                     - 192.168.122.11/24
-          - name: k3s-n1
-            net_config:
-              ethernets:
-                enp1s0:
-                  addresses:
-                    - 192.168.122.21/24
-          - name: k3s-n2
-            net_config:
-              ethernets:
-                enp1s0:
-                  addresses:
-                    - 192.168.122.22/24
+          # - name: k3s-n1
+          #   net_config:
+          #     ethernets:
+          #       enp1s0:
+          #         addresses:
+          #           - 192.168.122.21/24
+          # - name: k3s-n2
+          #   net_config:
+          #     ethernets:
+          #       enp1s0:
+          #         addresses:
+          #           - 192.168.122.22/24
