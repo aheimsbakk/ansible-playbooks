@@ -35,7 +35,7 @@
 
     - name: Set node hostname, k3s nodes need a host name
       ansible.builtin.hostname:
-        name: '{{ inventory_hostname }}'
+        name: '{{ inventory_hostname.split(".") | first }}'
         use: systemd
 
     - name: Enable etcd on control plane if we have more than one
