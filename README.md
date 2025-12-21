@@ -54,7 +54,7 @@ This describes all the steps to get Kubernetes running and deploying all contain
   ```
 - Start the virtual machines. `state=present` is not needed since it is the default. Set `state=absent` to destroy VMs. Playbook for provisioning virtual machines expects you have `$HOME/.ssh/id_ed25519.pub`. Do you have a different public SSHkey, change it in [provision-k3s-vms.yml](provision-k3s-vms.yml).
   ```bash
-  ansible-playbook -i hosts-k3s.yml provision-k3s-vms.yml -e state=present
+  ansible-playbook -i hosts-k3s.yml provision-k3s-vms.yml -l localhost -e state=present
   ```
 - Install the Kubernetes environment. `hosts-k3s.yaml` is the hosts file for our VMs.
   ```bash

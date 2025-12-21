@@ -45,6 +45,12 @@
       tags:
         - k3s
 
+    - name: Update cache and install ufw even on check mode
+      ansible.builtin.apt:
+        name: ufw
+        update_cache: true
+      check_mode: false
+
     - name: Install packages
       ansible.builtin.apt:
         name:
@@ -53,7 +59,6 @@
           - ufw                     # Uncomplicated firewall utilities
           - unattended-upgrades     # Auto-upgrade packages on debian distributions
           - wireguard               # Wireguard for communication between k3s nodes
-        update_cache: true
 
     # UFW
 
@@ -394,7 +399,9 @@
       ansible.builtin.systemd:
         name: k3s
         state: restarted
-      when: config_mirror is changed
+      when:
+        - config_mirror is changed
+        - not ansible_check_mode
       tags:
         - mirror
 

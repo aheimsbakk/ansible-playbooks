@@ -10,7 +10,7 @@
 #   StrictHostKeyChecking no
 ---
 - name: Provision k3s development VMs
-  hosts: localhost
+  hosts: all
 
   pre_tasks:
     - name: Set variables that need to be set on localhost
@@ -21,29 +21,4 @@
   roles:
     - role: aheimsbakk.libvirt_provision
       vars:
-        libvirt_provision_root_password: root
         libvirt_provision_temp_path: '{{ lookup("env", "HOME") + "/tmp" }}'
-        libvirt_provision_virtual_machine_config:
-          memory_mb: 8000
-          disk_gb: 20
-          vcpus: 2
-          distro: trixie
-        libvirt_provision_virtual_machines:
-          - name: k3s-cp1
-            net_config:
-              ethernets:
-                enp1s0:
-                  addresses:
-                    - 192.168.122.11/24
-          # - name: k3s-n1
-          #   net_config:
-          #     ethernets:
-          #       enp1s0:
-          #         addresses:
-          #           - 192.168.122.21/24
-          # - name: k3s-n2
-          #   net_config:
-          #     ethernets:
-          #       enp1s0:
-          #         addresses:
-          #           - 192.168.122.22/24

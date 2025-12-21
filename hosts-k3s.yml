@@ -3,6 +3,32 @@ all:
   hosts:
     localhost:
       ansible_connection: local
+      libvirt_provision_root_password: root
+      libvirt_provision_temp_path: '{{ lookup("env", "HOME") + "/tmp" }}'
+      libvirt_provision_virtual_machine_config:
+        memory_mb: 8000
+        disk_gb: 20
+        vcpus: 2
+        distro: trixie
+      libvirt_provision_virtual_machines:
+        - name: k3s-cp1
+          net_config:
+            ethernets:
+              enp1s0:
+                addresses:
+                  - 192.168.122.11/24
+        # - name: k3s-n1
+        #   net_config:
+        #     ethernets:
+        #       enp1s0:
+        #         addresses:
+        #           - 192.168.122.21/24
+        # - name: k3s-n2
+        #   net_config:
+        #     ethernets:
+        #       enp1s0:
+        #         addresses:
+        #           - 192.168.122.22/24
 
 k3s:
   children:
