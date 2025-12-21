@@ -4,7 +4,6 @@ all:
     localhost:
       ansible_connection: local
       libvirt_provision_root_password: root
-      libvirt_provision_temp_path: '{{ lookup("env", "HOME") + "/tmp" }}'
       libvirt_provision_virtual_machine_config:
         memory_mb: 8000
         disk_gb: 20
