@@ -1,0 +1,24 @@
+# vim: ai et ts=2 st=2 sw=2 :
+#
+# $ ansible-playbook -i hosts-k3s provision-k3s.yml
+# $ cat .ssh/config
+# Host 192.168.122.*
+#   ControlMaster auto
+#   ControlPath /tmp/ssh-%C
+#   ControlPersist 1h
+#   UserKnownHostsFile /dev/null
+#   StrictHostKeyChecking no
+---
+- name: Provision k3s development VMs
+  hosts: all
+
+  pre_tasks:
+    - name: Set variables that need to be set on localhost
+      ansible.builtin.set_fact:
+        libvirt_provision_root_ssh_key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_ed25519.pub') }}"
+      delegate_to: localhost
+
+  roles:
+    - role: aheimsbakk.libvirt_provision
+      vars:
+        libvirt_provision_temp_path: '{{ lookup("env", "HOME") + "/tmp" }}'

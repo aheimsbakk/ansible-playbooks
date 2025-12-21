@@ -55,7 +55,7 @@ spec:
             - name: PASSWORD_ITERATIONS
               value: '2000000'
             - name: DOMAIN
-              value: 'https://vaultwarden.192.168.56.11.nip.io'
+              value: 'https://vaultwarden.192.168.122.11.nip.io'
             - name: LOGIN_RATELIMIT_SECONDS
               value: '120'
             - name: LOGIN_RATELIMIT_MAX_BURST
@@ -110,7 +110,7 @@ metadata:
     app: vaultwarden
 spec:
   rules:
-    - host: vaultwarden.192.168.56.11.nip.io
+    - host: vaultwarden.192.168.122.11.nip.io
       http:
         paths:
           - path: /
@@ -133,7 +133,7 @@ metadata:
     app: vaultwarden
 spec:
   rules:
-    - host: vaultwarden.192.168.56.11.nip.io
+    - host: vaultwarden.192.168.122.11.nip.io
       http:
         paths:
           - path: /admin

@@ -2,7 +2,7 @@
 http:
   routers:
     dashboard:
-      rule: Host(`traefik.192.168.56.11.nip.io`)
+      rule: Host(`traefik.192.168.122.11.nip.io`)
       service: api@internal
       middlewares:
         - private-ip-ranges

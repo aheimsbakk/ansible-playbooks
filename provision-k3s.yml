@@ -1,0 +1,424 @@
+---
+- name: Common configuration for k3s nodes
+  hosts:
+    - k3s_cp
+    - k3s_node
+  become: true
+
+  vars:
+    architecture_map:
+      aarch64: arm64
+      armv7l: arm
+      x86_64: amd64
+
+  tasks:
+    - name: Set variables for all plays
+      ansible.builtin.set_fact:
+        k3s_cp: '{{ groups["k3s_cp"] | map("extract", hostvars, "k3s_node_ip") | list }}'
+        k3s_node: '{{ groups["k3s_node"] | map("extract", hostvars, "k3s_node_ip") | default([]) | list }}'
+        k3s_version: '{{ k3s_version | default("v1.34.2+k3s1") }}'
+        k9s_version: '{{ k9s_version | default("v0.50.16") }}'
+
+        # The IP of our NFS server, if none then k3s_prime_cp_name becomes a NFS server
+        k3s_nfs_ip: '{{ k3s_nfs_ip | default(hostvars[groups["k3s_cp"][0]]["k3s_node_ip"]) }}'
+
+        # Prime k3s node that all other nodes registers with
+        k3s_prime_cp_name: '{{ groups["k3s_cp"][0] }}'
+
+        # IP of prime control plane node
+        k3s_prime_cp_ip: '{{ k3s_nfs_ip | default(hostvars[groups["k3s_cp"][0]]["k3s_node_ip"]) }}'
+
+        # Super secret password used for connecting nodes to cluster
+        k3s_token: '{{ k3s_token | default("my-secret-token") }}'
+      tags:
+        - always
+
+    - name: Set node hostname, k3s nodes need a host name
+      ansible.builtin.hostname:
+        name: '{{ inventory_hostname.split(".") | first }}'
+        use: systemd
+
+    - name: Enable etcd on control plane if we have more than one
+      ansible.builtin.set_fact:
+        k3s_enable_etcd: --cluster-init
+      when: groups["k3s_cp"] | length > 1
+      tags:
+        - k3s
+
+    - name: Update cache and install ufw even on check mode
+      ansible.builtin.apt:
+        name: ufw
+        update_cache: true
+      check_mode: false
+
+    - name: Install packages
+      ansible.builtin.apt:
+        name:
+          - curl                    # Needed by k3s installation script
+          - nfs-client              # Mount shared filesystem between all k3s nodes
+          - ufw                     # Uncomplicated firewall utilities
+          - unattended-upgrades     # Auto-upgrade packages on debian distributions
+          - wireguard               # Wireguard for communication between k3s nodes
+
+    # UFW
+
+    - name: Enable and start UFW
+      community.general.ufw:
+        policy: reject
+        state: enabled
+
+    - name: Ufw allow SSH
+      community.general.ufw:
+        rule: allow
+        port: '22'
+        proto: tcp
+
+    - name: UFW allow Wireguard
+      community.general.ufw:
+        rule: allow
+        port: '51820'
+        proto: udp
+
+    # - name: allow internal kubernetes communication
+    #   ansible.builtin.ufw:
+    #     rule: allow
+    #     from: 10.42.0.0/16
+    #     to: 10.42.0.0/16
+
+    - name: UFW allow kubelet metrics
+      community.general.ufw:
+        rule: allow
+        port: '10250'
+        proto: tcp
+        from: '{{ item }}'
+      loop: '{{ k3s_cp + k3s_node }}'
+
+    - name: UFW allow kubernetes API
+      community.general.ufw:
+        rule: allow
+        port: '6443'
+        proto: tcp
+        from: '{{ item }}'
+      loop: '{{ k3s_cp + k3s_node + ["10.42.0.0/16"] }}'
+      when: inventory_hostname in groups["k3s_cp"]
+
+    - name: UFW allow etcd between control plain
+      community.general.ufw:
+        rule: allow
+        port: '2379:2380'
+        proto: tcp
+        from: '{{ item }}'
+      loop: '{{ k3s_cp }}'
+      when: inventory_hostname in groups["k3s_cp"]
+
+    - name: UFW allow kubernetes and pods to connect to systemd-resolv
+      community.general.ufw:
+        rule: allow
+        port: '5355'
+        from_ip: fe80::/64
+
+    - name: Allow forwarding to pods
+      community.general.ini_file:
+        path: /etc/default/ufw
+        section: null
+        option: DEFAULT_FORWARD_POLICY
+        value: '"ACCEPT"'
+        no_extra_spaces: true
+        mode: '0644'
+      register: ufw_defaults
+
+    - name: Restart UFW on config change
+      ansible.builtin.systemd:
+        name: ufw
+        state: restarted
+      when: ufw_defaults is changed
+
+    - name: Remove swapfile from /etc/fstab
+      ansible.posix.mount:
+        name: '{{ item }}'
+        fstype: swap
+        state: absent
+      with_items:
+        - swap
+        - none
+
+    # Swap
+
+    - name: Disable running swap
+      ansible.builtin.command: swapoff -a
+      when: ansible_swaptotal_mb > 0
+      changed_when: ansible_swaptotal_mb > 0
+
+    # Sysctl
+
+    - name: Allow ping from containers which has net_admin + net_raw
+      ansible.posix.sysctl:
+        name: net.ipv4.ping_group_range
+        value: "0 2147483647"
+        sysctl_set: true
+        reload: true
+        sysctl_file: /etc/sysctl.d/00-k3s.conf
+
+    - name: Set UDP buffer size for HTTP3
+      ansible.posix.sysctl:
+        name: "{{ item.n }}"
+        value: "{{ item.v }}"
+        sysctl_set: true
+        reload: true
+        sysctl_file: /etc/sysctl.d/00-http3.conf
+      loop:
+        - n: "net.core.rmem_max"
+          v: "7500000"
+        - n: "net.core.wmem_max"
+          v: "7500000"
+
+    # NFS
+
+    - name: Install NFS server on prime node
+      ansible.builtin.apt:
+        name: nfs-kernel-server
+      when:
+        - inventory_hostname == k3s_prime_cp_name
+        - hostvars[inventory_hostname]["k3s_node_ip"] == k3s_nfs_ip
+
+    - name: Allow unrestricted NFS traffic
+      community.general.ufw:
+        rule: allow
+        port: '{{ item.0 | string }}'
+        from: '{{ item.1 }}'
+      loop: '{{ [111, 2049, 20048] | product(k3s_cp + k3s_node) | list }}'
+      when:
+        - inventory_hostname == k3s_prime_cp_name
+        - hostvars[inventory_hostname]["k3s_node_ip"] == k3s_nfs_ip
+
+    # https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
+    - name: Prepare NFS space on prime node
+      ansible.builtin.file:
+        path: /nfs4/k3s
+        state: directory
+        mode: a=rwxt
+      when:
+        - inventory_hostname == k3s_prime_cp_name
+        - hostvars[inventory_hostname]["k3s_node_ip"] == k3s_nfs_ip
+
+    - name: Share /nfs4 to the kubernetes cluster, so other nodes can start containers
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        line: /nfs4/k3s {{ item }}(rw,async,no_subtree_check,no_auth_nlm,insecure,no_root_squash)
+        mode: '0644'
+        create: true
+      loop: '{{ k3s_cp + k3s_node }}'
+      register: etc_exportfs
+      when:
+        - inventory_hostname == k3s_prime_cp_name
+        - hostvars[inventory_hostname]["k3s_node_ip"] == k3s_nfs_ip
+
+    - name: Export filesystems through NFS
+      ansible.builtin.command: exportfs -r
+      when:
+        - etc_exportfs is changed
+      changed_when: false
+
+    - name: Mount nfs shared volume on /srv
+      ansible.posix.mount:
+        path: /srv
+        src: '{{ k3s_nfs_ip }}:/nfs4/k3s'
+        opts: tcp,async
+        state: mounted
+        fstype: nfs4
+
+    # Download k9s on control plane
+
+    - name: Save k9s version
+      ansible.builtin.copy:
+        dest: /etc/k9s-version
+        mode: '0644'
+        content: |
+          # Ansible managed
+          {{ k9s_version }}
+      register: k9s_version_file
+      when:
+        - inventory_hostname in groups["k3s_cp"]
+      tags:
+        - k9s
+
+    - name: Download k9s on control plain
+      ansible.builtin.get_url:
+        url: 'https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/k9s_Linux_{{ architecture_map[ansible_architecture] }}.tar.gz'
+        checksum: 'sha256:https://github.com/derailed/k9s/releases/download/{{ k9s_version }}/checksums.sha256'
+        dest: /tmp/k9s.tar.gz
+        mode: "0644"
+      register: k9s_download
+      when:
+        - k9s_version_file is changed
+      tags:
+        - k9s
+
+    - name: Uncompress k9s on control plain
+      ansible.builtin.unarchive:
+        src: /tmp/k9s.tar.gz
+        dest: /usr/local/bin
+        remote_src: true
+        mode: '0755'
+      when:
+        - k9s_download is changed
+        - not ansible_check_mode
+      tags:
+        - k9s
+
+    # Download k3s install
+
+
+    - name: Save k3s version
+      ansible.builtin.copy:
+        dest: /etc/k3s-version
+        mode: '0644'
+        content: |
+          # Ansible managed
+          {{ k3s_version }}
+      register: k3s_version_file
+      tags:
+        - k3s
+
+    - name: Download k3s versions install script
+      ansible.builtin.get_url:
+        url: 'https://raw.githubusercontent.com/k3s-io/k3s/refs/tags/{{ k3s_version }}/install.sh'
+        checksum: 'sha256:https://raw.githubusercontent.com/k3s-io/k3s/refs/tags/{{ k3s_version }}/install.sh.sha256sum'
+        dest: /root/install.sh
+        mode: '0755'
+      when: k3s_version_file is changed
+      tags:
+        - k3s
+
+    # k3s control plane
+
+    - name: Install / upgrade k3s on prime node
+      ansible.builtin.command: /root/install.sh
+      environment:
+        K3S_TOKEN: '{{ k3s_token }}'
+        INSTALL_K3S_EXEC: 'server {{ k3s_enable_etcd | default("") }} --tls-san {{ k3s_node_ip }} --node-ip {{ k3s_node_ip }} --node-external-ip {{ k3s_node_ip }} --disable traefik --write-kubeconfig-mode 600 --write-kubeconfig /root/.kube/config --kubelet-arg image-gc-low-threshold=70 --kubelet-arg image-gc-high-threshold=80 --flannel-backend wireguard-native --flannel-external-ip' # --embedded-registry=true'
+        # INSTALL_K3S_EXEC: '--node-ip {{ k3s_node_ip }} --disable traefik --node-taint "k3s-controlplane=true:NoSchedule" --write-kubeconfig-mode 600 --write-kubeconfig /root/.kube/config --kubelet-arg image-gc-low-threshold=70 --kubelet-arg image-gc-high-threshold=80 --flannel-backend wireguard'
+        INSTALL_K3S_VERSION: '{{ k3s_version }}'
+      register: k3s_server
+      changed_when: k3s_server.rc == 0
+      when:
+        - k3s_version_file is changed
+        - inventory_hostname == k3s_prime_cp_name
+      tags:
+        - k3s
+
+    - name: Wait for prime node to finish
+      ansible.builtin.wait_for:
+        port: 6443
+      when: inventory_hostname == k3s_prime_cp_name
+      tags:
+        - k3s
+
+    - name: Install / upgrade k3s control plane
+      ansible.builtin.command: /root/install.sh
+      environment:
+        K3S_TOKEN: '{{ k3s_token }}'
+        INSTALL_K3S_EXEC: 'server --tls-san {{ k3s_node_ip }} --node-ip {{ k3s_node_ip }} --node-external-ip {{ k3s_node_ip }} --disable traefik --write-kubeconfig-mode 600 --write-kubeconfig /root/.kube/config --kubelet-arg image-gc-low-threshold=70 --kubelet-arg image-gc-high-threshold=80 --flannel-backend wireguard-native --flannel-external-ip' # --embedded-registry=true'
+        # INSTALL_K3S_EXEC: '--node-ip {{ k3s_node_ip }} --disable traefik --node-taint "k3s-controlplane=true:NoSchedule" --write-kubeconfig-mode 600 --write-kubeconfig /root/.kube/config --kubelet-arg image-gc-low-threshold=70 --kubelet-arg image-gc-high-threshold=80 --flannel-backend wireguard'
+        INSTALL_K3S_VERSION: '{{ k3s_version }}'
+        K3S_URL: 'https://{{ k3s_prime_cp_ip }}:6443'
+      register: k3s_server
+      changed_when: k3s_server.rc == 0
+      when:
+        - k3s_version_file is changed
+        - inventory_hostname in groups["k3s_cp"]
+        - inventory_hostname != k3s_prime_cp_name
+      tags:
+        - k3s
+
+    - name: Wait for control plane to finish
+      ansible.builtin.wait_for:
+        port: 6443
+      when:
+        - inventory_hostname in groups["k3s_cp"]
+        - inventory_hostname != k3s_prime_cp_name
+      tags:
+        - k3s
+
+    - name: Bash completion directory on master
+      ansible.builtin.file:
+        path: /etc/bash_completion.d
+        state: directory
+        mode: '0755'
+      when: inventory_hostname in groups["k3s_cp"]
+
+    - name: Generate bash completion on master
+      ansible.builtin.copy:
+        content: |
+          #!/bin/bash
+          if [[ $(id -u) -eq 0 ]]
+          then
+            . <(kubectl completion bash)
+            . <(crictl completion bash)
+          fi
+        dest: /etc/bash_completion.d/k3s
+        mode: '0644'
+      when: inventory_hostname in groups["k3s_cp"]
+
+    # k3s nodes
+
+    - name: Install / upgrade k3s on node
+      ansible.builtin.command: /root/install.sh
+      environment:
+        INSTALL_K3S_EXEC: 'agent --node-ip {{ k3s_node_ip }} --node-external-ip {{ k3s_node_ip }} --kubelet-arg=image-gc-low-threshold=70 --kubelet-arg=image-gc-high-threshold=80'
+        INSTALL_K3S_VERSION: '{{ k3s_version }}'
+        K3S_URL: 'https://{{ k3s_prime_cp_ip }}:6443'
+        K3S_TOKEN: '{{ k3s_token }}'
+      register: k3s_agent
+      changed_when: k3s_agent.rc == 0
+      when:
+        - k3s_version_file is changed
+        - inventory_hostname in groups["k3s_node"] | default([])
+      tags:
+        - k3s
+
+    # Enable mirroring of docker.io
+
+    - name: Set gcr as mirror for docker.io
+      ansible.builtin.copy:
+        dest: /etc/rancher/k3s/registries.yaml
+        mode: '0644'
+        content: |
+          # Ansible managed
+          ---
+          mirrors:
+            docker.io:
+              endpoint:
+                - "https://mirror.gcr.io"
+      register: config_mirror
+      when: inventory_hostname in groups["k3s_cp"]
+      tags:
+        - mirror
+
+    - name: Restart k3s service when mirrors has changed
+      ansible.builtin.systemd:
+        name: k3s
+        state: restarted
+      when:
+        - config_mirror is changed
+        - not ansible_check_mode
+      tags:
+        - mirror
+
+    # I install traefik and enable logging, need rotation
+
+    - name: Just because logrotate for traefik container
+      ansible.builtin.copy:
+        mode: "0644"
+        dest: /etc/logrotate.d/traefik
+        content: |
+          /srv/traefik/log/access.log {
+            daily
+            rotate 14
+            compress
+            delaycompress
+            missingok
+            notifempty
+            create 644 root root
+            copytruncate
+          }

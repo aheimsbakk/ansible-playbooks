@@ -97,7 +97,7 @@ metadata:
     app: forgejo
 spec:
   rules:
-    - host: forgejo.192.168.56.11.nip.io
+    - host: forgejo.192.168.122.11.nip.io
       http:
         paths:
           - path: /
