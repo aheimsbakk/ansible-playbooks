@@ -2,7 +2,7 @@
 fail2ban_jail_d:
   sshd:
     enabled: true
-    banaction: hostsdeny
+    banaction: ufw[blocktype=reject]
     maxretry: 3
     findtime: 1h
     bantime: 3h
@@ -11,5 +11,5 @@ fail2ban_jail_d:
     enabled: true
     findtime: 7d
     bantime: 1mo
-    banaction: ufw
+    banaction: route[blocktype=blackhole]
     maxretry: 3
