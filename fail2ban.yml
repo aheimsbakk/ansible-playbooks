@@ -11,12 +11,14 @@
 
     - name: Convert key value to ini_file compatible option value pair
       ansible.builtin.set_fact:
-        fail2ban_jail_d_conf: |
-          {
-          {%- for item in fail2ban_jail_d | dict2items %}
-            "{{ item.key }}": {{ item.value | dict2items(key_name='option', value_name='value') }},
-          {%- endfor %}
-          }
+        fail2ban_jail_d_conf: >-
+          {%- set results = {} -%}
+          {%- for jail, settings in fail2ban_jail_d.items() -%}
+            {%- set _ = results.update({
+              jail: settings | dict2items(key_name='option', value_name='value')
+            }) -%}
+          {%- endfor -%}
+          {{ results }}
 
     - name: Remove debain default config
       ansible.builtin.file:
@@ -30,8 +32,10 @@
         option: '{{ item.1.option }}'
         value: '{{ item.1.value | string | lower }}'
         no_extra_spaces: true
-        mode: 0644
+        mode: '0644'
       loop: '{{ fail2ban_jail_d_conf | dict2items(key_name="section") | subelements("value") }}'
+      loop_control:
+        label: '[{{ item.0.section }}] {{ item.1.option }}={{ item.1.value }}'
       register: fail2ban_conf
 
     - name: Restart fail2ban on config change
@@ -40,3 +44,4 @@
         state: restarted
         enabled: true
       when: fail2ban_conf is changed
+      

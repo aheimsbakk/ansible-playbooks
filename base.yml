@@ -1,10 +1,23 @@
 # vim: ai et ts=2 st=2 sw=2 :
 ---
-- name: homeserver configuration
+- name: Base server configuration
   hosts: base
   become: true
 
   tasks:
+    - name: Set node hostname
+      ansible.builtin.hostname:
+        name: '{{ inventory_hostname.split(".") | first }}'
+        use: systemd
+
+    - name: Update cache and install some packages, even on check mode
+      ansible.builtin.apt:
+        name:
+          - git
+          - libnss-mdns
+        update_cache: true
+      check_mode: false
+
     - name: Set SSH keys
       ansible.posix.authorized_key:
         user: '{{ ansible_user }}'
@@ -15,14 +28,14 @@
         - ssh
 
     - name: Allow other things
-      ufw:
+      community.general.ufw:
         rule: allow
         port: "{{ item.port }}"
         proto: "{{ item.proto }}"
       loop: '{{ base_ufw_rules | default([]) }}'
 
     - name: Add cron jobs
-      cron:
+      ansible.builtin.cron:
         name: '{{ item.name }}'
         weekday: '{{ item.weekday | default(omit) }}'
         day: '{{ item.day | default(omit) }}'
@@ -36,26 +49,22 @@
         - cron
 
     - name: Server ssh notify
-      template:
+      ansible.builtin.template:
         src: sshnotif
         dest: /usr/local/bin/sshnotif
-        mode: 0755
+        mode: '0755'
 
     - name: Add notify on ssh
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/pam.d/common-session
         line: session optional pam_exec.so /usr/local/bin/sshnotif
-      when: ansible_os_family | lower  == "debian"
+      when: ansible_os_family | lower == "debian"
 
     - name: Add notify on ssh
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/pam.d/sshd
         line: session optional pam_exec.so /usr/local/bin/sshnotif
-      when: ansible_os_family | lower  == "redhat"
-
-    - name: Ensure that git is installed
-      ansible.builtin.package:
-        name: git
+      when: ansible_os_family | lower == "redhat"
 
     - name: Checkout notes repository containing powerline
       ansible.builtin.git:
