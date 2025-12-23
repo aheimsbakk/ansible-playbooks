@@ -5,8 +5,8 @@ fail2ban_jail_d:
     filter: sshd[mode=aggressive]
     banaction: ufw[blocktype=reject]
     maxretry: 3
-    findtime: 1h
-    bantime: 3h
+    findtime: 10m
+    bantime: 10m
 
   recidive:
     enabled: true
