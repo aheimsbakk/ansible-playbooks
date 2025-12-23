@@ -2,14 +2,16 @@
 fail2ban_jail_d:
   sshd:
     enabled: true
+    filter: sshd[mode=aggressive]
     banaction: ufw[blocktype=reject]
     maxretry: 3
     findtime: 1h
     bantime: 3h
-    mode: aggressive
+
   recidive:
     enabled: true
-    findtime: 7d
-    bantime: 1mo
+    filter: recidive
     banaction: route[blocktype=blackhole]
     maxretry: 3
+    findtime: 7d
+    bantime: 1mo
