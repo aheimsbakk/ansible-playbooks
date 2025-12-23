@@ -3,14 +3,13 @@ fail2ban_jail_d:
   sshd:
     enabled: true
     banaction: hostsdeny
-    maxretry: 5
-    findtime: 10m
-    bantime: 10m
+    maxretry: 3
+    findtime: 1h
+    bantime: 3h
     mode: aggressive
   recidive:
     enabled: true
-    findtime: 1d
-    bantime: 1w
+    findtime: 7d
+    bantime: 1mo
     banaction: ufw
     maxretry: 3
-
