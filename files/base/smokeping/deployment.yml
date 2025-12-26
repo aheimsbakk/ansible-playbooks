@@ -17,6 +17,7 @@ spec:
     metadata:
       labels:
         app: smokeping
+        egress: any
     spec:
       containers:
         - name: smokeping

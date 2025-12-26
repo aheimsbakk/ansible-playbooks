@@ -15,6 +15,7 @@ spec:
     metadata:
       labels:
         app: prometheus
+        egress: any
     spec:
       serviceAccountName: prometheus
       initContainers:

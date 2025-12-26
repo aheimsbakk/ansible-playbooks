@@ -15,6 +15,7 @@ spec:
     metadata:
       labels:
         app: grafana
+        egress: any
     spec:
       initContainers:
         - name: grafana-init

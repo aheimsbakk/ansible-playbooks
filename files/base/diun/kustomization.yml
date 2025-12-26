@@ -1,5 +1,0 @@
----
-resources:
-  - rbac.yml
-  - secrets.yml
-  - deployment.yml

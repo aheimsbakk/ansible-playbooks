@@ -26,6 +26,8 @@ spec:
     metadata:
       labels:
         app: vaultwarden
+        # FIXME: For sending mail
+        egress: internet
     spec:
       containers:
         - name: vaultwarden

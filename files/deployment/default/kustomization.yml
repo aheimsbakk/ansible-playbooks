@@ -1,7 +1,6 @@
 ---
 namespace: default
 resources:
-  # - ../../base/diun
   # - ../../base/gitlab
   - ../../base/gotify
   - ../../base/munin
@@ -12,4 +11,5 @@ resources:
   - ../../base/grafana
   - ../../base/vaultwarden
   - ../../base/collabora
-  - netpol.yml
+  - ../../base/forgejo
+  - default-netpol.yml

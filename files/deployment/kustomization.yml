@@ -1,7 +1,6 @@
 ---
 resources:
   - traefik
-  - forgejo
   - default
 images:
   - name: k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner

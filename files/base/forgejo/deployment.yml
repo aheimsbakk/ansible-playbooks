@@ -15,6 +15,7 @@ spec:
     metadata:
       labels:
         app: forgejo
+        egress: internet
     spec:
       containers:
         - name: forgejo
