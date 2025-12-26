@@ -30,7 +30,7 @@ spec:
     metadata:
       labels:
         app: munin
-        egress: internal
+        egress: any
     spec:
       containers:
         - name: munin
