@@ -15,7 +15,7 @@ These playbooks, except of the `desktop-*.yml` playbook, can be tested on libvir
 ### Kubernetes deployments
 
 * `deployments.yml` --- copy out deployment configuration files and apply them to running kubernetes
-* `provision-k3s-vms.yml` --- start virtual machines for development locally
+* `provision-vms.yml` --- start virtual machines for development locally
 * `provision-k3s.yml` --- configure a small, large or huge k3s, cluster
 
 ## Start developing
@@ -54,7 +54,7 @@ This describes all the steps to get Kubernetes running and deploying all contain
   ```
 - Start the virtual machines. `state=present` is not needed since it is the default. Set `state=absent` to destroy VMs. Playbook for provisioning virtual machines expects you have `$HOME/.ssh/id_ed25519.pub`. Do you have a different public SSHkey, change it in [provision-k3s-vms.yml](provision-k3s-vms.yml).
   ```bash
-  ansible-playbook -i hosts-k3s.yml provision-k3s-vms.yml -l localhost -e state=present
+  ansible-playbook -i hosts-k3s.yml provision-vms.yml -l localhost -e state=present
   ```
 - Install the Kubernetes environment. `hosts-k3s.yaml` is the hosts file for our VMs.
   ```bash

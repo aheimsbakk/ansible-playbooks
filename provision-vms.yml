@@ -1,6 +1,6 @@
 # vim: ai et ts=2 st=2 sw=2 :
 #
-# $ ansible-playbook -i hosts-k3s provision-k3s.yml
+# $ ansible-playbook -i hosts-k3s provision-vms.yml -l localhost -e state=present
 # $ cat .ssh/config
 # Host 192.168.122.*
 #   ControlMaster auto
@@ -9,7 +9,7 @@
 #   UserKnownHostsFile /dev/null
 #   StrictHostKeyChecking no
 ---
-- name: Provision k3s development VMs
+- name: Provision development VMs
   hosts: all
 
   pre_tasks:
