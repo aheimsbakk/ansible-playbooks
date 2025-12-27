@@ -13,4 +13,5 @@ resources:
   - rbac.yml
   - deployment.yml
   - crontab.yml
+  - netpol.yml
 

@@ -46,6 +46,8 @@ spec:
     metadata:
       labels:
         app: nextcloud-mysql
+        tier: backend
+        part-of: nextcloud
     spec:
       containers:
         - name: nextcloud-mysql
@@ -130,6 +132,8 @@ spec:
     metadata:
       labels:
         app: nextcloud-redis
+        tier: backend
+        part-of: nextcloud
     spec:
       containers:
         - name: nextcloud-redis
@@ -213,6 +217,9 @@ spec:
     metadata:
       labels:
         app: nextcloud
+        tier: frontend
+        part-of: nextcloud
+        egress: any
     spec:
       containers:
         - name: nextcloud
@@ -401,6 +408,8 @@ spec:
     metadata:
       labels:
         app: nextcloud-talk-hpb
+        egress: any
+        tier: frontend
     spec:
       containers:
         - name: nextcloud-talk-hpb

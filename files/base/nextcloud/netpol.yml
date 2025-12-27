@@ -1,0 +1,40 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-nextcloud-frontend-to-nextcloud-backend
+spec:
+  podSelector:
+    matchLabels:
+      part-of: nextcloud
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              tier: frontend
+              part-of: nextcloud
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              tier: backend
+              part-of: nextcloud
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-any-to-port-3478
+spec:
+  podSelector:
+    matchLabels:
+      app: nextcloud-talk-hpb
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 3478
+          protocol: TCP
+        - port: 3478
+          protocol: UDP

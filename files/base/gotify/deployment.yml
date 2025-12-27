@@ -27,6 +27,7 @@ spec:
     metadata:
       labels:
         app: gotify
+        tier: frontend
     spec:
       containers:
         - name: gotify

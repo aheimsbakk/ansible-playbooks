@@ -1,7 +1,0 @@
----
-namespace: forgejo
-resources:
-  - ns.yml
-  - ../../base/forgejo
-  - ../../base/pod-updater
-  - netpol.yml
