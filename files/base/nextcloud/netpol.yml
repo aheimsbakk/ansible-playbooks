@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-inter-nextcloud
+  name: allow-from-nextcloud-frontend-to-nextcloud-backend
 spec:
   podSelector:
     matchLabels:
@@ -12,17 +12,19 @@ spec:
         - podSelector:
             matchLabels:
               tier: frontend
+              part-of: nextcloud
   egress:
     - to:
         - podSelector:
             matchLabels:
               tier: backend
+              part-of: nextcloud
 
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-to-port-3478
+  name: allow-from-any-to-port-3478
 spec:
   podSelector:
     matchLabels:

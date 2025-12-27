@@ -27,8 +27,8 @@ spec:
     metadata:
       labels:
         app: collabora
-        egress: any
         tier: frontend
+        egress: any
     spec:
       containers:
         - name: collabora
