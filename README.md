@@ -109,4 +109,26 @@ Other services running.
 
 Your router will block nip.io name resolution if _DNS rebind protection_ is enabled.
 
+## Investigate dropped traefik in by network policies
+
+Use `tshark` to look into dropped by a Kubernetes network policy. For more information about `k3s` logging see [Additional Network Policy Logging](https://docs.k3s.io/advanced#additional-logging-sources).
+
+### All dropped traffic
+
+```bash
+tshark -i nflog:100 -T fields -e nflog.prefix -e ip.src -e ip.dst -e tcp.dstport -e udp.dstport
+```
+
+### Filter by IP
+
+```bash
+tshark -i nflog:100 -T fields -e nflog.prefix -e ip.src -e ip.dst -e tcp.dstport -e udp.dstport -Y 'ip.src == 10.42.0.37'
+```
+
+### Filter by word in policy name
+
+```bash
+tshark -i nflog:100 -T fields -e nflog.prefix -e ip.src -e ip.dst -e tcp.dstport -e udp.dstport -Y 'nflog.prefix matches "(?i)nextcloud"'
+```
+
 ###### vim: set spell spelllang=en:

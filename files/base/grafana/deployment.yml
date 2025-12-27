@@ -16,6 +16,7 @@ spec:
       labels:
         app: grafana
         egress: any
+        tier: frontend
     spec:
       initContainers:
         - name: grafana-init

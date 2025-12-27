@@ -18,6 +18,7 @@ spec:
       labels:
         app: smokeping
         egress: any
+        tier: frontend
     spec:
       containers:
         - name: smokeping

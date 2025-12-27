@@ -409,6 +409,7 @@ spec:
       labels:
         app: nextcloud-talk-hpb
         egress: any
+        tier: frontend
     spec:
       containers:
         - name: nextcloud-talk-hpb

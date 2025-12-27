@@ -16,6 +16,7 @@ spec:
       labels:
         app: prometheus
         egress: any
+        tier: frontend
     spec:
       serviceAccountName: prometheus
       initContainers:

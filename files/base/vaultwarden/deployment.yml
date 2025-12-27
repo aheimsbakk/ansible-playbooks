@@ -28,6 +28,7 @@ spec:
         app: vaultwarden
         # FIXME: For sending mail
         egress: internet
+        tier: frontend
     spec:
       containers:
         - name: vaultwarden

@@ -16,6 +16,7 @@ spec:
       labels:
         app: forgejo
         egress: internet
+        tier: frontend
     spec:
       containers:
         - name: forgejo

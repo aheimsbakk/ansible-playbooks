@@ -17,7 +17,9 @@ kind: NetworkPolicy
 metadata:
   name: allow-from-traefik
 spec:
-  podSelector: {}
+  podSelector:
+    matchLabels:
+      tier: frontend
   ingress:
     - from:
         - namespaceSelector: {}
