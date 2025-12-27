@@ -29,7 +29,7 @@ spec:
     metadata:
       labels:
         app: munin
-        egress: any
+        egress: internal
         tier: frontend
     spec:
       containers:
