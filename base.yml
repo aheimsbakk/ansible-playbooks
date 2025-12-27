@@ -76,3 +76,12 @@
       ansible.builtin.command: /tmp/notes-git/install-powerline-go.sh
       args:
         creates: /etc/profile.d/z-powerline-go.sh
+
+    - name: Copy custom scripts
+      ansible.builtin.copy:
+        dest: '/usr/local/bin/{{ item }}'
+        src: '{{ item }}'
+        mode: '0755'
+      loop:
+        - departure.sh
+        - git-touch.sh
