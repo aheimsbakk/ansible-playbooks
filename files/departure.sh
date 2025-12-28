@@ -31,7 +31,7 @@ fi
 # --- Default Configuration ---
 STATION_NAME="Bergkrystallen"
 NUM_DEPARTURES=2
-VERSION="0.11"
+VERSION="0.12"
 API_URL="https://api.entur.io/journey-planner/v3/graphql"
 CLIENT_NAME="personal-bash-script"
 FETCH_INTERVAL=60
@@ -126,8 +126,9 @@ get_figlet() {
 
 # --- Helper: Generate Header Line ---
 get_header_line() {
-    local str="=< $STATION_NAME >="
-    local str_len=${#str}
+    # We construct the text without escape codes first to calculate length correctly
+    local plain_inner="=< $STATION_NAME >="
+    local str_len=${#plain_inner}
 
     local remaining_width=$((TERM_WIDTH - str_len))
 
@@ -143,9 +144,9 @@ get_header_line() {
     local right_dashes=""
     for ((i=0; i<right_count; i++)); do right_dashes+="-"; done
 
-    local line="${left_dashes}${str}${right_dashes}"
-
-    echo "$(tput bold)$line$(tput sgr0)"
+    # Construct the final string with BOLD codes only around STATION_NAME
+    # Pattern: [Dashes]=< [BOLD]Name[RESET] >=[Dashes]
+    echo "${left_dashes}=< $(tput bold)$STATION_NAME$(tput sgr0) >=${right_dashes}"
 }
 
 # --- Function: Fetch Data ---
@@ -242,13 +243,10 @@ while true; do
                 fi
 
                 # --- Layout ---
-
-                # Destination (Standard Weight)
                 CONTENT_BUFFER+=$(get_figlet "$DESTINATION")
                 CONTENT_BUFFER+=$'\n'
 
                 # Time (BOLD)
-                # We append the bold code, the figlet output, and the reset code
                 CONTENT_BUFFER+=$(tput bold)
                 CONTENT_BUFFER+=$(get_figlet "$TIME_STR")
                 CONTENT_BUFFER+=$(tput sgr0)
