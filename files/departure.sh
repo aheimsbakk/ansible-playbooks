@@ -30,7 +30,7 @@ fi
 # --- Default Configuration ---
 STATION_NAME="Bergkrystallen"
 NUM_DEPARTURES=2
-VERSION="0.19"
+VERSION="0.20"
 API_URL="https://api.entur.io/journey-planner/v3/graphql"
 CLIENT_NAME="personal-bash-script"
 FETCH_INTERVAL=60
@@ -137,7 +137,7 @@ trap cleanup SIGINT SIGTERM EXIT
 
 # --- Helper: Generate Figlet Text ---
 get_figlet() {
-    figlet -c -w "$TERM_WIDTH" -f "$FONT_NAME" -- "$1"
+    figlet -s -C utf8 -c -w "$TERM_WIDTH" -f "$FONT_NAME" -- "$1"
 }
 
 # --- Helper: Center Normal Text ---
