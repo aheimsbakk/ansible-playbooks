@@ -79,7 +79,7 @@
 
     - name: Copy custom scripts
       ansible.builtin.copy:
-        dest: '/usr/local/bin/{{ item }}'
+        dest: '/usr/local/bin/{{ item | split(".") | first }}'
         src: '{{ item }}'
         mode: '0755'
       loop:
