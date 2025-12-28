@@ -4,20 +4,41 @@
   become: true
 
   tasks:
+    - name: Update apt cache and install playbook dependencies
+      ansible.builtin.apt:
+        name: python3-pip
+        update_cache: true
+        cache_valid_time: 3600
+      check_mode: false
+
+    - name: Gather the package facts
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Install wiringpi
+      ansible.builtin.apt:
+        deb: https://github.com/WiringPi/WiringPi/releases/download/3.16/wiringpi_3.16_arm64.deb
+      when:
+        - "'wiringpi' not in ansible_facts.packages or ansible_facts.packages['wiringpi'][0].version != '3.16'"
+
     - name: Install packages
       ansible.builtin.apt:
         name:
-          - python-setuptools       # allow to use the ansible pip module
-          - python3-pip             # python pip and dependencies
-          - unattended-upgrades     # unattended upgrades
-          - wiringpi                # gpio set pin values
-        cache_valid_time: 3600
+          - curl                    # Talk to APIs
+          - figlet                  # Fancy text output
+          - jq                      # Parse API results
+          - libnss-mdns             # Zero-config name lookup
+          - python3-gpiozero        # Distro version av gpiozero
+          - python3-pip             # Install Python packages
+          - python3-yaml            # Distro version of pyyaml
+          - unattended-upgrades     # Unattended upgrades
 
-    - name: Install pip packages
+    - name: Force in gpiocmd program
       ansible.builtin.pip:
         name:
-          - https://github.com/aheimsbakk/gpiocmd/archive/refs/tags/0.9.0.zip
+          - https://github.com/aheimsbakk/gpiocmd/archive/refs/tags/0.11.0.zip
         executable: pip3
+        break_system_packages: true
 
     - name: Enable screen in config.txt
       ansible.builtin.blockinfile:
@@ -40,6 +61,8 @@
 
     - name: Disable console messages from kernel
       ansible.posix.sysctl:
+        sysctl_file: /etc/sysctl.d/kernel-logging.conf
+        sysctl_set: true
         name: kernel.printk
         value: '1'
 
@@ -72,6 +95,8 @@
         content: |
           {{ gpiocmd_yml | default({}) | to_nice_yaml }}
         mode: '0644'
+      tags:
+        - copy
 
     - name: Set console fonts
       community.general.ini_file:
@@ -105,15 +130,6 @@
           WantedBy=sys-subsystem-net-devices-wlan0.device
         mode: '0644'
 
-
-    - name: Install packages
-      ansible.builtin.apt:
-        name:
-          - figlet                  # fancy banners
-          - jq                      # parse json
-          - curl                    # talk to api
-          - libnss-mdns             # zeroconfig name lookup
-
     - name: Copy out files
       ansible.builtin.copy:
         dest: '/opt/{{ item }}'
@@ -121,6 +137,8 @@
         mode: '0755'
       loop:
         - departure.sh
+      tags:
+        - copy
 
     - name: Reboot raspberry pi
       ansible.builtin.reboot:

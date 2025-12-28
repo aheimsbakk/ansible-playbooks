@@ -6,16 +6,15 @@
 #
 #  Description:
 #  This script turns your terminal into a real-time public transport departure
-#  board using the Entur API. It fetches departure data for a specified station,
-#  displays the destination and a dynamic countdown timer, and renders the
-#  output in centered ASCII art using 'figlet'.
+#  board using the Entur API.
 #
 #  Features:
+#  - Color Modes: Color (Default) vs No Color (-C)
+#  - Conditional Formatting: Destination is bold only in Color mode.
 #  - Real-time countdowns (HH:MM:SS or MM:SS)
+#  - Conditional Service alerts ("Situations")
 #  - Auto-centering (Horizontal & Vertical)
-#  - Configurable transport modes (Metro, Tram, Bus, etc.)
-#  - Configurable Figlet font
-#  - Artifact-free refreshing
+#  - Option to hide station header (-H)
 #
 #  Author: Arnulf Heimsbakk (w/Gemini)
 #
@@ -31,12 +30,14 @@ fi
 # --- Default Configuration ---
 STATION_NAME="Bergkrystallen"
 NUM_DEPARTURES=2
-VERSION="0.12"
+VERSION="0.19"
 API_URL="https://api.entur.io/journey-planner/v3/graphql"
 CLIENT_NAME="personal-bash-script"
 FETCH_INTERVAL=60
 TRANSPORT_MODES="bus, tram, metro, rail, water"
-FONT_NAME="mini" # Default font
+FONT_NAME="mini"      # Default font
+SHOW_HEADER=true      # Default: Show header
+USE_COLOR=true        # Default: Use color
 
 # --- Function: Help ---
 show_help() {
@@ -49,19 +50,20 @@ show_help() {
     echo "  -s <name>    Set station name (default: Bergkrystallen)"
     echo "  -n <number>  Number of departures to display (default: 2)"
     echo "  -m <modes>   Transport modes (default: all)"
-    echo "               Available: bus, tram, metro, rail, water"
     echo "  -i <seconds> API fetch interval in seconds (default: 60)"
     echo "  -f <font>    Figlet font name (default: mini)"
+    echo "  -C           Disable colors (No-color mode)"
+    echo "  -H           Hide station header and spacing"
     echo "  -v           Show version"
     echo "  -h           Show this help message"
     echo ""
     echo "Examples:"
-    echo "  $(basename "$0") -s 'Nationaltheatret' -m 'train, metro'"
-    echo "  $(basename "$0") -f 'slant' -n 1"
+    echo "  $(basename "$0") -s 'Nationaltheatret'"
+    echo "  $(basename "$0") -C -H"
 }
 
 # --- Argument Parsing ---
-while getopts ":s:n:m:i:f:vh" opt; do
+while getopts ":s:n:m:i:f:vCHh" opt; do
   case ${opt} in
     s) STATION_NAME="$OPTARG" ;;
     n)
@@ -82,6 +84,8 @@ while getopts ":s:n:m:i:f:vh" opt; do
       fi
       ;;
     f) FONT_NAME="$OPTARG" ;;
+    H) SHOW_HEADER=false ;;
+    C) USE_COLOR=false ;;
     v)
       echo "Version: $VERSION"
       exit 0
@@ -102,6 +106,19 @@ while getopts ":s:n:m:i:f:vh" opt; do
   esac
 done
 
+# --- Color & Style Configuration ---
+if [ "$USE_COLOR" = true ]; then
+    COL_GREEN=$(tput setaf 2)
+    COL_RED=$(tput setaf 1)
+    DEST_BOLD=$(tput bold) # Destination is bold in color mode
+else
+    COL_GREEN=""
+    COL_RED=""
+    DEST_BOLD=""           # Destination is NOT bold in no-color mode
+fi
+COL_RESET=$(tput sgr0)
+
+
 # --- State Variables ---
 NEXT_FETCH_TIME=0
 DEPARTURE_DATA=""
@@ -120,16 +137,22 @@ trap cleanup SIGINT SIGTERM EXIT
 
 # --- Helper: Generate Figlet Text ---
 get_figlet() {
-    # Uses the configured FONT_NAME
     figlet -c -w "$TERM_WIDTH" -f "$FONT_NAME" -- "$1"
+}
+
+# --- Helper: Center Normal Text ---
+get_centered_text() {
+    local text="$1"
+    local len=${#text}
+    local pad=$(( (TERM_WIDTH - len) / 2 ))
+    [ "$pad" -lt 0 ] && pad=0
+    printf "%${pad}s%s" "" "$text"
 }
 
 # --- Helper: Generate Header Line ---
 get_header_line() {
-    # We construct the text without escape codes first to calculate length correctly
     local plain_inner="=< $STATION_NAME >="
     local str_len=${#plain_inner}
-
     local remaining_width=$((TERM_WIDTH - str_len))
 
     local left_count=$((remaining_width / 2))
@@ -144,8 +167,6 @@ get_header_line() {
     local right_dashes=""
     for ((i=0; i<right_count; i++)); do right_dashes+="-"; done
 
-    # Construct the final string with BOLD codes only around STATION_NAME
-    # Pattern: [Dashes]=< [BOLD]Name[RESET] >=[Dashes]
     echo "${left_dashes}=< $(tput bold)$STATION_NAME$(tput sgr0) >=${right_dashes}"
 }
 
@@ -169,6 +190,12 @@ fetch_data() {
           destinationDisplay {
             frontText
           }
+          situations {
+            description {
+              value
+              language
+            }
+          }
         }
       }
     }'
@@ -180,7 +207,15 @@ fetch_data() {
 
     DEPARTURE_DATA=$(echo "$RESPONSE" | jq -r '
         .data.stopPlace.estimatedCalls[] |
-        "\(.destinationDisplay.frontText)|\(.expectedDepartureTime)"')
+        (
+            if (.situations | length) > 0 then
+                (.situations[0].description[] | select(.language=="no" or .language=="nob") | .value)
+            else
+                "null"
+            end
+        ) as $sit |
+        "\(.destinationDisplay.frontText)|\(.expectedDepartureTime)|\($sit)"'
+    )
 }
 
 # --- Main Loop ---
@@ -205,19 +240,33 @@ while true; do
 
     CONTENT_BUFFER=""
 
-    # Header
-    CONTENT_BUFFER+=$(get_header_line)
-    CONTENT_BUFFER+=$'\n'
-    CONTENT_BUFFER+=$'\n'
+    # Conditional Header Generation
+    if [ "$SHOW_HEADER" = true ]; then
+        CONTENT_BUFFER+=$(get_header_line)
+        CONTENT_BUFFER+=$'\n'
+        CONTENT_BUFFER+=$'\n'
+    fi
 
     if [ "$DEPARTURE_DATA" == "ERROR" ]; then
          CONTENT_BUFFER+=$(get_figlet "Station Not Found")
     elif [ -z "$DEPARTURE_DATA" ]; then
         CONTENT_BUFFER+=$(get_figlet "Loading...")
     else
-        while IFS='|' read -r DESTINATION ISO_TIME; do
+        while IFS='|' read -r DESTINATION ISO_TIME SITUATION_TEXT; do
             [ -z "$DESTINATION" ] && continue
 
+            # --- Determine Status & Color ---
+            CURRENT_COLOR=""
+            HAS_SITUATION=false
+
+            if [ -n "$SITUATION_TEXT" ] && [ "$SITUATION_TEXT" != "null" ]; then
+                HAS_SITUATION=true
+                CURRENT_COLOR="$COL_RED"
+            else
+                CURRENT_COLOR="$COL_GREEN"
+            fi
+
+            # --- Time Calculation ---
             if date --version >/dev/null 2>&1; then
                  DEP_SEC=$(date -d "$ISO_TIME" +%s)
             else
@@ -242,11 +291,23 @@ while true; do
                     fi
                 fi
 
-                # --- Layout ---
+                # --- Layout Construction ---
+
+                # 1. Destination
+                # Applies Color AND Bold (if enabled via DEST_BOLD)
+                CONTENT_BUFFER+="$CURRENT_COLOR"
+                CONTENT_BUFFER+="$DEST_BOLD"
                 CONTENT_BUFFER+=$(get_figlet "$DESTINATION")
+                CONTENT_BUFFER+="$COL_RESET"
                 CONTENT_BUFFER+=$'\n'
 
-                # Time (BOLD)
+                # 2. Situation Text (Only if valid)
+                if [ "$HAS_SITUATION" = true ]; then
+                    CONTENT_BUFFER+=$(get_centered_text "$SITUATION_TEXT")
+                    CONTENT_BUFFER+=$'\n'
+                fi
+
+                # 3. Time (Always Bold)
                 CONTENT_BUFFER+=$(tput bold)
                 CONTENT_BUFFER+=$(get_figlet "$TIME_STR")
                 CONTENT_BUFFER+=$(tput sgr0)
@@ -257,24 +318,33 @@ while true; do
 
     # --- Render Logic ---
 
-    CONTENT_LINES=$(echo "$CONTENT_BUFFER" | wc -l)
+    # Trim trailing newline for perfect centering
+    CONTENT_BUFFER="${CONTENT_BUFFER%$'\n'}"
 
+    # Calculate actual lines
+    CONTENT_LINES=$(echo -e "$CONTENT_BUFFER" | wc -l)
+
+    # Calculate Padding
     PAD_TOP=$(( (TERM_HEIGHT - CONTENT_LINES) / 2 ))
     if [ "$PAD_TOP" -lt 0 ]; then PAD_TOP=0; fi
 
+    # Reset Cursor
     tput cup 0 0
 
+    # Draw Top Padding
     for ((i=0; i<PAD_TOP; i++)); do
         tput el
         echo ""
     done
 
+    # Draw Content
     echo "$CONTENT_BUFFER" | while IFS= read -r line; do
         printf "%s" "$line"
         tput el
         echo ""
     done
 
+    # Clear Bottom
     tput ed
 
     sleep 1
