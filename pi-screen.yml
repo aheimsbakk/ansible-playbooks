@@ -11,9 +11,15 @@
         cache_valid_time: 3600
       check_mode: false
 
+    - name: Gather the package facts
+      ansible.builtin.package_facts:
+        manager: auto
+
     - name: Install wiringpi
       ansible.builtin.apt:
         deb: https://github.com/WiringPi/WiringPi/releases/download/3.16/wiringpi_3.16_arm64.deb
+      when:
+        - "'wiringpi' not in ansible_facts.packages or ansible_facts.packages['wiringpi'][0].version != '3.16'"
 
     - name: Install packages
       ansible.builtin.apt:
@@ -89,6 +95,8 @@
         content: |
           {{ gpiocmd_yml | default({}) | to_nice_yaml }}
         mode: '0644'
+      tags:
+        - copy
 
     - name: Set console fonts
       community.general.ini_file:
@@ -129,6 +137,8 @@
         mode: '0755'
       loop:
         - departure.sh
+      tags:
+        - copy
 
     - name: Reboot raspberry pi
       ansible.builtin.reboot:

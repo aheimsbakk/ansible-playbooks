@@ -2,7 +2,7 @@
 gpiocmd_yml:
   17:
     commands:
-      - run: /opt/departure.sh
+      - run: /opt/departure.sh -H
       - run: clear
         pressed_for: 1
 
