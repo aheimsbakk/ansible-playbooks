@@ -137,7 +137,7 @@ trap cleanup SIGINT SIGTERM EXIT
 
 # --- Helper: Generate Figlet Text ---
 get_figlet() {
-    figlet -s -C utf8 -c -w "$TERM_WIDTH" -f "$FONT_NAME" -- "$1"
+    figlet -C utf8 -c -w "$TERM_WIDTH" -f "$FONT_NAME" -- "$1"
 }
 
 # --- Helper: Center Normal Text ---
