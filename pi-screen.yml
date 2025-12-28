@@ -1,11 +1,11 @@
 ---
-- name: configure raspberian os with adafruid 2.8" screen / generic bootstrap
+- name: Configure raspberian os with adafruid 2.8" screen / generic bootstrap
   hosts: piscreen
   become: true
 
   tasks:
-    - name: install packages
-      apt:
+    - name: Install packages
+      ansible.builtin.apt:
         name:
           - python-setuptools       # allow to use the ansible pip module
           - python3-pip             # python pip and dependencies
@@ -13,14 +13,14 @@
           - wiringpi                # gpio set pin values
         cache_valid_time: 3600
 
-    - name: install pip packages
-      pip:
+    - name: Install pip packages
+      ansible.builtin.pip:
         name:
           - https://github.com/aheimsbakk/gpiocmd/archive/refs/tags/0.9.0.zip
         executable: pip3
 
-    - name: enable screen in config.txt
-      blockinfile:
+    - name: Enable screen in config.txt
+      ansible.builtin.blockinfile:
         marker: '# {mark} adafruid 2.8"'
         path: /boot/firmware/config.txt
         block: |
@@ -30,27 +30,27 @@
           dtparam=i2c_arm=on
           dtoverlay=pitft28-resistive,rotate=90,speed=64000000,fps=30
 
-    - name: enable screen in configure cmdline.txt
-      lineinfile:
+    - name: Enable screen in configure cmdline.txt
+      ansible.builtin.lineinfile:
         path: /boot/firmware/cmdline.txt
         regexp: '^(.* rootwait).*$'
-        line: '\1 fbcon=map:2 fbcon=font:VGA8x8 consoleblank=0'
+        line: '\1 fbcon=map:10 fbcon=font:VGA8x8 consoleblank=0'
         backrefs: true
       register: cmdline
 
-    - name: disable console messages from kernel
-      sysctl:
+    - name: Disable console messages from kernel
+      ansible.posix.sysctl:
         name: kernel.printk
         value: '1'
 
-    - name: make directory for tty0
-      file:
+    - name: Make directory for tty0
+      ansible.builtin.file:
         path: /etc/systemd/system/getty@tty1.service.d
         state: directory
-        mode: 0755
+        mode: '0755'
 
-    - name: enable autologin on tty1
-      copy:
+    - name: Enable autologin on tty1
+      ansible.builtin.copy:
         dest: /etc/systemd/system/getty@tty1.service.d/override.conf
         content: |
           # Ansible managed
@@ -63,33 +63,33 @@
           Restart=always
           RestartSec=10
           # TTYVTDisallocate=no
-        mode: 0644
+        mode: '0644'
       register: tty1_service
 
-    - name: distribute gpiocmd configuration
-      copy:
+    - name: Distribute gpiocmd configuration
+      ansible.builtin.copy:
         dest: /etc/gpiocmd.yml
         content: |
           {{ gpiocmd_yml | default({}) | to_nice_yaml }}
-        mode: 0644
+        mode: '0644'
 
-    - name: set console fonts
-      ini_file:
+    - name: Set console fonts
+      community.general.ini_file:
         path: /etc/default/console-setup
         section: null
         option: '{{ item.option }}'
         value: '{{ item.value }}'
         create: true
         no_extra_spaces: true
-        mode: 0644
+        mode: '0644'
       loop:
         - option: FONTFACE
           value: Terminus
         - option: FONTSIZE
           value: 6x12
 
-    - name: make it possible to turn on and off wifi power management
-      copy:
+    - name: Make it possible to turn on and off wifi power management
+      ansible.builtin.copy:
         dest: /etc/systemd/system/wifi_powersave@.service
         content: |
           [Unit]
@@ -103,8 +103,25 @@
 
           [Install]
           WantedBy=sys-subsystem-net-devices-wlan0.device
-        mode: 0644
+        mode: '0644'
 
-    - name: reboot raspberry pi
-      reboot:
+
+    - name: Install packages
+      ansible.builtin.apt:
+        name:
+          - figlet                  # fancy banners
+          - jq                      # parse json
+          - curl                    # talk to api
+          - libnss-mdns             # zeroconfig name lookup
+
+    - name: Copy out files
+      ansible.builtin.copy:
+        dest: '/opt/{{ item }}'
+        src: '{{ item }}'
+        mode: '0755'
+      loop:
+        - departure.sh
+
+    - name: Reboot raspberry pi
+      ansible.builtin.reboot:
       when: cmdline is changed or tty1_service is changed

@@ -12,7 +12,8 @@ gpiocmd_yml:
 
   23:
     commands:
-      - run: clear; curl wttr.in?0
+      - run: clear; curl 'wttr.in/Oslo?nM0&lang=nb'
+        repeat_every: 1800
       - run: clear; dstat -cdn
         pressed_for: 1
 
