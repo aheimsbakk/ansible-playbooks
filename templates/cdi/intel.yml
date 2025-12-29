@@ -1,0 +1,9 @@
+---
+cdiVersion: "0.5.0"
+kind: "intel.com/gpu"
+devices:
+  - name: "all"
+    containerEdits:
+      deviceNodes:
+        - path: "/dev/dri/renderD128"
+        - path: "/dev/dri/card0"
