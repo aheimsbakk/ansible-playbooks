@@ -1,0 +1,112 @@
+---
+- name: Install podman and copy out podman plays
+  hosts: all
+  become: true  
+  gather_facts: true
+
+  tasks:
+    - name: Install Podman (and dependencies)
+      ansible.builtin.package:
+        name: podman
+        state: present
+
+    - name: Enable and start Podman auto-update timer
+      ansible.builtin.systemd:
+        name: podman-auto-update.timer
+        state: started
+        enabled: true
+
+    - name: Create definition folders
+      ansible.builtin.file:
+        state: directory
+        path: '{{ item }}'
+        mode: 'u=rwx,g=rx,o='
+      loop_control:
+        label: '{{ item }}'
+      loop:
+        - /etc/cdi
+        - /etc/podman
+
+    - name: Distribute CDI definitions, for GPU access
+      ansible.builtin.copy:
+        dest: '/etc/cdi/{{ item }}'
+        src: 'podman/cdi/{{ item }}'
+        mode: 'u=rw,g=r,o='
+      loop:
+        - intel.yaml
+
+    - name: Create data folders
+      ansible.builtin.file:
+        state: directory
+        path: '{{ item }}'
+        mode: 'u=rwx,g=rx,o='
+        owner: nobody
+        group: nogroup
+      loop_control:
+        label: '{{ item }}'
+      loop:
+        - /srv/jellyfin
+        - /srv/uptime-kuma/data
+        - /srv/autokuma/monitors
+
+    - name: Distribute CDI definitions, for GPU access
+      ansible.builtin.copy:
+        dest: '/etc/cdi/{{ item }}'
+        src: 'podman/cdi/{{ item }}'
+        mode: 'u=rw,g=r,o='
+      loop:
+        - intel.yaml
+
+    - name: Distribute Kubernetes definitions
+      ansible.builtin.copy:
+        dest: '/etc/podman/{{ item }}'
+        src: 'podman/{{ item }}'
+        mode: 'u=rw,g=r,o='
+      loop:
+        - jellyfin.yml
+
+    - name: Check if uptime-kuma exists
+      ansible.builtin.stat:
+        path: /etc/podman/uptime-kuma.yml
+      register: uptime_kuma
+
+    - name: Copy out mutable header for uptime-kuma
+      ansible.builtin.copy:
+        dest: /etc/podman/uptime-kuma.yml
+        mode: 'u=rw,g=r,o='
+        content: |
+          ---
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: autokuma
+            labels:
+              app: uptime-kuma
+          type: Opaque
+          stringData:
+            AUTOKUMA__KUMA__USERNAME: admin
+            AUTOKUMA__KUMA__PASSWORD: password
+            AUTOKUMA__KUMA__MFA_SECRET: xxxx
+      when: not uptime_kuma.stat.exists
+
+    - name: Add uptime-kuma config
+      ansible.builtin.blockinfile:
+        path: /etc/podman/uptime-kuma.yml
+        marker: "# {mark} ANSIBLE MANAGED BLOCK"
+        block: '{{ lookup("file", "podman/uptime-kuma.yml") }}'
+
+    - name: Find all podman definitions
+      ansible.builtin.find:
+        paths: /etc/podman
+        patterns: "*.yml"
+        file_type: file
+        recurse: false
+      register: podman_definitions
+
+    - name: Create systemd files
+      ansible.builtin.systemd:
+        name: 'podman-kube@{{ item.path | systemd_escape(path=true) }}.service'
+        enabled: true
+      loop: "{{ podman_definitions.files }}"
+      loop_control:
+        label: '{{ item.path | systemd_escape(path=true) }}'
