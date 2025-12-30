@@ -1,0 +1,91 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-autokuma-data
+  labels:
+    app: uptime-kuma
+spec:
+  capacity:
+    storage: 100M
+  accessModes:
+    - ReadWriteOnce
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: uptime-kuma
+  annotations:
+    io.containers.autoupdate: "true"
+  labels:
+    app: uptime-kuma
+spec:
+  containers:
+  - name: app
+    image: mirror.gcr.io/louislam/uptime-kuma:2-slim
+    args:
+    - node
+    - server/server.js
+    ports:
+    - containerPort: 3001
+      hostPort: 3001
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        add:
+        - CAP_NET_RAW
+      runAsGroup: 65534
+      runAsUser: 65534
+    volumeMounts:
+    - name: uptime-kuma
+      mountPath: /app/data
+      subPath: data
+  - name: updater
+    image: ghcr.io/bigboot/autokuma:2
+    env:
+    - name: AUTOKUMA__DOCKER__ENABLED
+      value: "false"
+    - name: AUTOKUMA__STATIC_MONITORS
+      value: /monitors/
+    - name: AUTOKUMA__KUMA__URL
+      value: http://localhost:3001
+    - name: AUTOKUMA__KUMA__USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: autokuma
+          key: AUTOKUMA__KUMA__USERNAME
+    - name: AUTOKUMA__KUMA__PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: autokuma
+          key: AUTOKUMA__KUMA__PASSWORD
+    - name: AUTOKUMA__KUMA__MFA_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: autokuma
+          key: AUTOKUMA__KUMA__MFA_SECRET
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      runAsGroup: 65534
+      runAsUser: 65534
+    volumeMounts:
+    - name: autokuma
+      mountPath: /monitors
+      subPath: monitors
+    - name: autokuma-data
+      mountPath: /data
+  volumes:
+  -  name: uptime-kuma
+     hostPath:
+      type: Directory
+      path: /srv/uptime-kuma
+  - name: autokuma
+    hostPath:
+      type: Directory
+      path: /srv/autokuma
+  - name: autokuma-data
+    persistentVolumeClaim:
+      claimName: pv-autokuma-data
