@@ -61,6 +61,11 @@ spec:
         secretKeyRef:
           name: autokuma
           key: AUTOKUMA__KUMA__PASSWORD
+    - name: AUTOKUMA__KUMA__MFA_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: autokuma
+          key: AUTOKUMA__KUMA__MFA_SECRET
     securityContext:
       allowPrivilegeEscalation: false
       readOnlyRootFilesystem: true
