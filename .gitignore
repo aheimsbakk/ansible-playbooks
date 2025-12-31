@@ -5,6 +5,7 @@
 .cache
 .ansible
 .vscode
+__pycache__
 
 # Vagrant temporary files
 *.log

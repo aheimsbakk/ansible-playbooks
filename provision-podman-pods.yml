@@ -1,7 +1,7 @@
 ---
 - name: Install podman and copy out podman plays
   hosts: all
-  become: true  
+  become: true
   gather_facts: true
 
   tasks:
@@ -48,6 +48,7 @@
         - /srv/jellyfin
         - /srv/uptime-kuma/data
         - /srv/autokuma/monitors
+        - /srv/ollama
 
     - name: Distribute CDI definitions, for GPU access
       ansible.builtin.copy:
@@ -64,6 +65,7 @@
         mode: 'u=rw,g=r,o='
       loop:
         - jellyfin.yml
+        - ollama.yml
 
     - name: Check if uptime-kuma exists
       ansible.builtin.stat:
@@ -103,10 +105,10 @@
         recurse: false
       register: podman_definitions
 
-    - name: Create systemd files
-      ansible.builtin.systemd:
-        name: 'podman-kube@{{ item.path | systemd_escape(path=true) }}.service'
-        enabled: true
-      loop: "{{ podman_definitions.files }}"
-      loop_control:
-        label: '{{ item.path | systemd_escape(path=true) }}'
+    # - name: Create systemd files
+    #   ansible.builtin.systemd:
+    #     name: 'podman-kube@{{ item.path | systemd_escape(path=true) }}.service'
+    #     enabled: true
+    #   loop: "{{ podman_definitions.files }}"
+    #   loop_control:
+    #     label: '{{ item.path | systemd_escape(path=true) }}'

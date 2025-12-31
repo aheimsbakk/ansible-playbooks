@@ -1,0 +1,51 @@
+# Nvidia CDI:
+#
+#  * https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/1.17.6/cdi-support.html
+#  * https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+#
+# Install: nvidia-container-toolkit-base
+#
+#   * sudo apt install nvidia-container-toolkit-base
+#
+# Create CDI, run after driver update:
+#
+#   * sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    io.containers.autoupdate: registry
+  labels:
+    app: ollama-pod
+  name: ollama-pod
+spec:
+  containers:
+  - args:
+    - serve
+    image: mirror.gcr.io/ollama/ollama:latest
+    name: ollama
+    env:
+    - name: HOME
+      value: /ollama-data
+    - name: OLLAMA_MODELS
+      value: /ollama-data/models
+    resources:
+      limits:
+        nvidia.com/gpu=all: 1
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      runAsGroup: 65534
+      runAsUser: 65534
+    ports:
+    - containerPort: 11434
+      hostPort: 11434
+    volumeMounts:
+    - mountPath: /ollama-data
+      name: ollama-data
+  volumes:
+  - hostPath:
+      path: /srv/ollama
+      type: Directory
+    name: ollama-data

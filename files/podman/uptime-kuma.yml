@@ -17,7 +17,7 @@ kind: Pod
 metadata:
   name: uptime-kuma
   annotations:
-    io.containers.autoupdate: "true"
+    io.containers.autoupdate: registry
   labels:
     app: uptime-kuma
 spec:
