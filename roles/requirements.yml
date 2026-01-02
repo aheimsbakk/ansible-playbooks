@@ -5,7 +5,7 @@ roles:
   - name: aheimsbakk.libvirt_provision
     src: https://github.com/aheimsbakk/ansible-role-libvirt-provision.git
     scm: git
-    version: '1.1.0'
+    version: '1.2.0'
 
 collections:
   - name: containers.podman
