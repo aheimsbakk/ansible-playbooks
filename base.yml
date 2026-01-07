@@ -41,7 +41,7 @@
         day: '{{ item.day | default(omit) }}'
         minute: '{{ item.minute | default(omit) }}'
         hour: '{{ item.hour | default(omit) }}'
-        user: root
+        user: '{{ item.user | default("root") }}'
         job: '{{ item.job }}'
         state: '{{ item.state | default("present") }}'
       loop: '{{ base_cron | default([]) }}'
