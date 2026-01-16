@@ -1,0 +1,34 @@
+---
+- name: Destroy
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  # no_log: "{{ molecule_no_log }}"
+
+
+  pre_tasks:
+    - name: Set variable for destroying VMs
+      ansible.builtin.set_fact:
+        # Inject .ssh/id_rsa.pub into VM
+        libvirt_provision_root_ssh_key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_ed25519.pub') }}"
+
+        # Use HOME tmp path
+        libvirt_provision_temp_path: '{{ lookup("env", "HOME") + "/tmp" }}'
+
+        # Sate of VMs
+        state: absent
+
+  roles:
+    - role: aheimsbakk.libvirt_provision
+
+  tasks:
+    - name: Populate instance config
+      ansible.builtin.set_fact:
+        instance_conf: {}
+
+    - name: Dump instance config
+      ansible.builtin.copy:
+        content: |
+          {{ instance_conf | to_nice_yaml(indent=2) }}
+        dest: "{{ molecule_instance_config }}"
+        mode: "0600"

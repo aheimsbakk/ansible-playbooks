@@ -1,0 +1,36 @@
+---
+driver:
+  name: default
+  options:
+    managed: true
+    login_cmd_template: "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -l {user} {address}"
+
+platforms:
+  - name: trixie
+    hostname: molecule-test
+
+ansible:
+  executor:
+    backend: ansible-playbook
+    args:
+      ansible_playbook:
+        - --inventory=${MOLECULE_SCENARIO_DIRECTORY}/inventory.yml
+        - --diff
+  env:
+    ANSIBLE_FORCE_COLOR: true
+    ANSIBLE_ROLES_PATH: ../../roles
+  cfg:
+    defaults:
+      host_key_checking: false
+  playbooks:
+    create: create.yml
+    destroy: destroy.yml
+    converge: converge.yml
+    prepare: prepare.yml
+
+scenario:
+  test_sequence:
+    - create
+    - prepare
+    - converge
+    - destroy

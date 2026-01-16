@@ -1,0 +1,38 @@
+---
+all:
+  hosts:
+    localhost:
+      ansible_connection: local
+
+  vars:
+    # Set the tmp folder for cloud images and files to non default
+    libvirt_provision_temp_path: '{{ lookup("env", "HOME") + "/tmp" }}'
+
+    # Set password to root
+    libvirt_provision_root_password: root
+
+    # Define all our VMs
+    libvirt_provision_virtual_machines:
+      - name: scanning
+        disk_gb: 8
+        memory_mb: 2048
+        distro: trixie
+        vcpus: 2
+        net_config:
+          ethernets:
+            enp1s0:
+              addresses:
+                - 192.168.122.200/24
+
+  children:
+    vms:
+      hosts:
+        molecule-host:
+          ansible_host: 192.168.122.200
+
+      vars:
+        ansible_user: root
+
+    molecule:
+      children:
+        vms:

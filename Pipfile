@@ -7,8 +7,8 @@ name = "pypi"
 powerline-gitstatus = "~=1.3"
 ansible-lint = "~=25.4"
 powerline-status = "~=2.7"
-molecule = "~=25.12"
 ansible-core = "~=2.20.0"
+molecule = "*"
 
 [dev-packages]
 

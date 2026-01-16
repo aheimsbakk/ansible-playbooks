@@ -1,0 +1,7 @@
+---
+collections:
+  - name: community.libvirt
+    version: ">=2.0.0,<=3.0.0"
+
+  - name: containers.podman
+    version: ">=1.8.0,<=2.0.0"

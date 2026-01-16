@@ -1,0 +1,9 @@
+---
+- name: Play
+  hosts: vms
+  gather_facts: false
+
+  tasks:
+    - name: Converge your role here
+      ansible.builtin.debug:
+        msg: "This is a debug message from the converge playbook"

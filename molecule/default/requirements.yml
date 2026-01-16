@@ -1,0 +1,6 @@
+---
+roles:
+  - src: https://github.com/aheimsbakk/ansible-role-libvirt-provision.git
+    name: aheimsbakk.libvirt_provider
+    scm: git
+    version: "1.2.0"
