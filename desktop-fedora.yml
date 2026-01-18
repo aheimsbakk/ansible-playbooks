@@ -175,6 +175,26 @@
           TCPSegmentationOffload=false
           NamePolicy=keep kernel database onboard slot path
 
+    - name: fix rotation on ideapad d330
+      become: true
+      copy:
+        dest: /etc/udev/hwdb.d/61-sensor-local.hwdb
+        mode: 0644
+        content: |
+          # IdeaPad D330
+          sensor:modalias:acpi:BOSC0200*:dmi:*:svnLENOVO:*:pvrLenovoideapadD330*
+              ACCEL_MOUNT_MATRIX=0, 1, 0; -1, 0, 0; 0, 0, 1
+      register: hwdb_update
+      tags:
+        - screen
+
+    - name: update hwdb
+      become: true
+      command: systemd-hwdb update
+      when: hwdb_update is changed
+      tags:
+        - screen
+
     - name: Flatpak remote flathub
       community.general.flatpak_remote:
         name: flathub
