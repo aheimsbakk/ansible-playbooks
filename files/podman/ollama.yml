@@ -30,6 +30,8 @@ spec:
       value: /ollama-data
     - name: OLLAMA_MODELS
       value: /ollama-data/models
+    - name: OLLAMA_CONTEXT_LENGTH
+      value: '65536'
     resources:
       limits:
         nvidia.com/gpu=all: 1
