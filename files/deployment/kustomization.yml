@@ -22,8 +22,8 @@ images:
   - name: docker.io/redis
     newTag: latest
   - name: docker.io/nextcloud
-    newName: docker.io/nextcloud
-    newTag: 32-apache
+    newName: ghcr.io/aheimsbakk/nextcloud
+    newTag: latest
   - name: ghcr.io/aheimsbakk/smokeping
     newTag: latest
   - name: docker.io/traefik
@@ -39,3 +39,6 @@ images:
   - name: docker.io/collabora/code
     newTag: latest
     # newTag: 24.04.13.1.1
+  - name: docker.io/nextcloud/aio-talk
+    newName: ghcr.io/nextcloud-releases/aio-talk
+    newTag: latest
