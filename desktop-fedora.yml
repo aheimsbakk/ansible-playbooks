@@ -8,7 +8,7 @@
   connection: local
 
   vars:
-     ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
 
   tasks:
     - name: Run only on fedora
@@ -16,127 +16,75 @@
       ansible.builtin.assert:
         that: ansible_distribution == "Fedora"
 
-    - name: RPMFusion repositories
-      become: true
-      ansible.builtin.dnf:
-        name:
-          - "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
-          - "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm"
-        disable_gpg_check: true
+    # - name: RPMFusion repositories
+    #  become: true
+    #  ansible.builtin.dnf:
+    #    name:
+    #      - "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+    #      - "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+    #    disable_gpg_check: true
 
-    - name: Add tainted repo (libdvdcss)
-      become: true
-      ansible.builtin.dnf:
-        name: rpmfusion-free-release-tainted
+    # - name: Add tainted repo (libdvdcss)
+    #   become: true
+    #   ansible.builtin.dnf:
+    #     name: rpmfusion-free-release-tainted
 
     - name: Install packages
       become: true
       ansible.builtin.dnf:
         name:
-          - arm-image-installer  # Install arm images, ie. fedora arm on a SD-card
-          - btop              # Better top
-          - btrfs-heatmap     # Visualize how data is stored on disk
-          - catimg            # Display images in terminal
-          - clevis-dracut     # Decrypt Luks during boot with TPM
-          - clevis-udisks2    # Decrypt Luks with TPM when inserting disk
-          - compsize          # Check the compression ratio on btrfs
-          - davfs2            # DavFS for mounting Nextcloud, no need to sync everything
-          - dconf-editor      # Change configuration under the hood of Gnome
-          - dstat             # Stat system values in colors
-          - duperemove        # Dedup btrfs
-          - etckeeper         # Watch what happens in /etc
-          - ffmpeg            # Transcode audio and video
-          - file              # What file is this?
-          - flac              # Lossless audio
-          - git               # Version control <3
-          - gnome-tweaks      # Customize Gnome
-          - gnupg-pkcs11-scd  # Smart card functionality for SSH keys on Yubikey
-          - haveged           # More random data from CPU flutter
-          - hugo              # Static blog generator
-          - keepassxc         # KeePass
-          - lame              # Encode mp3
-          - lftp              # FTP isn't dead
-          - libdvdcss         # Play your old DVDs on Linux
-          - libmp4v2          # Need it, realy need it
-          - ltrace            # Trace library calls
-          - mediainfo         # Used by AAX
-          - ncdu              # Interactive du
-          - nmap              # Scan network ports
-          - offlineimap       # Make local backup of IMAP
-          - pam-u2f           # U2F token 2 factor in PAM
-          - pamu2fcfg         # Set up U2F token
-          - pcsc-lite         # Smart card daemon
-          - pv                # How fast do we transfer
-          - python3-pygments  # Syntax highlighting in Hugo
-          - python3-qrcode    # Generate QR-codes in terminal with qr
-          - rsync             # Syncing files, syncing life
-          - strace            # String trace processes
-          - syncthing         # To sync stuff
-          #- tlp               # Save battery power on laptops
-          - tmux              # <3
-          - u2f-host          # Commandline U2F operations
-          - ufw               # Uncomplicated firewall
-          - vagrant           # Automate VMs
-          - vagrant-sshfs     # Better to do this, than using buggy nfs
-          - vim               # <3
-          - virt-manager      # Graphical interface to Libvirt
-          - whois             # A must
-          - wireguard-tools   # Wireguard VPN
-          - yamllint          # YAML files need to be linted too
-          - yubikey-personalization-gui  # Yubico configuration
-          - zmap              # Map internet
+          - arm-image-installer # Install arm images, ie. fedora arm on a SD-card
+          - bat # Cat with wings
+          - btop # Better top
+          - btrfs-heatmap # Visualize how data is stored on disk
+          - cascadia-fonts-all # Fonts for terminal and Visual Studio Code
+          - catimg # Display images in terminal
+          - compsize # Check the compression ratio on btrfs
+          - davfs2 # DavFS for mounting Nextcloud, no need to sync everything
+          - dconf-editor # Change configuration under the hood of Gnome
+          - dstat # Stat system values in colors
+          - duperemove # Dedup btrfs
+          - etckeeper # Watch what happens in /etc
+          - file # What file is this?
+          - flac # Lossless audio
+          - git # Version control <3
+          - gnome-tweaks # Customize Gnome
+          - gnupg-pkcs11-scd # Smart card functionality for SSH keys on Yubikey
+          - haveged # More random data from CPU flutter
+          - lame # Encode mp3
+          - lftp # FTP isn't dead
+          - libmp4v2 # Need it, realy need it
+          - ltrace # Trace library calls
+          - mediainfo # Used by AAX
+          - ncdu # Interactive du
+          - nmap # Scan network ports
+          - offlineimap # Make local backup of IMAP
+          - pcsc-lite # Smart card daemon
+          - pv # How fast do we transfer
+          - rsync # Syncing files, syncing life
+          - strace # String trace processes
+          - tmux # <3
+          - u2f-host # Commandline U2F operations
+          - ufw # Uncomplicated firewall
+          - vim # <3
+          - virt-manager # Graphical interface to Libvirt
+          - whois # A must
+          - wireguard-tools # Wireguard VPN
+          - yamllint # YAML files need to be linted too
+          - yubikey-personalization-gui # Yubico configuration
+          - zmap # Map internet
 
     - name: Increase user watches
       become: true
-      ansible.builtin.sysctl:
+      ansible.posix.sysctl:
         name: fs.inotify.max_user_watches
         value: "2097152"
 
     - name: Reduse use of memory swap
       become: true
-      ansible.builtin.sysctl:
+      ansible.posix.sysctl:
         name: vm.swappiness
         value: "10"
-
-    - name: PAM config for pam_u2f
-      become: true
-      ansible.builtin.copy:
-        dest: "/etc/pam.d/u2f-{{ item }}"
-        content: |
-          #%PAM-1.0
-          auth {{ item }} pam_u2f.so cue
-        mode: "0644"
-      loop:
-        - sufficient
-        - required
-      tags:
-        - pam
-
-    - name: PAM YubiKey
-      become: true
-      ansible.builtin.lineinfile:
-        path: '{{ item }}'
-        insertafter: PAM
-        firstmatch: true
-        line: auth include u2f-sufficient
-      loop:
-        - /etc/pam.d/sudo
-      tags:
-        - pam
-
-    - name: PAM YubiKey
-      become: true
-      ansible.builtin.lineinfile:
-        path: '{{ item }}'
-        line: auth sufficient pam_u2f.so cue
-        state: absent
-      loop:
-        # - /etc/pam.d/password-auth
-        # - /etc/pam.d/system-auth
-        - /etc/pam.d/sudo
-        - /etc/pam.d/sudo-i
-      tags:
-        - pam
 
     - name: Disable firewalld
       become: true
@@ -148,11 +96,11 @@
     - name: Enable services
       become: true
       ansible.builtin.systemd:
-        name: '{{ item }}'
+        name: "{{ item }}"
         enabled: true
         state: started
       loop:
-        - ufw                 # Simpler firewall, Ubuntus default
+        - ufw # Simpler firewall, Ubuntus default
 
     - name: Deny incomming, and don't bother to log
       become: true
@@ -166,7 +114,7 @@
       become: true
       ansible.builtin.copy:
         dest: /etc/systemd/network/10-intel-wifi.link
-        mode: 0644
+        mode: "0644"
         content: |
           [Match]
           Driver=iwlwifi
@@ -175,11 +123,11 @@
           TCPSegmentationOffload=false
           NamePolicy=keep kernel database onboard slot path
 
-    - name: fix rotation on ideapad d330
+    - name: Fix rotation on ideapad d330
       become: true
-      copy:
+      ansible.builtin.copy:
         dest: /etc/udev/hwdb.d/61-sensor-local.hwdb
-        mode: 0644
+        mode: "0644"
         content: |
           # IdeaPad D330
           sensor:modalias:acpi:BOSC0200*:dmi:*:svnLENOVO:*:pvrLenovoideapadD330*
@@ -188,45 +136,33 @@
       tags:
         - screen
 
-    - name: update hwdb
+    - name: Update hwdb
       become: true
-      command: systemd-hwdb update
+      ansible.builtin.command: systemd-hwdb update
       when: hwdb_update is changed
+      register: hwdb_update
+      changed_when: whdb_update.rc == 0
       tags:
         - screen
 
-    - name: Flatpak remote flathub
-      community.general.flatpak_remote:
-        name: flathub
-        state: present
-        method: user
-        flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
-
-    - name: Flatpak remote fedora
-      community.general.flatpak_remote:
-        name: fedora
-        state: present
-        method: user
-        flatpakrepo_url: oci+https://registry.fedoraproject.org
-
     - name: Install flatpaks from flathub
       community.general.flatpak:
-        name: '{{ item }}'
+        name: "{{ item }}"
         remote: flathub
-        method: user
+        method: system
       loop:
         - com.belmoussaoui.Decoder
+        - com.bitwarden.desktop
         - com.calibre_ebook.calibre
         - com.github.phase1geo.minder
         - com.github.tchx84.Flatseal
         - com.mattjakeman.ExtensionManager
-        - com.valvesoftware.Steam
         - fr.handbrake.ghb
+        - md.obsidian.Obsidian
         - org.audacityteam.Audacity
         - org.gimp.GIMP
-        - org.gnome.Shotwell
         - org.mozilla.Thunderbird
-        - org.remmina.Remmina
+        - org.mozilla.firefox
         - org.signal.Signal
         - org.torproject.torbrowser-launcher
         - org.upscayl.Upscayl
@@ -234,7 +170,7 @@
 
     - name: Install flatpaks from fedora
       community.general.flatpak:
-        name: '{{ item }}'
+        name: "{{ item }}"
         remote: fedora
-        method: user
+        method: system
       loop: []
