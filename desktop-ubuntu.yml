@@ -3,77 +3,77 @@
 # How to run this playbook:
 # $ ansible-playbook -K dekstop.yml
 ---
-- name: configure ubuntu desktop
+- name: Configure ubuntu desktop
   hosts: localhost
 
   tasks:
-    - name: run only on ubuntu
+    - name: Run only on ubuntu
       become: true
-      assert:
+      ansible.builtin.assert:
         that: ansible_distribution == "Ubuntu"
 
-    - name: install packages
+    - name: Install packages
       become: true
-      apt:
+      ansible.builtin.apt:
         name:
-          - btrfs-compsize    # Check the compression ratio on btrfs
-          - btrfs-heatmap     # Visualize how data is stored on disk
-          - catimg            # Display images in terminal
-          - davfs2            # DavFS for mounting Nextcloud, no need to sync everything
-          - dconf-editor      # Change configuration under the hood of Gnome
-          - dstat             # Stat system values in colors
-          - duperemove        # Dedup btrfs
-          - etckeeper         # Watch what happens in /etc
-          - ffmpeg            # Transcode audio and video
-          - file              # What file is this?
-          - flac              # Lossless audio
-          - flatpak           # Here be GUI software, don't use snap
-          - git               # Version control <3
-          - gnome-tweaks      # Customize Gnome
-          - hugo              # Static blog generator
-          - lame              # Encode mp3
-          - lftp              # FTP isn't dead
-          - libpam-u2f        # U2F token 2 factor in PAM
-          - ltrace            # Trace library calls
-          - mediainfo         # Used by AAX
-          - ncdu              # Interactive du
-          - nmap              # Scan network ports
-          - offlineimap       # Make local backup of IMAP
-          - pamu2fcfg         # Set up U2F token
-          - pcscd             # Windows SCard interface
-          - pv                # How fast do we transfer
-          - python3-pygments  # Syntax highlighting in Hugo
-          - python3-qrcode    # Generate QR-codes in terminal with qr
-          - python3-venv      # Use python virtual environmens
-          - rsync             # Syncing files, syncing life
-          - scdaemon          # Smart card daemon
-          - strace            # String trace processes
-          - syncthing         # To sync stuff
-          - tmux              # <3
-          - u2f-host          # Commandline U2F operations
-          - ufw               # Uncomplicated firewall
-          - vagrant           # Automate VMs
-          - vagrant-sshfs     # Better to do this, than using buggy nfs
-          - vim               # <3
-          - virt-manager      # Graphical interface to Libvirt
-          - whois             # A must
-          - wireguard-tools   # Wireguard VPN
-          - yamllint          # YAML files need to be linted too
-          - yubikey-personalization-gui  # Yubico configuration
-          - yubioath-desktop  # The Yubico Authenticator
-          - zmap              # Map internet
+          - btrfs-compsize # Check the compression ratio on btrfs
+          - btrfs-heatmap # Visualize how data is stored on disk
+          - catimg # Display images in terminal
+          - davfs2 # DavFS for mounting Nextcloud, no need to sync everything
+          - dconf-editor # Change configuration under the hood of Gnome
+          - dstat # Stat system values in colors
+          - duperemove # Dedup btrfs
+          - etckeeper # Watch what happens in /etc
+          - ffmpeg # Transcode audio and video
+          - file # What file is this?
+          - flac # Lossless audio
+          - flatpak # Here be GUI software, don't use snap
+          - git # Version control <3
+          - gnome-tweaks # Customize Gnome
+          - hugo # Static blog generator
+          - lame # Encode mp3
+          - lftp # FTP isn't dead
+          - libpam-u2f # U2F token 2 factor in PAM
+          - ltrace # Trace library calls
+          - mediainfo # Used by AAX
+          - ncdu # Interactive du
+          - nmap # Scan network ports
+          - offlineimap # Make local backup of IMAP
+          - pamu2fcfg # Set up U2F token
+          - pcscd # Windows SCard interface
+          - pv # How fast do we transfer
+          - python3-pygments # Syntax highlighting in Hugo
+          - python3-qrcode # Generate QR-codes in terminal with qr
+          - python3-venv # Use python virtual environmens
+          - rsync # Syncing files, syncing life
+          - scdaemon # Smart card daemon
+          - strace # String trace processes
+          - syncthing # To sync stuff
+          - tmux # <3
+          - u2f-host # Commandline U2F operations
+          - ufw # Uncomplicated firewall
+          - vagrant # Automate VMs
+          - vagrant-sshfs # Better to do this, than using buggy nfs
+          - vim # <3
+          - virt-manager # Graphical interface to Libvirt
+          - whois # A must
+          - wireguard-tools # Wireguard VPN
+          - yamllint # YAML files need to be linted too
+          - yubikey-personalization-gui # Yubico configuration
+          - yubioath-desktop # The Yubico Authenticator
+          - zmap # Map internet
 
-    - name: increase user watches
+    - name: Increase user watches
       become: true
-      sysctl:
+      ansible.posix.sysctl:
         name: fs.inotify.max_user_watches
         value: "2097152"
 
-    - name: fix for slow wifi
+    - name: Fix for slow wifi
       become: true
-      copy:
+      ansible.builtin.copy:
         dest: /etc/systemd/network/10-intel-wifi.link
-        mode: 0644
+        mode: "0644"
         content: |
           [Match]
           Driver=iwlwifi
@@ -98,7 +98,7 @@
 
     - name: Install flatpaks from flathub
       community.general.flatpak:
-        name: '{{ item }}'
+        name: "{{ item }}"
         remote: flathub
         method: user
       loop:
@@ -117,8 +117,7 @@
 
     - name: Install flatpaks from fedora
       community.general.flatpak:
-        name: '{{ item }}'
+        name: "{{ item }}"
         remote: fedora
         method: user
-      loop: [ ]
-
+      loop: []
