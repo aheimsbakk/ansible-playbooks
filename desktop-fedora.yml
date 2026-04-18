@@ -97,6 +97,31 @@
         name: vm.swappiness
         value: "10"
 
+    - name: Ensure target gdm dconf exists
+      ansible.builtin.file:
+        path: /etc/dconf/db/gdm.d
+        state: directory
+        mode: "0755"
+
+    - name: Disable gdm sleep
+      become: true
+      ansible.builtin.copy:
+        dest: /etc/dconf/db/gdm.d/01-disable-suspend
+        directory_mode: "0755"
+        mode: "0644"
+        content: |
+          [org/gnome/settings-daemon/plugins/power]
+          sleep-inactive-ac-timeout=0
+          sleep-inactive-ac-type='nothing'
+      register: gdm_sleep
+
+    - name: Update dconf
+      become: true
+      ansible.builtin.command: dconf update
+      register: dconf_update
+      changed_when: dconf_update.rc == 0
+      when: gdm_sleep is changed
+
     - name: Disable firewalld
       become: true
       ansible.builtin.systemd:
