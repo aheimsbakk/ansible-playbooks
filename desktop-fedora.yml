@@ -16,18 +16,25 @@
       ansible.builtin.assert:
         that: ansible_distribution == "Fedora"
 
-    # - name: RPMFusion repositories
-    #  become: true
-    #  ansible.builtin.dnf:
-    #    name:
-    #      - "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
-    #      - "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm"
-    #    disable_gpg_check: true
+    - name: RPMFusion repositories
+      become: true
+      ansible.builtin.dnf:
+        name:
+          - "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+          - "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+        disable_gpg_check: true
 
     # - name: Add tainted repo (libdvdcss)
     #   become: true
     #   ansible.builtin.dnf:
     #     name: rpmfusion-free-release-tainted
+
+    - name: Install video acceleration for H.264 and H.265
+      become: true
+      ansible.builtin.dnf:
+        name:
+          - mesa-va-drivers-freeworld # Video acceleration
+          - libva-utils # Show vainfo, offloading capabilities
 
     - name: Install packages
       become: true
@@ -166,7 +173,6 @@
         - org.audacityteam.Audacity
         - org.gimp.GIMP
         - org.mozilla.Thunderbird
-        - org.mozilla.firefox
         - org.signal.Signal
         - org.torproject.torbrowser-launcher
         - org.upscayl.Upscayl
