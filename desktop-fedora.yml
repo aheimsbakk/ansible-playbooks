@@ -33,7 +33,7 @@
       become: true
       ansible.builtin.dnf:
         name:
-          - mesa-va-drivers-freeworld # Video acceleration
+          - mesa-va-drivers-freeworld # Video acceleration from rpmfusion
           - libva-utils # Show vainfo, offloading capabilities
 
     - name: Install packages
@@ -45,11 +45,11 @@
           - btop # Better top
           - btrfs-heatmap # Visualize how data is stored on disk
           - cascadia-fonts-all # Fatter code font with ligatures, good visibility
-          - cascadia-fonts-all # Fonts for terminal and Visual Studio Code
           - catimg # Display images in terminal
           - compsize # Check the compression ratio on btrfs
           - davfs2 # DavFS for mounting Nextcloud, no need to sync everything
           - dconf-editor # Change configuration under the hood of Gnome
+          - distrobox # Run debian in a container
           - dstat # Stat system values in colors
           - duperemove # Dedup btrfs
           - etckeeper # Watch what happens in /etc
