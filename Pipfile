@@ -4,13 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-ansible-lint = "~=25.4"
-molecule = "~=25.12"
-ansible-core = "*"
-powerline-status = "*"
-powerline-gitstatus = "*"
+ansible-lint = "~=26.0"
+molecule = "~=26.0"
+ansible-core = "~=2.20.0"
 
 [dev-packages]
 
 [requires]
-python_version = "3"
+python_version = "3.14"

@@ -1,11 +1,11 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "253161dcfdfc7322c35c91bd0787a745150ea64754a70bcde9523cfe2769b500"
+            "sha256": "416ea500f9214d516499b6118fc78dc091a24fe4e093532db89702935938f682"
         },
         "pipfile-spec": 6,
         "requires": {
-            "python_version": "3"
+            "python_version": "3.14"
         },
         "sources": [
             {
@@ -35,12 +35,12 @@
         },
         "ansible-lint": {
             "hashes": [
-                "sha256:cafcd991c9ddfd9a13e5b56e5a4f1d9997973e0c0d6a0f6eb2b148d39f42e2c3",
-                "sha256:d4dbf2905c868d6f7b330941efc586f19a5e2b3b6826fd6a2edf0d5080329e46"
+                "sha256:29e0438f8af685a4fec96f9ea3404a3beb50d2911bc8df43f283256954ceea5b",
+                "sha256:f33c4823544a5a8e5e36614866e111d1a929eeffee5e84481ede10d524a9d6d6"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.10'",
-            "version": "==25.12.2"
+            "version": "==26.4.0"
         },
         "attrs": {
             "hashes": [
@@ -188,13 +188,6 @@
             ],
             "markers": "python_version >= '3.10'",
             "version": "==8.3.2"
-        },
-        "click-help-colors": {
-            "hashes": [
-                "sha256:b33c5803eeaeb084393b1ab5899dc5476c7196b87a18713045afe76f840b42db",
-                "sha256:f4cabe52cf550299b8888f4f2ee4c5f359ac27e33bcfe4d61db47785a5cc936c"
-            ],
-            "version": "==0.9.4"
         },
         "cryptography": {
             "hashes": [
@@ -412,12 +405,12 @@
         },
         "molecule": {
             "hashes": [
-                "sha256:3df4fc034f3204efce7247b5b1087b2a7e411e27374a05fe96c6c676656e82bd",
-                "sha256:b226bf1be67ce0fa30c726aab226063f9443e561d7e3d048f55dfb2ee51adbd6"
+                "sha256:12e4c905079f67628ae765506c697d2b8a744a65f2d4cbf5a3b22cb09d0dafc4",
+                "sha256:b231f4955f95240a8e2b8194c086d0b5e8ab998032a9411eafe85429442a3bd5"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.10'",
-            "version": "==25.12.0"
+            "version": "==26.4.0"
         },
         "mypy-extensions": {
             "hashes": [
@@ -458,21 +451,6 @@
             ],
             "markers": "python_version >= '3.9'",
             "version": "==1.6.0"
-        },
-        "powerline-gitstatus": {
-            "hashes": [
-                "sha256:1e444e947d654a09bd7846da8283bba87a398c9e05196c4757f87f10b69a0e16",
-                "sha256:7255b2efd5cf39ed15c476223a3615dfa0c19976940399461050d0db1c4fa5dd"
-            ],
-            "index": "pypi",
-            "version": "==1.3.3"
-        },
-        "powerline-status": {
-            "hashes": [
-                "sha256:8c7e7da45beb2332bc8226b166b732ef70db2cb0a1f3f0fdc3c539115522ecb6"
-            ],
-            "index": "pypi",
-            "version": "==2.7"
         },
         "pycparser": {
             "hashes": [
