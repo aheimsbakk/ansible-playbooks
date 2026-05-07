@@ -159,6 +159,18 @@
           TCPSegmentationOffload=false
           NamePolicy=keep kernel database onboard slot path
 
+    - name: Turn off scanning, remove latency blips when streaming low latency
+      become: true
+      ansible.builtin.copy:
+        dest: /etc/NetworkManager/conf.d/99-disable-scanning.conf
+        mode: "0644"
+        content: |
+          [device]
+          wifi.scan-rand-mac-address=no
+
+          [connection]
+          wifi.powersave=2
+
     - name: Fix rotation on ideapad d330
       become: true
       ansible.builtin.copy:
