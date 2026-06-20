@@ -19,31 +19,31 @@
     - name: Create definition folders
       ansible.builtin.file:
         state: directory
-        path: '{{ item }}'
-        mode: 'u=rwx,g=rx,o='
+        path: "{{ item }}"
+        mode: "u=rwx,g=rx,o="
       loop_control:
-        label: '{{ item }}'
+        label: "{{ item }}"
       loop:
         - /etc/cdi
         - /etc/podman
 
     - name: Distribute CDI definitions, for GPU access
       ansible.builtin.copy:
-        dest: '/etc/cdi/{{ item }}'
-        src: 'podman/cdi/{{ item }}'
-        mode: 'u=rw,g=r,o='
+        dest: "/etc/cdi/{{ item }}"
+        src: "podman/cdi/{{ item }}"
+        mode: "u=rw,g=r,o="
       loop:
         - intel.yaml
 
     - name: Create data folders
       ansible.builtin.file:
         state: directory
-        path: '{{ item }}'
-        mode: 'u=rwx,g=rx,o='
+        path: "{{ item }}"
+        mode: "u=rwx,g=rx,o="
         owner: nobody
         group: nogroup
       loop_control:
-        label: '{{ item }}'
+        label: "{{ item }}"
       loop:
         - /srv/jellyfin
         - /srv/uptime-kuma/data
@@ -52,17 +52,17 @@
 
     - name: Distribute CDI definitions, for GPU access
       ansible.builtin.copy:
-        dest: '/etc/cdi/{{ item }}'
-        src: 'podman/cdi/{{ item }}'
-        mode: 'u=rw,g=r,o='
+        dest: "/etc/cdi/{{ item }}"
+        src: "podman/cdi/{{ item }}"
+        mode: "u=rw,g=r,o="
       loop:
         - intel.yaml
 
     - name: Distribute Kubernetes definitions
       ansible.builtin.copy:
-        dest: '/etc/podman/{{ item }}'
-        src: 'podman/{{ item }}'
-        mode: 'u=rw,g=r,o='
+        dest: "/etc/podman/{{ item }}"
+        src: "podman/{{ item }}"
+        mode: "u=rw,g=r,o="
       loop:
         - jellyfin.yml
         - ollama.yml
@@ -75,7 +75,7 @@
     - name: Copy out mutable header for uptime-kuma
       ansible.builtin.copy:
         dest: /etc/podman/uptime-kuma.yml
-        mode: 'u=rw,g=r,o='
+        mode: "u=rw,g=r,o="
         content: |
           ---
           apiVersion: v1

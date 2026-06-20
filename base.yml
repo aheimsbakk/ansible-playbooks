@@ -20,8 +20,8 @@
 
     - name: Set SSH keys
       ansible.posix.authorized_key:
-        user: '{{ ansible_user }}'
-        key: '{{ authorized_key }}'
+        user: "{{ ansible_user }}"
+        key: "{{ authorized_key }}"
         exclusive: true
       become: false
       tags:
@@ -32,19 +32,19 @@
         rule: allow
         port: "{{ item.port }}"
         proto: "{{ item.proto }}"
-      loop: '{{ base_ufw_rules | default([]) }}'
+      loop: "{{ base_ufw_rules | default([]) }}"
 
     - name: Add cron jobs
       ansible.builtin.cron:
-        name: '{{ item.name }}'
-        weekday: '{{ item.weekday | default(omit) }}'
-        day: '{{ item.day | default(omit) }}'
-        minute: '{{ item.minute | default(omit) }}'
-        hour: '{{ item.hour | default(omit) }}'
+        name: "{{ item.name }}"
+        weekday: "{{ item.weekday | default(omit) }}"
+        day: "{{ item.day | default(omit) }}"
+        minute: "{{ item.minute | default(omit) }}"
+        hour: "{{ item.hour | default(omit) }}"
         user: '{{ item.user | default("root") }}'
-        job: '{{ item.job }}'
+        job: "{{ item.job }}"
         state: '{{ item.state | default("present") }}'
-      loop: '{{ base_cron | default([]) }}'
+      loop: "{{ base_cron | default([]) }}"
       tags:
         - cron
 
@@ -52,7 +52,7 @@
       ansible.builtin.template:
         src: sshnotif
         dest: /usr/local/bin/sshnotif
-        mode: '0755'
+        mode: "0755"
 
     - name: Add notify on ssh
       ansible.builtin.lineinfile:
@@ -68,7 +68,7 @@
 
     - name: Checkout notes repository containing powerline
       ansible.builtin.git:
-        repo: 'https://github.com/aheimsbakk/notes.git'
+        repo: "https://github.com/aheimsbakk/notes.git"
         dest: /tmp/notes-git
         version: master
 
@@ -80,8 +80,8 @@
     - name: Copy custom scripts
       ansible.builtin.copy:
         dest: '/usr/local/bin/{{ item | split(".") | first }}'
-        src: '{{ item }}'
-        mode: '0755'
+        src: "{{ item }}"
+        mode: "0755"
       loop:
         - departure.sh
         - git-touch.sh

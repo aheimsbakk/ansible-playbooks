@@ -1,0 +1,76 @@
+---
+all:
+  hosts:
+    localhost:
+      ansible_connection: local
+
+      libvirt_provision_root_password: password
+      libvirt_provision_virtual_machine_net_config:
+        version: 2
+        ethernets:
+          enp1s0:
+            dhcp4: false
+            routes:
+              - to: default
+                via: 192.168.122.1
+            nameservers:
+              search:
+                - lan
+              addresses:
+                - 192.168.1.1
+      libvirt_provision_virtual_machine_config:
+        memory_mb: 1024
+        disk_gb: 10
+        vcpus: 2
+        distro: trixie
+        networks:
+          - bridge: virbr0
+            model:
+              type: virtio
+      libvirt_provision_virtual_machines:
+        - name: machine1
+          net_config:
+            version: 2
+            ethernets:
+              enp1s0:
+                addresses:
+                  - 192.168.122.11/24
+                routes:
+                  - to: default
+                    via: 192.168.122.1
+                nameservers:
+                  search:
+                    - lan
+                  addresses:
+                    - 192.168.1.1
+        - name: machine2
+          net_config:
+            version: 2
+            ethernets:
+              enp1s0:
+                addresses:
+                  - 192.168.122.12/24
+                routes:
+                  - to: default
+                    via: 192.168.122.1
+                nameservers:
+                  search:
+                    - lan
+                  addresses:
+                    - 192.168.1.1
+        - name: machine3
+          net_config:
+            version: 2
+            ethernets:
+              enp1s0:
+                addresses:
+                  - 192.168.122.13/24
+                routes:
+                  - to: default
+                    via: 192.168.122.1
+                nameservers:
+                  search:
+                    - lan
+                  addresses:
+                    - 192.168.1.1
+  
