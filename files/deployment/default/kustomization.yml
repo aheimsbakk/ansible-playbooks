@@ -11,5 +11,5 @@ resources:
   - ../../base/grafana
   - ../../base/vaultwarden
   - ../../base/collabora
-  - ../../base/forgejo
+  # - ../../base/forgejo
   - default-netpol.yml

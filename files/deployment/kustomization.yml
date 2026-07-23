@@ -42,3 +42,5 @@ images:
   - name: docker.io/nextcloud/aio-talk
     newName: ghcr.io/nextcloud-releases/aio-talk
     newTag: latest
+  - name: codeberg.org/forgejo/forgejo
+    newTag: "16"
