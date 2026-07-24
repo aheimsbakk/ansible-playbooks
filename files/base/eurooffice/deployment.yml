@@ -1,0 +1,105 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: eurooffice
+  labels:
+    app: eurooffice
+type: Opaque
+stringData:
+  JWT_SECRET: "0123456789012345678901234567890123456789"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eurooffice
+  labels:
+    app: eurooffice
+    auto-update-hour: '00'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eurooffice
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: eurooffice
+        egress: internal
+        tier: frontend
+    spec:
+      containers:
+        - name: eurooffice
+          image: ghcr.io/euro-office/documentserver:latest
+          imagePullPolicy: Always
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: eurooffice
+                  key: JWT_SECRET
+            - name: JWT_ENABLED
+              value: "true"
+            - name: TZ
+              value: UTC
+          securityContext:
+            allowPrivilegeEscalation: false
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
+          ports:
+            - name: web
+              containerPort: 80
+          # volumeMounts:
+          #   - name: eurooffice
+          #     mountPath: /etc/euro-office/documentserver
+          #   - name: eurooffice-data
+          #     mountPath: /var/lib/euro-office/documentserver
+      volumes:
+        - name: eurooffice
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/eurooffice/config
+        - name: eurooffice-data
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/eurooffice/data
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eurooffice
+spec:
+  selector:
+    app: eurooffice
+  ports:
+    - protocol: TCP
+      name: web
+      port: 80
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: eurooffice
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  labels:
+    app: eurooffice
+spec:
+  rules:
+    - host: eurooffice.192.168.122.11.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: eurooffice
+                port:
+                  number: 80
