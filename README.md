@@ -52,11 +52,11 @@ This describes all the steps to get Kubernetes running and deploying all contain
   ```bash
   pipenv shell
   ```
-- Start the virtual machines. `state=present` is not needed since it is the default. Set `state=absent` to destroy VMs. Playbook for provisioning virtual machines expects you have `$HOME/.ssh/id_ed25519.pub`. Do you have a different public SSHkey, change it in [provision-k3s-vms.yml](provision-k3s-vms.yml).
+- Start the virtual machines. Update `hosts-k3s.yml` with your own DNS configuration. `state=present` is not needed since it is the default. Set `state=absent` to destroy VMs. Playbook for provisioning virtual machines expects you have `$HOME/.ssh/id_ed25519.pub`. Do you have a different public SSHkey, change it in [provision-k3s-vms.yml](provision-k3s-vms.yml).
   ```bash
   ansible-playbook -i hosts-k3s.yml provision-vms.yml -l localhost -e state=present
   ```
-- Install the Kubernetes environment. `hosts-k3s.yaml` is the hosts file for our VMs.
+- Install the Kubernetes environment. `hosts-k3s.yml` is the hosts file for our VMs.
   ```bash
   ansible-playbook -i hosts-k3s.yml provision-k3s.yml
   ```
@@ -75,10 +75,10 @@ Public available services.
 * [Gotify](https://gotify.192.168.122.11.nip.io), default username `admin` and password `password`  
     After installing playbooks, go into the Gotify and add an application. Take the applications token and update the `gotify_token`. Voila, you get a notification every time someone logs into `homeserver`.
 * [Nextcloud](https://nextcloud.192.168.122.11.nip.io) with database backup cronjob - default username `admin` and password `password`
-  * For Collabora office install the app `Nextcloud Office` and go to admin interface and find `Office`
+  * For Collabora office install the app `Nextcloud Office (Collabora)` and go to admin interface and find `Office`
     * Use your own server, in `URL (and Port) of Collabora Online-server` add `https://collabora.nextcloud.192.168.122.11.nip.io/`.
     * Check `Disable certificate verification`.
-    * Allow list for WOPI requests should contain `10.42.0.1`.
+    * Allow list for WOPI requests should contain `10.42.0.1,192.168.122.0/24`.
     * Go to the admin interface for Collabora and accept the certificate.
     * Now you can edit Office documents.
   * Nextcloud Talk, with `talk-aio` container. Configure as follows.
@@ -93,7 +93,7 @@ Public available services.
 Services restricted to source IP range. Defaults to `192.168.0.0/16`, `172.16.0.0/12` and `10.0.0.0/8`.
 
 * [Collabora CODE Admin](https://collabora.nextcloud.192.168.122.11.nip.io/browser/dist/admin/admin.html), default username `admin` and password `password`.
-* [ForgeJo](https://forgejo.192.168.122.11.nip.io), ForgeJo self-hosted GitHub alternative. Needs configuring before usage.
+* ~~[ForgeJo](https://forgejo.192.168.122.11.nip.io), ForgeJo self-hosted GitHub alternative. Needs configuring before usage.~~
 * [Grafana](https://grafana.192.168.122.11.nip.io)
 * [Munin](https://munin.192.168.122.11.nip.io)
 * [Prometheus](https://prometheus.192.168.122.11.nip.io)
