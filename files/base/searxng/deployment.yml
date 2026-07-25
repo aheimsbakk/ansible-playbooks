@@ -1,0 +1,109 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: searxng
+  labels:
+    app: searxng
+type: Opaque
+stringData:
+  SEARXNG_SECRET: "kubernetes-searxng-secret-key-change-this"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: searxng
+  labels:
+    app: searxng
+    auto-update-hour: '00'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: searxng
+  template:
+    metadata:
+      labels:
+        app: searxng
+        egress: internet
+        tier: frontend
+    spec:
+      containers:
+        - name: searxng
+          image: docker.io/searxng/searxng:latest
+          imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+          env:
+            - name: SEARXNG_PORT
+              value: '8080'
+            - name: SEARXNG_BIND_ADDRESS
+              value: '0.0.0.0'
+            - name: SEARXNG_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: searxng
+                  key: SEARXNG_SECRET
+            - name: SEARXNG_IMAGE_PROXY
+              value: 'true'
+            - name: SEARXNG_METHOD
+              value: GET
+            - name: FORCE_OWNERSHIP
+              value: 'true'
+          ports:
+            - name: web
+              containerPort: 8080
+          volumeMounts:
+            - name: searxng-config
+              mountPath: /etc/searxng/settings.yml
+              subPath: settings.yml
+            - name: searxng-data
+              mountPath: /var/cache/searxng
+      volumes:
+        - name: searxng-config
+          configMap:
+            name: searxng-config
+        - name: searxng-data
+          hostPath:
+            type: DirectoryOrCreate
+            path: /srv/searxng/data
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: searxng
+  labels:
+    app: searxng
+spec:
+  selector:
+    app: searxng
+  ports:
+    - protocol: TCP
+      name: web
+      port: 8080
+      targetPort: 8080
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: searxng
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: private-ip-ranges@file
+  labels:
+    app: searxng
+spec:
+  rules:
+    - host: searxng.192.168.122.11.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: searxng
+                port:
+                  number: 8080

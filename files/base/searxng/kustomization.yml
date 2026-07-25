@@ -1,0 +1,9 @@
+---
+generatorOptions:
+  disableNameSuffixHash: true
+configMapGenerator:
+  - files:
+      - config/settings.yml
+    name: searxng-config
+resources:
+  - deployment.yml

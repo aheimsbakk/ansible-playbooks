@@ -1,0 +1,55 @@
+---
+use_default_settings: true
+
+search:
+  formats:
+    - html
+    - json
+    - rss
+
+engines:
+  - name: abcnyheter
+    disabled: false
+  - name: qwant
+    disabled: true
+  - name: startpage
+    disabled: true
+  - name: startpage images
+    disabled: true
+  - name: startpage news
+    disabled: true
+  - name: google news
+    disabled: true
+  - name: vimeo
+    disabled: true
+  - name: material icons
+    disabled: false
+
+hostnames:
+  remove:
+    - '(.*\.)?localhost$'
+    - '(.*\.)?127\.0\.0\.1$'
+    - '(.*\.)?10\.0\.0\.\d+$'
+    - '(.*\.)?10\.16\.\d+\.\d+$'
+    - '(.*\.)?172\.16\.\d+\.\d+$'
+    - '(.*\.)?172\.17\.\d+\.\d+$'
+    - '(.*\.)?172\.18\.\d+\.\d+$'
+    - '(.*\.)?172\.19\.\d+\.\d+$'
+    - '(.*\.)?172\.20\.\d+\.\d+$'
+    - '(.*\.)?172\.21\.\d+\.\d+$'
+    - '(.*\.)?172\.22\.\d+\.\d+$'
+    - '(.*\.)?172\.23\.\d+\.\d+$'
+    - '(.*\.)?172\.24\.\d+\.\d+$'
+    - '(.*\.)?172\.25\.\d+\.\d+$'
+    - '(.*\.)?172\.26\.\d+\.\d+$'
+    - '(.*\.)?172\.27\.\d+\.\d+$'
+    - '(.*\.)?172\.28\.\d+\.\d+$'
+    - '(.*\.)?172\.29\.\d+\.\d+$'
+    - '(.*\.)?172\.30\.\d+\.\d+$'
+    - '(.*\.)?172\.31\.\d+\.\d+$'
+    - '(.*\.)?192\.168\.\d+\.\d+$'
+    - '(.*\.)?169\.254\.\d+\.\d+$'
+    - '(.*\.)?0\.0\.0\.0$'
+    - '(.*\.)?metadata\.google\.internal$'
+    - '(.*\.)?100\.64\.\d+\.\d+$'
+    - '(.*\.)?100\.100\.\d+\.\d+$'

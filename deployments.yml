@@ -7,15 +7,45 @@
     deployment_path: /root/deployments
 
   tasks:
-    - name: Copy out deployment
+
+    - name: Compress base and deployment to local archive
+      become: false
+      ansible.builtin.command:
+        cmd: tar -czf payload.tar.gz base deployment
+        chdir: files/
+      environment:
+        COPYFILE_DISABLE: '1'
+      delegate_to: localhost
+      run_once: true
+
+    - name: Create the deployment path
+      ansible.builtin.file:
+        path: "{{ deployment_path }}"
+        mode: "0755"
+        state: directory
+
+    - name: Transfer and extract base and deployment
+      ansible.builtin.unarchive:
+        src: files/payload.tar.gz
+        dest: "{{ deployment_path }}"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Clean up the local temporary archive
+      become: false
+      ansible.builtin.file:
+        path: files/payload.tar.gz
+        state: absent
+      delegate_to: localhost
+      run_once: true
+
+    - name: Copy out environment
       ansible.builtin.copy:
         src: "{{ item }}/"
         dest: "{{ deployment_path }}/{{ item }}/"
         mode: "0600"
         directory_mode: "0700"
       loop:
-        - base
-        - deployment
         - "{{ env }}"
 
     - name: "Apply depolyments env '{{ env }}'"
