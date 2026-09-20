@@ -13,6 +13,7 @@ stringData:
   MYSQL_ROOT_PASSWORD: password
   NEXTCLOUD_ADMIN_USER: admin
   NEXTCLOUD_ADMIN_PASSWORD: password
+  NEXTCLOUD_WHITEBOARD_SECRET: password
 
 ---
 apiVersion: v1
@@ -413,7 +414,7 @@ spec:
     spec:
       containers:
         - name: nextcloud-talk-hpb
-          image: docker.io/nextcloud/aio-talk:latest
+          image: ghcr.io/nextcloud-releases/aio-talk:latest
           imagePullPolicy: Always
           # resources:
           #   limits:
@@ -515,3 +516,110 @@ spec:
                 name: nextcloud-talk-hpb
                 port:
                   number: 8081
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud-whiteboard
+  labels:
+    app: nextcloud-whiteboard
+    auto-update-hour: '00'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud-whiteboard
+  template:
+    metadata:
+      labels:
+        app: nextcloud-whiteboard
+        tier: frontend
+        part-of: nextcloud
+    spec:
+      containers:
+        - name: nextcloud-whiteboard
+          image: ghcr.io/nextcloud-releases/aio-whiteboard:latest
+          imagePullPolicy: Always
+          # resources:
+          #   limits:
+          #     memory: 2Gi
+          env:
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud
+                  key: NEXTCLOUD_WHITEBOARD_SECRET
+            - name: NEXTCLOUD_URL
+              value: http://nextcloud
+            - name: REDIS_HOST
+              value: nextcloud-redis
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_HOST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud
+                  key: REDIS_HOST_PASSWORD
+            - name: STORAGE_STRATEGY
+              value: redis
+          securityContext:
+            allowPrivilegeEscalation: false
+            # readOnlyRootFilesystem: true
+            # capabilities:
+            #   drop: [ "all" ]
+            #   add: [ "chown" ]
+          ports:
+            - name: web
+              containerPort: 3002
+          livenessProbe:
+            exec:
+              command:
+                - /healthcheck.sh
+            periodSeconds: 30
+            timeoutSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - /healthcheck.sh
+            periodSeconds: 30
+            timeoutSeconds: 30
+            failureThreshold: 3
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextcloud-whiteboard
+  labels:
+    app: nextcloud-whiteboard
+spec:
+  selector:
+    app: nextcloud-whiteboard
+  ports:
+    - protocol: TCP
+      name: web
+      port: 3002
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: nextcloud-whiteboard
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  labels:
+    app: nextcloud-whiteboard
+spec:
+  rules:
+    - host: whiteboard.nextcloud.192.168.122.11.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nextcloud-whiteboard
+                port:
+                  number: 3002
