@@ -39,8 +39,9 @@ images:
   - name: docker.io/collabora/code
     newTag: latest
     # newTag: 24.04.13.1.1
-  - name: docker.io/nextcloud/aio-talk
-    newName: ghcr.io/nextcloud-releases/aio-talk
+  - name: ghcr.io/nextcloud-releases/aio-talk
+    newTag: latest
+  - name: ghcr.io/nextcloud-releases/aio-whiteboard
     newTag: latest
   - name: codeberg.org/forgejo/forgejo
     newTag: "16"
