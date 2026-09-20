@@ -13,7 +13,7 @@ stringData:
   MYSQL_ROOT_PASSWORD: password
   NEXTCLOUD_ADMIN_USER: admin
   NEXTCLOUD_ADMIN_PASSWORD: password
-  WHITEBOARD_SECRET: password
+  NEXTCLOUD_WHITEBOARD_SECRET: password
 
 ---
 apiVersion: v1
@@ -536,7 +536,6 @@ spec:
         app: nextcloud-whiteboard
         tier: frontend
         part-of: nextcloud
-        egress: any
     spec:
       containers:
         - name: nextcloud-whiteboard
@@ -550,7 +549,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: nextcloud
-                  key: WHITEBOARD_SECRET
+                  key: NEXTCLOUD_WHITEBOARD_SECRET
             - name: NEXTCLOUD_URL
               value: http://nextcloud
             - name: REDIS_HOST
